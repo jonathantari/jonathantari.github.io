@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>garage</title>
 <meta name="description" content="Jonathan Tari's garage.">
-<meta name="theme-color" content="#4a4a50">
+<meta name="theme-color" content="#c7c2b9">
 <style>
-  html, body { margin: 0; height: 100%; background: #4a4a50; overflow: hidden; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+  html, body { margin: 0; height: 100%; background: #c7c2b9; overflow: hidden; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
   canvas { position: fixed; bottom: 0; display: block; image-rendering: pixelated; image-rendering: crisp-edges; -webkit-tap-highlight-color: transparent; }
   #crate { position: fixed; display: block; border-radius: 6px; -webkit-tap-highlight-color: transparent; }
   #crate:focus-visible { outline: 2px solid #f2a34b; outline-offset: 3px; }
@@ -24,8 +24,8 @@
   var cv = document.getElementById("c"), ctx = cv.getContext("2d");
   var link = document.getElementById("crate");
   var RM = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var skyC = document.createElement("canvas"), skyX = skyC.getContext("2d");
-  var scnC = document.createElement("canvas"), scnX = scnC.getContext("2d");
+  function mk() { var c = document.createElement("canvas"); return { c: c, x: c.getContext("2d") }; }
+  var SKY = mk(), BASE = mk(), GLOW = mk();
 
   // ---------- utils ----------
   var BAY = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
@@ -45,34 +45,52 @@
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
 
   var K = {
-    skyDay: ["#5a97cf", "#71a8d8", "#8fbde2", "#b0d2ea", "#cde3ef"].map(hx),
-    skyNight: ["#10142a", "#181e40", "#232b56", "#353a6c", "#4e4878"].map(hx),
+    skyDay: ["#4f8fcc", "#67a2d6", "#86b7e0", "#a8cce9", "#c6def0"].map(hx),
+    skyNight: ["#0e1228", "#161b3c", "#202852", "#313868", "#454273"].map(hx),
     star: hx("#fff3d6"), moon: hx("#f4e7c0"),
-    siding: hx("#8fa3b2"), lap: hx("#7d91a1"), trim: hx("#eeebe3"), trimSh: hx("#c4c2bc"),
-    roof: hx("#58575f"), roofLn: hx("#48474f"), roofHi: hx("#66656e"),
-    brick: hx("#93503f"), door: hx("#8b3a33"), brass: hx("#d6b25e"),
-    glassDay: hx("#a9c6dc"), glassDayLo: hx("#7fa2bf"), glassNight: hx("#1e2440"),
-    warmHi: hx("#ffe2a6"), warmLo: hx("#f1a85a"), curtain: hx("#d48a54"),
-    grass: hx("#6e9a4e"), grassLo: hx("#628d44"), grassHi: hx("#7aa758"), shrub: hx("#4a7442"), shrubHi: hx("#5c8a50"),
-    drive: hx("#b9b3a8"), driveLn: hx("#9d968c"), walk: hx("#c3bdb3"), walkLn: hx("#a39d93"),
-    curb: hx("#d2cdc4"), road: hx("#4a4a50"), paver: hx("#a8a096"),
-    ceil: hx("#c2b9a8"), wallIn: hx("#b8ad98"), backIn: hx("#ada18b"), floorIn: hx("#948f87"), floorSt: hx("#868179"),
-    track: hx("#5a5a62"), panel: hx("#ece8de"), panelLn: hx("#c9c4b8"),
-    shelf: hx("#6c6e76"), bins: ["#5c7896", "#a56e48", "#b89a6c", "#6e8a6a", "#8a8e96"].map(hx),
-    slat: hx("#c49a62"), slatLo: hx("#a77f4c"), gap: hx("#6e5132"), post: hx("#a57a46"), crateTop: hx("#d6ae76"), crateSide: hx("#93693c"),
+    // house
+    siding: hx("#45484f"), sidingLn: hx("#383b41"), sidingHi: hx("#4f525a"),
+    shingle: hx("#4a4d54"), shingleLn: hx("#3b3e44"),
+    roofEdge: hx("#26282c"), soffit: hx("#5c5f66"),
+    upper: hx("#a29c91"), upperLn: hx("#8f897f"), slabRoof: hx("#34363b"),
+    stucco: hx("#8d8c88"), stuccoLo: hx("#7f7e7a"),
+    trim: hx("#f1efe9"), trimSh: hx("#c9c6be"), frame: hx("#55585f"),
+    glassDay: hx("#9fc0d8"), glassDayLo: hx("#6f93b0"), glassNight: hx("#1a2038"),
+    warmHi: hx("#ffcf7a"), warmLo: hx("#f09a3e"), blind: hx("#d27a2c"),
+    // ground
+    grass: hx("#6a974a"), grassLo: hx("#5c8840"), grassHi: hx("#80ad5a"), grassDk: hx("#4f773a"),
+    drive: hx("#bdb7ad"), driveLn: hx("#a29c92"), driveTrk: hx("#b1aba1"),
+    wall: hx("#9f9d97"), wallCap: hx("#bab8b2"), wallSh: hx("#85837e"),
+    walk: hx("#c7c2b9"), walkLn: hx("#aaa59c"),
+    shrub: hx("#46703f"), shrubHi: hx("#5b8a4f"), flower: hx("#d8423e"),
+    // garage interior
+    ceil: hx("#b5ad9e"), wallIn: hx("#aea38f"), backIn: hx("#a39884"), floorIn: hx("#938e86"), floorSt: hx("#86817a"),
+    track: hx("#55565e"), panel: hx("#4a4d54"), panelLn: hx("#3a3d43"), opener: hx("#3e3f45"),
+    peg: hx("#9a7c58"), pegHole: hx("#6e5638"), metal: hx("#6a6d76"), steel: hx("#9a9ea8"), wood: hx("#a8784a"), woodDk: hx("#6e4a2c"),
+    shelf: hx("#5e6068"), bins: ["#4f6f92", "#a2643f", "#c2a46a", "#5f7f5d", "#8a8d96", "#9c4f4f"].map(hx),
+    card: hx("#b88d5a"), cardDk: hx("#99734a"), tape: hx("#d9c08c"),
+    skiA: hx("#c8473f"), skiB: hx("#e6e2da"), hose: hx("#4f8a4a"),
+    bulbOff: hx("#d9d5c8"), bulbOn: hx("#fff1c4"), cord: hx("#2a2a2e"), bead: hx("#d0b070"),
+    // the crate
+    crate: hx("#3f6fa3"), crateHi: hx("#5686ba"), crateLo: hx("#2f5582"), crateIn: hx("#223d5e"), hole: hx("#1d2f46"),
     sticker: hx("#f3eee2"), stickerLn: hx("#d6cfbd"), ink: hx("#2a2a30"), amber: hx("#f2a34b"),
-    bulbOff: hx("#d8d4c8"), bulbOn: hx("#fff1c4"), cord: hx("#2a2a2e"),
-    trunk: hx("#5e4836"), leaf: hx("#5b8746"), leafHi: hx("#6e9a54"), leafLo: hx("#4a7139"),
-    ridgeDay: hx("#8496ab"), slabDay: hx("#a39a98"), slabDayHi: hx("#b5aaa4"), slabDayLo: hx("#958c8c"), pineDay: hx("#5f7c5e"),
-    ridgeNight: hx("#1d2346"), slabNight: hx("#262b52"), slabNightHi: hx("#30365e"), pineNight: hx("#171c38"),
-    cat: hx("#19171c"), eye: hx("#e8c84a")
+    // trees
+    trunk: hx("#5a4636"), leaf: hx("#4f7d3e"), leafHi: hx("#679950"), leafLo: hx("#3f6633"),
+    // mountains
+    mDay: hx("#7e919e"), mDayPine: hx("#6e828f"), fhDay: hx("#647a6d"), fhDayPine: hx("#566b5f"),
+    slabDay: hx("#c3b19a"), slabDayHi: hx("#d9c9b3"), slabDayLo: hx("#9d8f80"),
+    mNight: hx("#1b2143"), mNightPine: hx("#171d3c"), fhNight: hx("#151a35"), fhNightPine: hx("#121730"),
+    slabNight: hx("#272e55"), slabNightHi: hx("#2e3660"), slabNightLo: hx("#20274a"),
+    // cat
+    cat: hx("#18161b"), catW: hx("#ecebe6"), eye: hx("#e8c84a")
   };
 
   // zones: 0 sky (transparent), 1 exterior, 2 garage interior, 3 far (unlit), 4 emissive, 5 ground
   var P, W, H, dpr, cssW, cssH, cssLeft, night;
   var A, Z, SPILL;
   var zone = 1, R;
-  var G = {}, wins = [], lights = [];
+  var G = {}, wins = [];
+  var S = { bulb: true, porch: true, flick: 0, pull: -1 };
 
   function put(x, y, c) {
     x = x | 0; y = y | 0;
@@ -103,6 +121,12 @@
       if (d <= 1) fn(x, y, d);
     }
   }
+  function line(x0, y0, x1, y1, c) {
+    x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1);
+    var dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1, dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1, err = dx + dy;
+    for (;;) { put(x0, y0, c); if (x0 === x1 && y0 === y1) break; var e2 = 2 * err; if (e2 >= dy) { err += dy; x0 += sx; } if (e2 <= dx) { err += dx; y0 += sy; } }
+  }
+  function ring(cx, cy, r, c) { for (var a = 0; a < 48; a++) { var t = a / 48 * 6.2832; put(Math.round(cx + Math.cos(t) * r), Math.round(cy + Math.sin(t) * r), c); } }
 
   var GLYPH = {
     t: [".#.", "###", ".#.", ".#.", "..#"],
@@ -114,7 +138,6 @@
     d: ["..#", "..#", ".##", "#.#", ".##"]
   };
 
-  // day or night from the device clock, with a rough seasonal sunrise/sunset
   function isNight() {
     var q = location.search;
     if (/[?&]night/.test(q)) return true;
@@ -129,45 +152,44 @@
   function layout() {
     dpr = window.devicePixelRatio || 1;
     var vw = window.innerWidth, vh = window.innerHeight, dw = vw * dpr, dh = vh * dpr;
-    P = Math.max(2, Math.floor(Math.min(dw / 165, dh / 240)));
+    P = Math.max(2, Math.floor(Math.min(dw / 160, dh / 215)));
     W = Math.ceil(dw / P); H = Math.ceil(dh / P);
-    [cv, skyC, scnC].forEach(function (c) { c.width = W; c.height = H; });
+    [cv, SKY.c, BASE.c, GLOW.c].forEach(function (c) { c.width = W; c.height = H; });
     cssW = W * P / dpr; cssH = H * P / dpr; cssLeft = (vw - cssW) / 2;
     cv.style.width = cssW + "px"; cv.style.height = cssH + "px"; cv.style.left = cssLeft + "px";
 
-    var g = G;
-    var tall = H / W > 1.6;
-    g.streetH = tall ? Math.round(H * 0.25) : clamp(Math.round(H * 0.19), 34, 80);
-    g.gy = H - g.streetH;
-    g.roadH = clamp(Math.round(g.streetH * 0.16), 6, 12);
-    g.swTop = H - g.roadH - 2 - 6;
-    g.gw = tall ? Math.round(W * 0.6) : clamp(Math.round(Math.min(W * 0.5, H * 0.36)), 76, 116);
-    g.gh = Math.round(g.gw * (tall ? 0.62 : 0.58));
-    g.storyH = Math.round(g.gw * (tall ? 0.52 : 0.44));
+    var g = G, tall = H / W > 1.5;
     g.tall = tall;
-    g.leftW = Math.round(g.gw * 1.3);
-    var total = g.leftW + g.gw + 16;
-    g.wingR = Math.min(W - 3, Math.round(W / 2 + total / 2));
-    g.wingL = g.wingR - g.gw - 16;
-    g.gx = g.wingL + 8;
-    g.hx0 = g.wingL - g.leftW;
+    g.swH = 7;
+    g.streetH = tall ? Math.round(H * 0.22) : clamp(Math.round(H * 0.2), 34, 70);
+    g.gy = H - g.streetH;
+    g.gw = tall ? Math.round(W * 0.62) : clamp(Math.round(Math.min(W * 0.4, H * 0.45)), 80, 140);
+    g.gh = Math.round(g.gw * 0.62);
+    g.gx = tall ? W - 14 - g.gw : Math.round(W * 0.56 - g.gw / 2);
     g.gTop = g.gy - g.gh;
-    g.yE = g.gTop - 7 - g.storyH;
-    g.peakY = g.yE - Math.round((g.gw + 24) / 2 * 0.62);
-    g.yL = g.yE + 5;
-    g.yR = g.yL - Math.round(g.storyH * 0.55);
+    g.floor = g.gTop - 8;
+    g.bodyR = g.gx + g.gw + 12;
+    g.bodyL = g.gx - g.gw;
+    g.cxB = (g.bodyL + g.bodyR) / 2;
+    g.half = (g.bodyR - g.bodyL) / 2 + 5;
+    g.slope = 0.47;
+    g.eave = g.floor - Math.round(g.gw * 0.2);
+    g.peak = Math.round(g.eave - g.half * g.slope);
+    g.upTop = g.peak - Math.round(g.gw * 0.27);
+    g.mTop = Math.max(Math.round(H * 0.07), Math.round(g.peak - (g.gy - g.peak) * 0.55));
     // interior perspective
-    g.vx = g.gx + g.gw / 2; g.vy = g.gTop + Math.round(g.gh * 0.42); g.s = 0.62;
+    g.vx = g.gx + g.gw / 2; g.vy = g.gTop + Math.round(g.gh * 0.42); g.s = 0.6;
     g.L = Math.round(g.vx - g.gw / 2 * g.s); g.R = Math.round(g.vx + g.gw / 2 * g.s);
     g.T = Math.round(g.vy - (g.vy - g.gTop) * g.s); g.Bt = Math.round(g.vy + (g.gy - g.vy) * g.s);
-    g.bulbY = g.gTop + Math.round(g.gh * 0.2);
-    // front door
-    g.dx = tall ? g.wingL - 20 : g.wingL - Math.round(g.leftW * 0.4);
-    // crate (3/4 view): bottom-left of the front face
-    g.fw = 50; g.fh = 22; g.sd = 7; g.su = 4;
-    g.cx = Math.round(g.vx - g.fw / 2 - 5); g.cy = g.gy - 3;
+    g.pH = Math.max(4, Math.round(g.gh * 0.08));
+    g.bulbX = Math.round(g.vx - g.gw * 0.08); g.bulbY = g.gTop + g.pH + Math.round(g.gh * 0.1);
+    g.sconce = { x: g.gx - 10, y: g.gTop + 8 };
+    // milk crate: bottom-left of the front face
+    g.fw = 50; g.fh = 22; g.sd = 9; g.su = 5;
+    g.cx = Math.round(g.vx - g.fw / 2 - 4); g.cy = g.gy - 3;
 
     night = isNight();
+    S.bulb = !/[?&]dark/.test(location.search); S.porch = true;
     placeLink();
     render();
     initDynamic();
@@ -175,7 +197,7 @@
 
   function placeLink() {
     var g = G, k = P / dpr, bottom = window.innerHeight - cssH;
-    var x = g.cx - 3, y = g.cy - g.fh - g.su - 3, w = g.fw + g.sd + 6, h = g.fh + g.su + 7;
+    var x = g.cx - 3, y = g.cy - g.fh - g.su - 14, w = g.fw + g.sd + 6, h = g.fh + g.su + 18;
     var L = cssLeft + x * k, T = bottom + y * k, Wd = w * k, Ht = h * k, pad = Math.max(0, (48 - Math.min(Wd, Ht)) / 2);
     link.style.left = (L - pad) + "px"; link.style.top = (T - pad) + "px";
     link.style.width = (Wd + pad * 2) + "px"; link.style.height = (Ht + pad * 2) + "px";
@@ -185,29 +207,25 @@
   function render() {
     var N = W * H;
     A = new Float32Array(N * 3); Z = new Uint8Array(N); SPILL = new Uint8Array(N);
-    R = rng(11 + W * 7 + H * 3);
-    wins = []; lights = [];
+    R = rng(17 + W * 7 + H * 3);
+    wins = [];
     drawSky();
     drawMountains();
-    drawTrees();
-    drawHouse();
-    drawGround();
+    drawUpperBox();
+    drawFacade();
     drawGarage();
-    drawPorch();
-    if (night) {
-      var g = G, sp = Math.round((g.swTop - g.gy) * 0.4);
-      poly([[g.gx, g.gy], [g.gx + g.gw, g.gy], [g.gx + g.gw + sp, g.swTop + 6], [g.gx - sp, g.swTop + 6]], function (x, y) {
-        if (x >= 0 && y >= 0 && x < W && y < H) SPILL[y * W + x] = 1;
-      });
-      lights.push({ x: g.vx, y: g.bulbY + 2, r: g.gw * 1.15, i: 1.2, c: [1, 0.78, 0.5], kind: "bulb" });
-      lights.push({ x: g.dx - 10, y: g.gy - 20, r: 26, i: 0.85, c: [1, 0.8, 0.55], kind: "porch" });
-    }
-    shade();
+    drawGround();
+    drawTrees();
+    var g = G, sp = Math.round((g.H5 = H - g.swH - g.gy) * 0.35);
+    poly([[g.gx, g.gy], [g.gx + g.gw, g.gy], [g.gx + g.gw + sp, H], [g.gx - sp, H]], function (x, y) {
+      if (x >= 0 && y >= 0 && x < W && y < H) SPILL[y * W + x] = 1;
+    });
+    shadeAll();
   }
 
   function drawSky() {
-    var st = night ? K.skyNight : K.skyDay, end = G.yR + 10;
-    var img = skyX.createImageData(W, H), d = img.data;
+    var st = night ? K.skyNight : K.skyDay, end = G.eave;
+    var img = SKY.x.createImageData(W, H), d = img.data;
     for (var y = 0; y < H; y++) {
       var t = clamp(y / end, 0, 1) * (st.length - 1), i = Math.floor(t), f = t - i;
       for (var x = 0; x < W; x++) {
@@ -215,293 +233,327 @@
         d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = 255;
       }
     }
-    skyX.putImageData(img, 0, 0);
-    if (night) { // crescent moon with a faint halo
-      var mx = Math.round(W * 0.78), my = Math.round(Math.min(28, G.yR * 0.22));
+    SKY.x.putImageData(img, 0, 0);
+    if (night) {
+      var mx = Math.round(W * (G.tall ? 0.22 : 0.18)), my = Math.round(Math.max(10, G.mTop * 0.45));
       for (var yy = -11; yy <= 11; yy++) for (var xx = -11; xx <= 11; xx++) {
         var dd = Math.sqrt(xx * xx + yy * yy);
-        if (dd < 11 && dd > 6 && (11 - dd) / 5 * 0.3 > bay(mx + xx, my + yy)) { skyX.fillStyle = css(mix(st[1], st[3], 0.55)); skyX.fillRect(mx + xx, my + yy, 1, 1); }
-        if (dd <= 5.2 && Math.sqrt((xx + 2.5) * (xx + 2.5) + (yy + 1.5) * (yy + 1.5)) > 4.6) { skyX.fillStyle = css(K.moon); skyX.fillRect(mx + xx, my + yy, 1, 1); }
+        if (dd < 11 && dd > 6 && (11 - dd) / 5 * 0.3 > bay(mx + xx, my + yy)) { SKY.x.fillStyle = css(mix(st[1], st[3], 0.55)); SKY.x.fillRect(mx + xx, my + yy, 1, 1); }
+        if (dd <= 5.2 && Math.sqrt((xx + 2.5) * (xx + 2.5) + (yy + 1.5) * (yy + 1.5)) > 4.6) { SKY.x.fillStyle = css(K.moon); SKY.x.fillRect(mx + xx, my + yy, 1, 1); }
       }
     }
   }
 
-  function ridgeY(x) {
-    var g = G, top = Math.round(g.yR - (g.gy - g.yR) * (g.tall ? 0.46 : 0.42)), u = x / W;
-    var bump = Math.exp(-((u - 0.3) * (u - 0.3)) / 0.09);
-    return top + (1 - bump) * (g.gy - top) * 0.32 + Math.sin(x * 0.21) * 1.2 + Math.sin(x * 0.07) * 2;
+  // Flatirons: a forested ridge, with long tilted sandstone slabs leaning up-left
+  function ridge(x) {
+    var g = G, pts = [[0, 0.55], [0.1, 0.36], [0.2, 0.2], [0.3, 0.1], [0.42, 0.06], [0.55, 0.0], [0.68, 0.04], [0.8, 0.14], [0.9, 0.24], [1, 0.32]];
+    var u = x / W;
+    for (var i = 0; i < pts.length - 1; i++) if (u <= pts[i + 1][0]) {
+      var t = (u - pts[i][0]) / (pts[i + 1][0] - pts[i][0]), s = t * t * (3 - 2 * t);
+      return g.mTop + (pts[i][1] + (pts[i + 1][1] - pts[i][1]) * s) * (g.gy - g.mTop) * 0.62 + Math.sin(x * 0.6) * 0.6;
+    }
+    return g.mTop + 0.3 * (g.gy - g.mTop) * 0.7;
   }
   function drawMountains() {
     zone = 3;
-    var g = G, ridge = night ? K.ridgeNight : K.ridgeDay;
-    for (var x = 0; x < W; x++) { var ry = Math.round(ridgeY(x)); rect(x, ry, 1, g.gy - ry, ridge); }
-    // the Flatirons: tilted sandstone slabs on the near face
-    var slabs = [[0.17, 13, 9], [0.27, 16, 12], [0.36, 12, 8]];
-    slabs.forEach(function (s, k) {
-      var ax = Math.round(W * s[0]), ay = Math.round(ridgeY(ax) + 3 + k % 2), w = s[1], h = s[2] + Math.round((g.gy - ay) * 0.1);
-      var face = night ? K.slabNight : K.slabDay, hi = night ? K.slabNightHi : K.slabDayHi, lo = night ? K.slabNight : K.slabDayLo;
-      poly([[ax, ay], [ax + w * 0.3, ay + h], [ax - w * 0.7, ay + h]], function (x, y) {
-        var c = face;
-        var t = (y - ay) / h, edgeL = ax - w * 0.7 * t;
-        if (x - edgeL < 1.5) c = hi;
-        else if (((x + y * 0.6) | 0) % 7 === 0 && !night) c = lo; // bedding lines
+    var g = G, m = night ? K.mNight : K.mDay, mp = night ? K.mNightPine : K.mDayPine;
+    for (var x = 0; x < W; x++) {
+      var ry = Math.round(ridge(x));
+      for (var y = ry; y < g.gy; y++) put(x, y, ((x * 7 + y * 3) % 11 === 0 || (bay(x, y) > 0.82 && (y - ry) % 3 === 0)) ? mp : m);
+    }
+    // slabs: broad tilted plates, steep shaded left face, long sunlit right face
+    var sl = night ? [K.slabNight, K.slabNightHi, K.slabNightLo] : [K.slabDay, K.slabDayHi, K.slabDayLo];
+    var range = g.gy - g.mTop;
+    [[0.1, 0.1, 0.13], [0.155, 0.12, 0.16], [0.21, 0.13, 0.19], [0.265, 0.14, 0.21], [0.32, 0.12, 0.18], [0.37, 0.1, 0.14]].forEach(function (s) {
+      var ax = Math.round(W * s[0]), ay = Math.round(ridge(ax)) + 1, w = Math.round(range * s[1]), h = Math.round(range * s[2]);
+      var lx = ax - w * 0.3, rx = ax + w * 0.7, spx = ax + w * 0.12;
+      poly([[ax, ay], [rx, ay + h], [lx, ay + h]], function (x, y) {
+        var t = (y - ay) / h, spine = ax + (spx - ax) * t;
+        var c = x < spine ? sl[2] : sl[0];
+        if (x >= spine && x < spine + 1.2) c = sl[1];
+        if (y < ridge(x) + 1) return;
         put(x, y, c);
       });
     });
-    // pine band at the foot
-    var pine = night ? K.pineNight : K.pineDay;
+    // forested foothills in front
+    var fh = night ? K.fhNight : K.fhDay, fp = night ? K.fhNightPine : K.fhDayPine;
     for (var x2 = 0; x2 < W; x2++) {
-      var top = Math.round(ridgeY(x2) + (g.gy - ridgeY(x2)) * 0.55 + Math.sin(x2 * 0.9) * 1.5 + (x2 % 5 === 0 ? -2 : 0));
-      rect(x2, top, 1, g.gy - top, pine);
+      var top = Math.round(g.gy - range * 0.3 + Math.sin(x2 * 0.08) * 3 + Math.sin(x2 * 0.31) * 1.5 - (x2 % 4 === 0 ? 1 : 0));
+      for (var y2 = top; y2 < g.gy; y2++) put(x2, y2, (bay(x2, y2) > 0.75 && (y2 + x2) % 3 === 0) ? fp : fh);
     }
   }
 
-  function tree(cx, baseY, r) {
+  function drawUpperBox() {
+    var g = G, x0 = Math.round(g.cxB - g.gw * 0.95), x1 = Math.round(g.cxB - 4), top = g.upTop, bot = g.peak + 20;
     zone = 1;
-    rect(cx - 2, baseY - r * 1.6, 4, r * 1.6, K.trunk);
-    rect(cx - 1, baseY - r * 1.6, 1, r * 1.6, dk(K.trunk, 0.8));
-    [[0, -2.1, 1], [-0.6, -1.7, 0.75], [0.65, -1.75, 0.75], [-0.2, -2.6, 0.7], [0.4, -2.45, 0.65]].forEach(function (b) {
-      blob(cx + b[0] * r, baseY + b[1] * r, r * b[2], r * b[2] * 0.85, function (x, y, d) {
-        var c = K.leaf;
-        if (y < baseY + b[1] * r - r * b[2] * 0.35 && d < 0.75 && bay(x, y) > 0.35) c = K.leafHi;
-        if (d > 0.7 && y > baseY + b[1] * r && bay(x, y) > 0.5) c = K.leafLo;
+    for (var y = top; y < bot; y++) for (var x = x0; x < x1; x++) put(x, y, (y - top) % 4 === 3 ? K.upperLn : K.upper);
+    rect(x0 - 5, top - 3, x1 - x0 + 8, 3, K.slabRoof); rect(x0 - 5, top, x1 - x0 + 8, 1, dk(K.upper, 0.7));
+    var ww = Math.round(g.gw * 0.15), wh = Math.round(g.gw * 0.17);
+    var w1 = window2(Math.round(x0 + (x1 - x0) * 0.22), top + 6, ww, wh, false);
+    window2(Math.round(x0 + (x1 - x0) * 0.62), top + 6, Math.round(ww * 0.8), wh, night);
+    G.boxWin = w1;
+  }
+
+  function window2(x, y, w, h, lit, opts) {
+    opts = opts || {};
+    zone = 1;
+    rect(x - 2, y - 2, w + 4, h + 4, K.trim);
+    rect(x - 2, y + h + 1, w + 4, 1, K.trimSh);
+    var win = { x: x, y: y, w: w, h: h, lit: lit, blinds: opts.blinds, split: opts.split };
+    wins.push(win);
+    glass(win);
+    return win;
+  }
+  function glass(win) {
+    var x = win.x, y = win.y, w = win.w, h = win.h, bl = Math.round(h * 0.52);
+    zone = 4;
+    for (var j = 0; j < h; j++) for (var i = 0; i < w; i++) {
+      var c;
+      if (night && win.lit) {
+        c = mix(K.warmHi, K.warmLo, j / h);
+        if (win.blinds && j < bl) c = (j % 3 === 2) ? K.blind : mix(K.warmHi, K.blind, 0.25);
+        if (win.blinds && j === bl) c = dk(K.blind, 0.6);
+      } else if (night) {
+        c = K.glassNight;
+        if (win.blinds && j < bl && j % 3 === 2) c = mix(K.glassNight, [60, 66, 96], 0.6);
+      } else {
+        c = mix(K.glassDay, K.glassDayLo, j / h);
+        if (win.blinds && j < bl && j % 3 === 2) c = mix(c, [235, 235, 230], 0.35);
+        var dg = i + j * 0.7;
+        if (Math.abs(dg - w * 0.5) < 1.1 || Math.abs(dg - w * 0.75) < 0.6) c = mix(c, [235, 245, 252], 0.55);
+      }
+      put(x + i, y + j, c);
+    }
+    zone = 1;
+    if (win.split) rect(x + Math.round(w * win.split), y, 1, h, K.trim);
+  }
+
+  function drawFacade() {
+    var g = G, cx = g.cxB, L = g.bodyL, Rr = g.bodyR;
+    zone = 1;
+    // gable wall (shingles) + lower wall (lap siding)
+    poly([[L, g.eave + 0.5], [cx, g.peak + 2], [Rr, g.eave + 0.5], [Rr, g.floor], [L, g.floor]], function (x, y) {
+      var r = (y - g.peak) / 3 | 0, c = K.shingle;
+      if ((y - g.peak) % 3 === 2) c = K.shingleLn;
+      else if ((x + (r % 2) * 3) % 6 === 0) c = K.shingleLn;
+      put(x, y, c);
+    });
+    for (var y = g.floor; y < g.gy; y++) for (var x = L; x < Rr; x++) {
+      var c = K.siding, k = (y - g.floor) % 4;
+      if (k === 3) c = K.sidingLn; else if (k === 0) c = K.sidingHi;
+      put(x, y, c);
+    }
+    // band between floors
+    rect(L, g.floor - 1, Rr - L, 2, K.sidingLn);
+    // exposed foundation at the lower left
+    var fTop = g.gy - Math.round(g.gh * 0.42);
+    for (var y2 = fTop; y2 < g.gy; y2++) for (var x2 = L; x2 < g.gx - 16; x2++) put(x2, y2, R() < 0.12 ? K.stuccoLo : K.stucco);
+    rect(L, fTop, g.gx - 16 - L, 1, dk(K.stucco, 0.8));
+    // roof edges with soffit
+    for (var x3 = Math.round(cx - g.half); x3 <= Math.round(cx + g.half); x3++) {
+      var ry = Math.round(g.peak + Math.abs(x3 + 0.5 - cx) * g.slope);
+      rect(x3, ry - 3, 1, 3, K.roofEdge); put(x3, ry, K.soffit); put(x3, ry + 1, dk(K.shingle, 0.75));
+    }
+    // upstairs windows: a wide one on the left, the cat's window over the garage
+    var wh = Math.round(g.gw * 0.25), wy = g.floor - wh - 6;
+    var lw = Math.round(g.gw * 0.46), lx = Math.round(g.gx - g.gw * 0.62);
+    window2(lx, wy, lw, wh, night, { split: 0.5 });
+    var cw = Math.round(g.gw * 0.32), cxw = Math.round(g.gx + g.gw * 0.6 - cw / 2);
+    G.catWin = window2(cxw, wy, cw, wh, night, { split: 0.5, blinds: true });
+    // a lower window behind the shrubs on the left
+    var bw = Math.round(g.gw * 0.3);
+    window2(Math.round(g.gx - g.gw * 0.55), g.gTop + 6, bw, Math.round(g.gh * 0.28), false, { split: 0.5 });
+    // wall sconce by the garage
+    zone = 1;
+    var sc = g.sconce;
+    rect(sc.x - 1, sc.y - 4, 4, 9, [30, 31, 35]); rect(sc.x - 2, sc.y - 5, 6, 1, [24, 25, 28]);
+    zone = 4; rect(sc.x, sc.y + 5, 2, 1, [210, 200, 170]);
+  }
+
+  function drawGarage() {
+    var g = G, L = g.L, Rr = g.R, T = g.T, Bt = g.Bt, s = g.s;
+    zone = 1;
+    rect(g.gx - 3, g.gTop - 3, g.gw + 6, 3, K.frame);
+    rect(g.gx - 3, g.gTop, 3, g.gh, K.frame); rect(g.gx + g.gw, g.gTop, 3, g.gh, K.frame);
+    zone = 2;
+    for (var y = g.gTop; y < g.gy; y++) for (var x = g.gx; x < g.gx + g.gw; x++) {
+      var c, depth;
+      if (x >= L && x < Rr && y >= T && y < Bt) { c = K.backIn; depth = 1; if (R() < 0.06) c = dk(c, 0.95); }
+      else {
+        var hx2 = Math.abs(x + 0.5 - g.vx) / (g.gw / 2);
+        var ht = y + 0.5 < g.vy ? (g.vy - y - 0.5) / (g.vy - g.gTop) : (y + 0.5 - g.vy) / (g.gy - g.vy);
+        var k = Math.max(hx2, ht);
+        depth = clamp((1 / k - 1) / (1 / s - 1), 0, 1);
+        if (hx2 >= ht) { c = K.wallIn; if (R() < 0.05) c = dk(c, 0.95); }
+        else if (y + 0.5 < g.vy) {
+          c = K.ceil;
+          var tu = (x + 0.5 - g.vx) / k / (g.gw / 2);
+          if (Math.abs(Math.abs(tu) - 0.92) < 0.04 / k) c = K.track;
+          if (Math.abs(tu) < 0.02 / k) c = K.track; // opener rail
+        } else {
+          c = K.floorIn;
+          if (R() < 0.07) c = dk(c, 0.94);
+          var fx = (x + 0.5 - g.vx) / k;
+          if (Math.abs(fx) < g.gw * 0.14 && depth > 0.25 && depth < 0.55 && bay(x, y) > 0.6) c = K.floorSt;
+        }
+      }
+      put(x, y, dk(c, 1 - depth * 0.25));
+    }
+    // opener box at the back of the rail
+    rect(g.vx - 4, T - 3, 8, 3, K.opener); rect(g.vx - 3, T - 1, 6, 1, [200, 80, 60]);
+    // raised door tucked under the ceiling
+    for (var py = 0; py < g.pH; py++) rect(g.gx + 1 + py, g.gTop + py, g.gw - 2 - py * 2, 1, py % 2 ? K.panelLn : K.panel);
+    var bw = Rr - L, bh = Bt - T;
+    // pegboard + tools (right of back wall)
+    var px0 = L + Math.round(bw * 0.5), px1 = Rr - 2, py0 = T + 3, py1 = T + Math.round(bh * 0.52);
+    for (var yy = py0; yy < py1; yy++) for (var xx = px0; xx < px1; xx++) put(xx, yy, ((xx - px0) % 3 === 1 && (yy - py0) % 3 === 1) ? K.pegHole : K.peg);
+    var tw = px1 - px0;
+    // hammer, wrenches, saw, tape
+    rect(px0 + 3, py0 + 2, 1, 8, K.woodDk); rect(px0 + 2, py0 + 2, 3, 2, K.metal);
+    rect(px0 + 7, py0 + 2, 1, 7, K.steel); rect(px0 + 9, py0 + 3, 1, 6, K.steel); rect(px0 + 11, py0 + 4, 1, 5, K.steel);
+    if (tw > 22) { poly([[px0 + 14, py0 + 2], [px0 + 22, py0 + 2], [px0 + 22, py0 + 4], [px0 + 14, py0 + 7]], function (x, y) { put(x, y, K.steel); }); rect(px0 + 20, py0 + 2, 3, 3, K.wood); }
+    if (tw > 28) { rect(px0 + 25, py0 + 3, 3, 3, [212, 182, 60]); put(px0 + 26, py0 + 4, [60, 60, 60]); }
+    // workbench
+    var bTop = T + Math.round(bh * 0.58);
+    rect(px0 - 2, bTop, px1 - px0 + 3, 2, K.wood); rect(px0 - 2, bTop + 2, px1 - px0 + 3, 2, K.woodDk);
+    rect(px0 - 1, bTop + 4, 1, Bt - bTop - 4, K.woodDk); rect(px1, bTop + 4, 1, Bt - bTop - 4, K.woodDk);
+    rect(px0, Bt - 3, px1 - px0, 1, K.woodDk);
+    rect(px1 - 6, bTop - 3, 4, 3, K.metal); rect(px1 - 8, bTop - 2, 2, 1, K.metal); // vise
+    rect(px0 + 2, bTop - 4, 6, 4, [150, 60, 46]); rect(px0 + 3, bTop - 3, 2, 2, [60, 40, 34]); // radio
+    rect(px0 + 10, bTop - 3, 3, 3, [120, 150, 160]); // jar
+    // paint cans under the bench
+    rect(px0 + 2, Bt - 6, 4, 4, [170, 170, 176]); rect(px0 + 2, Bt - 6, 4, 1, [200, 200, 205]);
+    rect(px0 + 7, Bt - 5, 3, 3, [170, 170, 176]);
+    // metal shelving on the left of the back wall, with bins and boxes
+    var sx0 = L + 2, sx1 = L + Math.round(bw * 0.38);
+    rect(sx0, T + 1, 1, bh - 1, K.shelf); rect(sx1, T + 1, 1, bh - 1, K.shelf);
+    [0.3, 0.62, 0.95].forEach(function (f, i) {
+      var sy = T + Math.round(bh * f);
+      rect(sx0, sy, sx1 - sx0 + 1, 1, K.shelf);
+      var x = sx0 + 1;
+      while (x < sx1 - 2) {
+        var bwid = 3 + ((R() * 4) | 0), bht = 3 + ((R() * 3) | 0), col = K.bins[(R() * K.bins.length) | 0];
+        if (x + bwid > sx1) bwid = sx1 - x;
+        rect(x, sy - bht, bwid, bht, R() < 0.4 ? K.card : col);
+        if (bwid > 3) rect(x, sy - bht, bwid, 1, mix(R() < 0.4 ? K.card : col, [255, 255, 255], 0.2));
+        x += bwid + 1;
+      }
+    });
+    // boxes stacked on the floor at the back-left
+    rect(L + 3, Bt - 9, 12, 9, K.card); rect(L + 3, Bt - 9, 12, 1, K.tape); rect(L + 8, Bt - 9, 2, 9, K.tape);
+    rect(L + 5, Bt - 15, 9, 6, K.cardDk); rect(L + 5, Bt - 15, 9, 1, K.card);
+    // skis leaning in the front-left corner
+    line(g.gx + 4, g.gy - 2, g.gx + 9, g.gTop + Math.round(g.gh * 0.25), K.skiA);
+    line(g.gx + 6, g.gy - 2, g.gx + 11, g.gTop + Math.round(g.gh * 0.27), K.skiB);
+    line(g.gx + 5, g.gy - 2, g.gx + 10, g.gTop + Math.round(g.gh * 0.26), dk(K.skiA, 0.8));
+    // hose coiled on the right wall, and a broom
+    var hx3 = g.gx + g.gw - 9, hy3 = g.gTop + Math.round(g.gh * 0.45);
+    ring(hx3, hy3, 4, K.hose); ring(hx3, hy3, 3, dk(K.hose, 0.8)); put(hx3, hy3 - 5, K.metal);
+    line(g.gx + g.gw - 4, g.gy - 2, g.gx + g.gw - 7, g.gTop + Math.round(g.gh * 0.55), K.wood);
+    rect(g.gx + g.gw - 6, g.gy - 5, 5, 3, [190, 160, 90]);
+    // bare bulb + pull string
+    rect(g.bulbX, g.gTop + g.pH, 1, g.bulbY - g.gTop - g.pH - 1, K.cord);
+    rect(g.bulbX - 1, g.bulbY - 1, 3, 1, [96, 92, 86]);
+    zone = 4; rect(g.bulbX - 1, g.bulbY, 3, 3, K.bulbOff); put(g.bulbX, g.bulbY + 3, K.bulbOff);
+    zone = 2;
+  }
+
+  function drawGround() {
+    var g = G, dl0 = g.gx - 2, dr0 = g.gx + g.gw + 2, bottom = H - g.swH, spread = Math.round((bottom - g.gy) * 0.22);
+    function dl(y) { return dl0 - spread * (y - g.gy) / (bottom - g.gy); }
+    function dr(y) { return dr0 + spread * (y - g.gy) / (bottom - g.gy); }
+    zone = 5;
+    // lawn: raised on the left of the driveway
+    for (var y = g.gy - 3; y < bottom; y++) for (var x = 0; x < W; x++) {
+      if (x >= dl(y) - 4 && x <= dr(y)) continue;
+      if (y < g.gy && x >= g.bodyL && x < g.bodyR) continue;
+      var c = Math.floor((x + (y - g.gy) * 0.7) / 9) % 2 ? K.grass : K.grassLo;
+      var r = R();
+      if (r < 0.12) c = K.grassHi; else if (r < 0.2) c = K.grassDk;
+      put(x, y, c);
+      if (r < 0.06 && y > g.gy) put(x, y - 1, K.grassHi); // blade tips
+    }
+    // driveway concrete with tyre tracks and joints
+    for (var y2 = g.gy; y2 < bottom; y2++) {
+      var l = dl(y2), r2 = dr(y2), w = r2 - l, mid = (l + r2) / 2;
+      for (var x2 = Math.round(l); x2 < Math.round(r2); x2++) {
+        var c2 = K.drive, u = (x2 + 0.5 - l) / w;
+        if (Math.abs(u - 0.27) < 0.07 || Math.abs(u - 0.73) < 0.07) c2 = K.driveTrk;
+        if (R() < 0.05) c2 = dk(c2, 0.96);
+        if (Math.abs(x2 + 0.5 - mid) < 0.6) c2 = K.driveLn;
+        if (y2 === Math.round(g.gy + (bottom - g.gy) * 0.45)) c2 = K.driveLn;
+        put(x2, y2, c2);
+      }
+    }
+    // retaining wall along the left edge of the driveway
+    zone = 1;
+    for (var y3 = g.gy - 3; y3 < bottom; y3++) {
+      var l3 = Math.round(dl(y3));
+      put(l3 - 4, y3, K.wallCap); put(l3 - 3, y3, K.wallCap);
+      put(l3 - 2, y3, K.wall); put(l3 - 1, y3, K.wallSh);
+    }
+    // sidewalk
+    zone = 5;
+    for (var y4 = bottom; y4 < H; y4++) for (var x4 = 0; x4 < W; x4++) put(x4, y4, (x4 + 7) % 18 === 0 ? K.walkLn : (y4 === bottom ? dk(K.walk, 0.9) : K.walk));
+    // shrubs along the foundation, one with red flowers
+    zone = 1;
+    for (var sx = g.bodyL + 4; sx < g.gx - 18; sx += 11) {
+      var flowered = sx < g.gx - 40 && ((sx / 11) | 0) % 3 === 0;
+      blob(sx + 5, g.gy - 3, 7, 6, function (x, y, d) {
+        var c = (d < 0.45 && y < g.gy - 4 && bay(x, y) > 0.4) ? K.shrubHi : K.shrub;
+        if (flowered && d < 0.8 && bay(x, y) > 0.9) c = K.flower;
+        put(x, y, c);
+      });
+    }
+  }
+
+  function tree(cx, baseY, r, trunkH) {
+    zone = 1;
+    rect(cx - 2, baseY - trunkH, 4, trunkH, K.trunk); rect(cx - 1, baseY - trunkH, 1, trunkH, dk(K.trunk, 0.8));
+    line(cx, baseY - trunkH + 4, cx - r * 0.5, baseY - trunkH - r * 0.3, K.trunk);
+    var top = baseY - trunkH;
+    [[0, -0.6, 1], [-0.7, -0.2, 0.7], [0.7, -0.25, 0.72], [-0.3, -1.2, 0.75], [0.45, -1.05, 0.7], [-0.9, -0.8, 0.5]].forEach(function (b) {
+      var bx = cx + b[0] * r, by = top + b[1] * r, br = r * b[2];
+      blob(bx, by, br, br * 0.85, function (x, y, d) {
+        var c = K.leaf, rel = (y - by) / br + (x - bx) / br * 0.4;
+        if (rel < -0.35 && bay(x, y) > 0.3) c = K.leafHi;
+        if (rel > 0.4 && bay(x, y) > 0.45) c = K.leafLo;
+        if (d > 0.85 && bay(x, y) > 0.7) return;
         put(x, y, c);
       });
     });
   }
   function drawTrees() {
     var g = G;
-    if (g.hx0 > 46) tree(Math.round(g.hx0 - 34), g.gy + 4, Math.round(g.gw * 0.22));
-    if (W - g.wingR > 50) tree(Math.round(g.wingR + 36), g.gy + 2, Math.round(g.gw * 0.17));
-  }
-
-  function siding(x0, x1, y0, y1) {
-    for (var y = y0; y < y1; y++) for (var x = x0; x < x1; x++) put(x, y, (y - y0) % 4 === 3 ? K.lap : K.siding);
-  }
-
-  function drawWindow(x, y, w, h, lit, opts) {
-    opts = opts || {};
-    zone = 1;
-    rect(x - 2, y - 2, w + 4, h + 4, K.trim);
-    rect(x - 3, y - 3, w + 6, 1, K.trim);
-    rect(x - 3, y + h + 2, w + 6, 2, K.trim); rect(x - 3, y + h + 4, w + 6, 1, K.trimSh);
-    var win = { x: x, y: y, w: w, h: h, lit: lit, panes: opts.panes || 2 };
-    wins.push(win);
-    glass(win);
-    return win;
-  }
-  function glass(win) {
-    var x = win.x, y = win.y, w = win.w, h = win.h;
-    zone = 4;
-    for (var j = 0; j < h; j++) for (var i = 0; i < w; i++) {
-      var c;
-      if (night) {
-        if (win.lit) { c = mix(K.warmHi, K.warmLo, j / h); if (i < 2 || i >= w - 2) c = K.curtain; }
-        else c = K.glassNight;
-      } else {
-        c = mix(K.glassDay, K.glassDayLo, j / h);
-        var dg = i + j * 0.7;
-        if (Math.abs(dg - w * 0.55) < 1.1 || Math.abs(dg - w * 0.8) < 0.6) c = mix(c, [235, 245, 252], 0.6);
-      }
-      put(x + i, y + j, c);
+    if (g.tall) tree(W + 6, g.gTop - 4, Math.round(W * 0.2), Math.round(g.gh * 0.7));
+    else {
+      tree(Math.round(g.bodyR + g.gw * 0.32), g.gy, Math.round(g.gw * 0.3), Math.round(g.gh * 0.9));
+      if (g.bodyL > 30) tree(Math.round(g.bodyL - g.gw * 0.18), g.gy, Math.round(g.gw * 0.2), Math.round(g.gh * 0.6));
     }
-    zone = 1;
-    var pn = win.panes;
-    for (var p = 1; p < pn; p++) rect(x + Math.round(w * p / pn), y, 1, h, K.trim);
-    rect(x, y + Math.round(h * 0.48), w, 1, K.trim);
-  }
-
-  function drawHouse() {
-    var g = G;
-    // side-gabled roof over the left part
-    zone = 1;
-    for (var y = g.yR; y < g.yL; y++) for (var x = g.hx0 - 4; x < g.wingL; x++) {
-      var r = y - g.yR, c = K.roof;
-      if (r % 3 === 2) c = K.roofLn; else if ((x + ((r / 3 | 0) % 2) * 3) % 7 === 0) c = K.roofLn;
-      if (r === 0) c = K.roofHi;
-      put(x, y, c);
-    }
-    // chimney
-    var chx = Math.round(g.hx0 + g.leftW * 0.28);
-    if (chx > 2) {
-      rect(chx, g.yR - 12, 10, 14, K.brick);
-      for (var by = g.yR - 10; by < g.yR + 2; by += 3) rect(chx, by, 10, 1, dk(K.brick, 0.82));
-      rect(chx - 1, g.yR - 13, 12, 2, dk(K.brick, 0.75));
-      G.chimney = { x: chx, y: g.yR - 13 };
-    }
-    // left part walls
-    siding(g.hx0, g.wingL, g.yL, g.gy);
-    rect(g.hx0 - 4, g.yL, g.wingL - g.hx0 + 4, 2, K.trim);
-    rect(g.hx0, g.yL + 2, g.wingL - g.hx0, 2, dk(K.siding, 0.8)); // eave shadow
-    rect(g.hx0, g.yL, 2, g.gy - g.yL, K.trim);
-    // wing (garage) wall + front gable
-    siding(g.wingL, g.wingR, g.yE, g.gy);
-    var cx = (g.wingL + g.wingR) / 2, half = (g.wingR - g.wingL) / 2 + 4, slope = (g.yE - g.peakY) / half;
-    poly([[g.wingL, g.yE + 0.5], [cx, g.peakY + 3], [g.wingR, g.yE + 0.5]], function (x, y) { put(x, y, (y - g.peakY) % 4 === 3 ? K.lap : K.siding); });
-    for (var x2 = Math.round(cx - half); x2 <= Math.round(cx + half); x2++) {
-      var ry = Math.round(g.peakY + Math.abs(x2 + 0.5 - cx) * slope);
-      rect(x2, ry - 3, 1, 3, K.roof); put(x2, ry - 4, K.roofHi);
-      rect(x2, ry, 1, 2, K.trim); put(x2, ry + 2, dk(K.siding, 0.8));
-    }
-    // gable vent
-    var vy = Math.round(g.peakY + (g.yE - g.peakY) * 0.45);
-    rect(cx - 5, vy, 10, 7, K.trim);
-    for (var lv = 0; lv < 3; lv++) rect(cx - 4, vy + 1 + lv * 2, 8, 1, K.trimSh);
-    rect(g.wingL, g.yE, 2, g.gy - g.yE, K.trim); rect(g.wingR - 2, g.yE, 2, g.gy - g.yE, K.trim);
-    // windows above the garage
-    var ww = Math.round(g.gw * 0.22), wh = Math.round(g.storyH * 0.62), wy = g.yE + Math.round((g.storyH - wh) / 2) + 2;
-    G.catWins = [];
-    G.catWins.push(drawWindow(Math.round(cx - ww - 4), wy, ww, wh, true));
-    G.catWins.push(drawWindow(Math.round(cx + 4), wy, ww, wh, false));
-    // left part windows
-    var lw = Math.round(g.gw * 0.2);
-    var up1 = Math.round(g.hx0 + g.leftW * 0.22 - lw / 2), up2 = Math.round(g.hx0 + g.leftW * 0.62 - lw / 2);
-    G.catWins.push(drawWindow(up1, wy + 4, lw, wh - 4, false));
-    drawWindow(up2, wy + 4, lw, wh - 4, true);
-    var pw = Math.round(g.gw * 0.36), ph = Math.round(g.gh * 0.45);
-    var px = Math.round(g.hx0 + g.leftW * 0.2 - pw / 2);
-    if (px > -pw + 6) drawWindow(px, g.gy - ph - 14, pw, ph, false, { panes: 3 });
-  }
-
-  function drawGround() {
-    var g = G;
-    zone = 5;
-    // lawn with soft mowing stripes
-    for (var y = g.gy; y < g.swTop; y++) for (var x = 0; x < W; x++) {
-      var band = Math.floor((x + (y - g.gy) * 0.8) / 10) % 2, c = band ? K.grass : K.grassLo;
-      if (R() < 0.05) c = K.grassHi;
-      put(x, y, c);
-    }
-    // driveway
-    var dTop0 = g.gx - 1, dTop1 = g.gx + g.gw + 1, spread = Math.round((g.swTop - g.gy) * 0.28);
-    poly([[dTop0, g.gy], [dTop1, g.gy], [dTop1 + spread, g.swTop], [dTop0 - spread, g.swTop]], function (x, y) {
-      var t = (y - g.gy) / (g.swTop - g.gy), l = dTop0 - spread * t, r = dTop1 + spread * t;
-      var c = K.drive;
-      if (Math.abs(x + 0.5 - (l + r) / 2) < 0.6) c = K.driveLn;
-      if (y === Math.round(g.gy + (g.swTop - g.gy) * 0.5)) c = K.driveLn;
-      if (x - l < 1 || r - x < 1) c = K.driveLn;
-      put(x, y, c);
-    });
-    // front walk from the porch to the sidewalk
-    for (var y2 = g.gy + 2; y2 < g.swTop; y2++) for (var x2 = g.dx - 5; x2 < g.dx + 5; x2++)
-      put(x2, y2, ((y2 - g.gy) % 5 === 4 || x2 === g.dx) ? dk(K.paver, 0.88) : K.paver);
-    // sidewalk, curb, road
-    for (var y3 = g.swTop; y3 < g.swTop + 6; y3++) for (var x3 = 0; x3 < W; x3++) put(x3, y3, (x3 + 5) % 16 === 0 ? K.walkLn : K.walk);
-    rect(0, g.swTop + 6, W, 1, K.curb); rect(0, g.swTop + 7, W, 1, dk(K.curb, 0.75));
-    rect(0, g.swTop + 8, W, H - g.swTop - 8, K.road);
-    for (var k = 0; k < W * (H - g.swTop - 8) / 40; k++) put(R() * W, g.swTop + 8 + R() * (H - g.swTop - 8), dk(K.road, 1.12));
-    // shrubs along the left part (avoid the door and walk)
-    zone = 1;
-    for (var sx = g.hx0 + 4; sx < g.wingL - 6; sx += 9) {
-      if (Math.abs(sx + 4 - g.dx) < 14) continue;
-      blob(sx + 4, g.gy - 2, 6, 5, function (x, y, d) { put(x, y, (d < 0.5 && y < g.gy - 3 && bay(x, y) > 0.4) ? K.shrubHi : K.shrub); });
-    }
-  }
-
-  function drawPorch() {
-    var g = G, dx = g.dx, top = g.gy - 26;
-    zone = 1;
-    rect(dx - 8, top - 2, 16, 28, K.trim);
-    rect(dx - 6, top, 12, 26, K.door);
-    rect(dx - 5, top + 3, 4, 8, dk(K.door, 0.82)); rect(dx + 1, top + 3, 4, 8, dk(K.door, 0.82));
-    rect(dx - 5, top + 14, 4, 9, dk(K.door, 0.82)); rect(dx + 1, top + 14, 4, 9, dk(K.door, 0.82));
-    put(dx + 3, top + 13, K.brass);
-    // little gabled porch roof on two posts
-    var pr = 15;
-    rect(dx - pr + 2, top - 3, 2, 29, K.trim); rect(dx + pr - 4, top - 3, 2, 29, K.trim);
-    for (var x = dx - pr; x <= dx + pr; x++) {
-      var ry = Math.round(top - 10 + Math.abs(x - dx) * 0.45);
-      rect(x, ry, 1, top - 4 - ry, K.roof); put(x, ry, K.roofHi);
-      put(x, top - 4, K.trim); put(x, top - 3, K.trimSh);
-    }
-    // step
-    zone = 5; rect(dx - 10, g.gy, 20, 2, K.walk); rect(dx - 10, g.gy + 2, 20, 1, K.walkLn);
-    // porch light
-    zone = 1; rect(dx - 11, g.gy - 23, 3, 1, [40, 40, 44]); rect(dx - 12, g.gy - 22, 5, 5, [40, 40, 44]);
-    zone = 4; rect(dx - 11, g.gy - 21, 3, 3, night ? K.bulbOn : [200, 196, 182]);
-  }
-
-  function drawGarage() {
-    var g = G, L = g.L, Rr = g.R, T = g.T, Bt = g.Bt, s = g.s;
-    // trim around the opening
-    zone = 1;
-    rect(g.gx - 3, g.gTop - 4, g.gw + 6, 4, K.trim);
-    rect(g.gx - 3, g.gTop, 3, g.gh, K.trim); rect(g.gx + g.gw, g.gTop, 3, g.gh, K.trim);
-    rect(g.gx - 3, g.gTop, 1, g.gh, K.trimSh);
-    zone = 2;
-    for (var y = g.gTop; y < g.gy; y++) for (var x = g.gx; x < g.gx + g.gw; x++) {
-      var c, depth;
-      if (x >= L && x < Rr && y >= T && y < Bt) { c = K.backIn; depth = 1; }
-      else {
-        var hx2 = Math.abs(x + 0.5 - g.vx) / (g.gw / 2);
-        var ht = y + 0.5 < g.vy ? (g.vy - y - 0.5) / (g.vy - g.gTop) : (y + 0.5 - g.vy) / (g.gy - g.vy);
-        var k = Math.max(hx2, ht);
-        depth = clamp((1 / k - 1) / (1 / s - 1), 0, 1);
-        if (hx2 >= ht) c = K.wallIn;
-        else if (y + 0.5 < g.vy) {
-          c = K.ceil;
-          // overhead door tracks running back from the opening
-          var tu = (x + 0.5 - g.vx) / k / (g.gw / 2);
-          if (Math.abs(Math.abs(tu) - 0.9) < 0.05 / k) c = K.track;
-        } else {
-          c = K.floorIn;
-          if (Math.abs((x + 0.5 - g.vx) / k) < g.gw * 0.18 && depth > 0.2 && depth < 0.6 && bay(x, y) > 0.55) c = K.floorSt; // old oil stain
-        }
-      }
-      put(x, y, dk(c, 1 - depth * 0.28));
-    }
-    // raised door panel tucked under the ceiling, just inside the opening
-    var pTop = g.gTop, pH = Math.max(4, Math.round(g.gh * 0.08));
-    for (var py = 0; py < pH; py++) rect(g.gx + 2 + py, pTop + py, g.gw - 4 - py * 2, 1, py === pH - 1 ? K.panelLn : K.panel);
-    // back wall: door into the house (left), shelving, stacked crates (right)
-    var dW = Math.round((Rr - L) * 0.18), dH = Math.round((Bt - T) * 0.78);
-    rect(L + 3, Bt - dH, dW, dH, dk(K.trim, 0.86)); rect(L + 4, Bt - dH + 1, dW - 2, dH - 1, dk(K.backIn, 0.92));
-    put(L + 3 + dW - 3, Bt - Math.round(dH * 0.48), K.brass);
-    // metal shelf on the left wall, with bins and boxes in the gloom
-    var sx0 = L - 6, sh = [Bt - Math.round((Bt - T) * 0.9), Bt - Math.round((Bt - T) * 0.55), Bt - Math.round((Bt - T) * 0.2)];
-    sh.forEach(function (yy, i) {
-      rect(sx0 - 6, yy, 12, 1, K.shelf);
-      var bc = K.bins[(i * 2) % K.bins.length], bh = 4 + (i % 2) * 2;
-      rect(sx0 - 5, yy - bh, 5, bh, dk(bc, 0.9)); rect(sx0 + 1, yy - 3, 4, 3, dk(K.bins[(i * 2 + 1) % K.bins.length], 0.85));
-    });
-    rect(sx0 - 6, sh[0], 1, Bt - sh[0], K.shelf); rect(sx0 + 5, sh[0], 1, Bt - sh[0], K.shelf);
-    // other crates waiting at the back, unlabeled
-    var c1x = Rr - 22, ch = Math.round(g.fh * s);
-    crateSmall(c1x, Bt - 1, 20, ch, false);
-    crateSmall(c1x + 3, Bt - 1 - ch, 15, ch - 1, true);
-    crateSmall(c1x - 13, Bt - 1, 11, Math.round(ch * 0.8), false);
-    // bare bulb on a cord
-    rect(g.vx, g.gTop + pH, 1, g.bulbY - g.gTop - pH, K.cord);
-    rect(g.vx - 1, g.bulbY - 1, 3, 1, [90, 88, 84]);
-    zone = 4; rect(g.vx - 1, g.bulbY, 3, 3, night ? K.bulbOn : K.bulbOff); put(g.vx, g.bulbY + 3, night ? K.bulbOn : K.bulbOff);
-    zone = 2; rect(g.vx + 2, g.bulbY - 1, 1, 6, K.cord); // pull chain
-    G.crateTop = { x: c1x + 4, y: Bt - 1 - ch * 2 + 1 };
-  }
-  function crateSmall(x, bottom, w, h, label) {
-    zone = 2;
-    rect(x, bottom - h, w, h, K.slatLo);
-    for (var y = bottom - h + 2; y < bottom; y += 3) rect(x, y, w, 1, K.gap);
-    rect(x, bottom - h, 1, h, K.post); rect(x + w - 1, bottom - h, 1, h, K.post);
-    if (label) rect(x + 3, bottom - h + 2, 6, 3, mix(K.sticker, K.slatLo, 0.45));
   }
 
   // ---------- lighting ----------
-  var AMB_N = { 1: [0.4, 0.44, 0.64], 2: [0.24, 0.23, 0.25], 5: [0.36, 0.4, 0.6] };
-  var AMB_D = { 1: [1, 1, 1], 2: [0.66, 0.66, 0.68], 5: [1, 1, 1] };
-  function shade() {
-    var img = scnX.createImageData(W, H), d = img.data, AMB = night ? AMB_N : AMB_D;
+  function shade(out, glowOn) {
+    var img = out.x.createImageData(W, H), d = img.data, g = G;
+    var AMB = night
+      ? { 1: [0.5, 0.53, 0.72], 2: [0.15, 0.15, 0.18], 5: [0.42, 0.45, 0.64] }
+      : { 1: [1, 1, 1], 2: [0.42, 0.42, 0.45], 5: [1, 1, 1] };
+    var Ls = [];
+    if (S.bulb) Ls.push({ x: g.bulbX, y: g.bulbY + 2, r: g.gw * 1.1, i: night ? 1.25 : 0.75, c: [1, 0.8, 0.55], k: "bulb" });
+    if (S.porch) Ls.push({ x: g.sconce.x + 1, y: g.sconce.y + 7, r: night ? 34 : 18, i: night ? 0.95 : 0.25, c: [1, 0.82, 0.58], k: "out" });
+    if (glowOn) Ls.push({ x: g.cx + g.fw / 2 + 4, y: g.cy - g.fh - 4, r: g.gw * 0.85, i: 1.05, c: [1, 0.68, 0.3], k: "glow" });
     for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) {
       var i = y * W + x, z = Z[i], o = i * 4;
       if (z === 0) { d[o + 3] = 0; continue; }
       var r = A[i * 3], g2 = A[i * 3 + 1], b = A[i * 3 + 2];
       if (z === 3 || z === 4) { d[o] = r; d[o + 1] = g2; d[o + 2] = b; d[o + 3] = 255; continue; }
       var am = AMB[z], lr = am[0], lg = am[1], lb = am[2], bt = bay(x, y);
-      for (var k = 0; k < lights.length; k++) {
-        var Lt = lights[k], w = 0;
-        if (Lt.kind === "bulb") w = z === 2 ? 1 : (SPILL[i] ? 0.85 : 0);
-        else w = z !== 2 ? 1 : 0;
+      for (var k = 0; k < Ls.length; k++) {
+        var Lt = Ls[k], w = 0;
+        if (Lt.k === "out") w = z !== 2 ? 1 : 0;
+        else w = z === 2 ? 1 : (SPILL[i] ? (Lt.k === "glow" ? 0.6 : (night ? 0.85 : 0)) : 0);
         if (!w) continue;
-        var dx = x + 0.5 - Lt.x, dy = (y + 0.5 - Lt.y) * (Lt.kind === "bulb" && z === 5 ? 0.55 : 1);
+        var dx = x + 0.5 - Lt.x, dy = (y + 0.5 - Lt.y) * (z === 5 ? 0.6 : 1);
         var f = 1 - Math.sqrt(dx * dx + dy * dy) / Lt.r;
         if (f <= 0) continue;
         var q = Math.min(1.3, Math.floor(Math.pow(f, 1.3) * Lt.i * w * 6 + bt) / 6);
@@ -509,23 +561,33 @@
       }
       d[o] = Math.min(255, r * lr); d[o + 1] = Math.min(255, g2 * lg); d[o + 2] = Math.min(255, b * lb); d[o + 3] = 255;
     }
-    scnX.putImageData(img, 0, 0);
+    out.x.putImageData(img, 0, 0);
+    // emissive bulbs drawn on top so they read lit/unlit
+    out.x.fillStyle = css(S.bulb ? K.bulbOn : dk(K.bulbOff, night ? 0.35 : 0.8));
+    out.x.fillRect(g.bulbX - 1, g.bulbY, 3, 3); out.x.fillRect(g.bulbX, g.bulbY + 3, 1, 1);
+    out.x.fillStyle = css(S.porch ? K.bulbOn : dk(K.bulbOff, night ? 0.3 : 0.75));
+    out.x.fillRect(g.sconce.x, g.sconce.y + 5, 2, 1);
+  }
+  function shadeAll() {
+    shade(BASE, false);
+    if (!S.bulb) shade(GLOW, true);
   }
 
   // ---------- dynamic ----------
-  var stars = [], clouds = [];
+  var stars = [], clouds = [], motes = [];
   function initDynamic() {
-    stars = []; clouds = [];
+    stars = []; clouds = []; motes = [];
     var r = rng(5 + W);
     if (night) {
-      var n = Math.floor(W * G.yR / 260);
-      for (var i = 0; i < n; i++) stars.push({ x: r() * W | 0, y: r() * G.yR * 0.7 | 0, p: r() * 6.28 });
+      var n = Math.floor(W * G.mTop / 120);
+      for (var i = 0; i < n; i++) stars.push({ x: r() * W | 0, y: r() * G.peak * 0.9 | 0, p: r() * 6.28 });
     } else {
-      for (var c = 0; c < 3; c++) clouds.push(makeCloud(r, r() * W, 8 + r() * G.yR * 0.45, 0.5 + r() * 0.4));
+      for (var c = 0; c < 3; c++) clouds.push(makeCloud(r, r() * W, 6 + r() * Math.max(10, G.mTop * 0.8), 0.4 + r() * 0.4));
     }
+    for (var m = 0; m < 8; m++) motes.push({ p: Math.random() * 6.28, x: Math.random(), s: 0.5 + Math.random() });
   }
   function makeCloud(r, x, y, v) {
-    var w = 18 + r() * 22 | 0, parts = [];
+    var w = 16 + r() * 22 | 0, parts = [];
     for (var k = 0; k < 4; k++) parts.push([r() * (w - 10) | 0, -(r() * 4 | 0), 6 + r() * 6 | 0]);
     return { x: x, y: y | 0, w: w, v: v, parts: parts };
   }
@@ -534,7 +596,7 @@
       if (!RM) c.x += c.v * dt;
       if (c.x > W + 10) c.x = -c.w - 10;
       var x = Math.round(c.x);
-      ctx.fillStyle = "rgba(236,243,249,0.92)";
+      ctx.fillStyle = "rgba(238,244,250,0.92)";
       ctx.fillRect(x, c.y, c.w, 3);
       c.parts.forEach(function (p) { ctx.fillRect(x + p[0], c.y + p[1] - 2, p[2], 3 - p[1]); ctx.fillRect(x + p[0] + 1, c.y + p[1] - 3, p[2] - 2, 1); });
       ctx.fillStyle = "rgba(200,216,232,0.9)"; ctx.fillRect(x + 1, c.y + 3, c.w - 2, 1);
@@ -542,112 +604,154 @@
   }
   function drawStars(t) {
     stars.forEach(function (s) {
-      var a = RM ? 0.6 : 0.35 + 0.45 * (0.5 + 0.5 * Math.sin(t * 0.5 + s.p));
+      var a = RM ? 0.6 : 0.3 + 0.45 * (0.5 + 0.5 * Math.sin(t * 0.5 + s.p));
       ctx.fillStyle = css(K.star, a); ctx.fillRect(s.x, s.y, 1, 1);
     });
   }
 
-  // ---------- the cat ----------
+  // ---------- the cat (a tuxedo) ----------
   var WALK = [
-    ["k.k........", "kkk......k.", "ekk.....k..", "kkkkkkkkk..", ".kkkkkkk...", ".k.k..k.k..", ".k.k..k.k.."],
-    ["k.k........", "kkk.......k", "ekk......k.", "kkkkkkkkk..", ".kkkkkkk...", "..kk..kk...", "..k....k..."]
+    ["k.k.........", "kkk......k..", "ekw.....k...", "wkkkkkkkk...", ".wkkkkkkk...", ".w.k..k.k...", ".w.k..w.w..."],
+    ["k.k.........", "kkk.......k.", "ekw......k..", "wkkkkkkkk...", ".wkkkkkkk...", "..wk..kw....", "..w....w...."]
   ];
   var SIT = [
-    [".k..k...", ".kkkk...", ".ekke...", ".kkkk...", "..kk....", ".kkkk...", ".kkkkk..", ".kkkkkkk", ".kk.k..k"],
-    [".k..k...", ".kkkk...", ".kkkk...", ".kkkk...", "..kk....", ".kkkk...", ".kkkkk..", ".kkkkkk.", ".kk.k.kk"]
+    [".k....k.", ".kk..kk.", ".kkkkkk.", ".kekkek.", ".kkwwkk.", "..kwwk..", ".kkwwkk.", "kkkwwkkk", "kkwwwwkkk"],
+    [".k....k.", ".kk..kk.", ".kkkkkk.", ".kkkkkk.", ".kkwwkk.", "..kwwk..", ".kkwwkk.", "kkkwwkkk", "kkwwwwkk."]
   ];
   var cat = { mode: "idle", wait: RM ? 1e9 : 2.5, t: 0, next: 0 };
-  var PLAN = ["drive", "window", "roof", "drive", "window"];
+  var PLAN = ["drive", "window", "roof", "window", "drive"];
+  function roofY(x) { return Math.round(G.peak + Math.abs(x + 5.5 - G.cxB) * G.slope) - 10; }
   function startCat() {
     var g = G, m = PLAN[cat.next++ % PLAN.length];
-    cat.mode = m; cat.t = 0; cat.sat = false; cat.sitT = 0;
+    cat.mode = m; cat.t = 0; cat.sat = false; cat.sitting = false;
     if (m === "drive") {
-      cat.dir = -1; cat.y = Math.round(g.gy + (g.swTop - g.gy) * 0.55); cat.x = W + 2;
-      cat.sitAt = g.gx + g.gw * 0.4; cat.sitFor = 5;
+      cat.dir = -1; cat.y = Math.round(g.gy + (H - g.swH - g.gy) * 0.5); cat.x = W + 2;
+      cat.sitAt = g.gx + g.gw * 0.55; cat.sitFor = 5;
     } else if (m === "roof") {
-      if (g.yR < 12) { cat.mode = "idle"; cat.wait = 3; return; }
-      cat.dir = 1; cat.y = g.yR - 7; cat.x = Math.max(-12, g.hx0 - 12);
-      cat.sitAt = clamp(G.chimney ? G.chimney.x + 16 : g.hx0 + g.leftW * 0.45, 8, g.wingL - 22); cat.sitFor = 7; cat.end = g.wingL - 14;
-    } else {
-      var ws = G.catWins.filter(function (w) { return night ? w.lit : true; });
-      cat.win = ws[(Math.random() * ws.length) | 0] || G.catWins[0];
-      cat.sitFor = 12;
-    }
+      cat.dir = -1; cat.x = Math.min(W + 2, g.cxB + g.half); cat.sitAt = g.cxB - 5; cat.sitFor = 8;
+    } else { cat.sitFor = 14; }
   }
   function updateCat(dt) {
     if (cat.mode === "idle") { cat.wait -= dt; if (cat.wait <= 0) startCat(); return; }
     cat.t += dt;
     if (cat.mode === "window") { if (cat.t > cat.sitFor) endCat(); return; }
-    if (cat.sitting) { cat.sitT -= dt; if (cat.sitT <= 0) { cat.sitting = false; if (cat.mode === "roof") cat.dir = -1; } return; }
-    cat.x += cat.dir * 8 * dt;
+    if (cat.sitting) { cat.sitT -= dt; if (cat.sitT <= 0) { cat.sitting = false; if (cat.mode === "roof") cat.dir = 1; } return; }
+    cat.x += cat.dir * (cat.mode === "roof" ? 6 : 9) * dt;
+    if (cat.mode === "roof") cat.y = roofY(cat.x);
     if (!cat.sat && ((cat.dir < 0 && cat.x <= cat.sitAt) || (cat.dir > 0 && cat.x >= cat.sitAt))) { cat.sat = true; cat.sitting = true; cat.sitT = cat.sitFor; }
-    if (cat.mode === "roof" && cat.dir > 0 && cat.x > cat.end) cat.dir = -1;
-    if (cat.x < -14 || cat.x > W + 4 || (cat.mode === "roof" && cat.dir < 0 && cat.x < Math.max(-14, G.hx0 - 14))) endCat();
+    if (cat.x < -16 || cat.x > W + 4 || (cat.mode === "roof" && cat.dir > 0 && cat.x > G.cxB + G.half)) endCat();
   }
-  function endCat() { cat.mode = "idle"; cat.sitting = false; cat.wait = 14 + Math.random() * 16; }
-  function sprite(rows, x, y, flip) {
+  function endCat() { cat.mode = "idle"; cat.sitting = false; cat.wait = 12 + Math.random() * 14; }
+  function sprite(rows, x, y, flip, dim) {
     for (var r = 0; r < rows.length; r++) for (var i = 0; i < rows[r].length; i++) {
       var ch = rows[r][i]; if (ch === ".") continue;
-      ctx.fillStyle = ch === "e" ? css(night ? K.eye : dk(K.eye, 0.7)) : css(K.cat);
+      var c = ch === "e" ? (night ? K.eye : dk(K.eye, 0.6)) : ch === "w" ? dk(K.catW, dim) : K.cat;
+      ctx.fillStyle = css(c);
       ctx.fillRect(flip ? x + rows[r].length - 1 - i : x + i, y + r, 1, 1);
     }
   }
   function drawCat(t) {
     if (cat.mode === "idle") return;
-    var blink = (t % 3.7) < 0.15;
+    var blink = (t % 3.7) < 0.15, dim = night ? 0.45 : 1;
     if (cat.mode === "window") {
-      var w = cat.win;
+      var w = G.catWin;
       ctx.save(); ctx.beginPath(); ctx.rect(w.x, w.y, w.w, w.h); ctx.clip();
-      var rise = Math.min(1, cat.t / 0.8), fall = Math.max(0, (cat.t - cat.sitFor + 0.8) / 0.8);
-      sprite(SIT[blink ? 1 : 0], w.x + 2, w.y + w.h - 9 + Math.round((1 - rise + fall) * 9), false);
+      var rise = Math.min(1, cat.t / 1), fall = Math.max(0, (cat.t - cat.sitFor + 1) / 1);
+      sprite(SIT[blink ? 1 : 0], w.x + Math.round(w.w * 0.55) - 4, w.y + w.h - 9 + Math.round((1 - rise + fall) * 10), false, night && w.lit ? 0.75 : dim);
       ctx.restore(); return;
     }
     var x = Math.round(cat.x);
-    if (!night) { ctx.fillStyle = "rgba(0,0,0,0.18)"; ctx.fillRect(x + 1, cat.y + 7, 9, 1); }
-    if (cat.sitting) sprite(SIT[blink ? 1 : 0], x + 1, cat.y - 2, cat.dir > 0);
-    else sprite(WALK[Math.floor(cat.t * 5) % 2], x, cat.y, cat.dir > 0);
+    if (!night && cat.mode === "drive") { ctx.fillStyle = "rgba(0,0,0,0.16)"; ctx.fillRect(x + 1, cat.y + 7, 10, 1); }
+    if (cat.sitting) sprite(SIT[blink ? 1 : 0], x + 2, cat.y - 2, false, dim);
+    else sprite(WALK[Math.floor(cat.t * 5) % 2], x, cat.y, cat.dir > 0, dim);
   }
 
-  // ---------- the crate ----------
+  // ---------- the milk crate ----------
   var hover = false, pressed = -1;
-  function drawCrate() {
+  function crateLift(t) {
+    if (RM) return 0;
+    var ph = t % 7;
+    if (ph > 6) return Math.round(Math.sin((ph - 6) * Math.PI) * 3);
+    return 0;
+  }
+  function drawCrate(t, glow) {
     var g = G, fw = g.fw, fh = g.fh, sd = g.sd, su = g.su;
-    var dip = pressed >= 0 ? 1 : (hover ? -1 : 0);
-    var x = g.cx, y = g.cy + dip, top = y - fh + 1;
-    var lit = night ? 1 : 0.94;
-    function c(col) { return css(dk(col, lit)); }
-    ctx.fillStyle = "rgba(20,14,10,0.35)"; ctx.fillRect(x - 1, g.cy + 1, fw + sd, 1);
-    // side
-    for (var i = 0; i < sd; i++) {
-      var o = Math.round((i + 1) * su / sd);
-      ctx.fillStyle = c(K.crateSide); ctx.fillRect(x + fw + i, top - o, 1, fh - 1);
-      for (var sy = top - o + 5; sy < top - o + fh - 1; sy += 6) { ctx.fillStyle = c(dk(K.crateSide, 0.7)); ctx.fillRect(x + fw + i, sy, 1, 1); }
+    var lift = pressed >= 0 ? -1 : (hover ? 2 : crateLift(t));
+    var x = g.cx, y = g.cy - lift, top = y - fh + 1;
+    var k = night && !S.bulb && !glow ? 0.35 : (night ? 1 : (S.bulb ? 0.98 : 0.6));
+    if (glow) k = Math.max(k, 0.8);
+    function c(col) { return css(dk(col, k)); }
+    // shadow (shrinks as it lifts)
+    ctx.fillStyle = "rgba(15,12,10," + (0.4 - lift * 0.08) + ")"; ctx.fillRect(x - 1 + lift, g.cy + 1, fw + sd - lift * 2, 1);
+    // back rim + contents sticking out
+    var rimY = top - su;
+    // contents (behind front face): rolled plans, a wrench, a plant, a book, a pennant
+    function px(xx, yy, col) { ctx.fillStyle = c(col); ctx.fillRect(xx, yy, 1, 1); }
+    ctx.fillStyle = c(K.crateIn);
+    for (var r = 1; r <= su; r++) ctx.fillRect(x + Math.round(r * sd / su), top - r, fw - 1, 1);
+    // rolled blueprints, leaning
+    for (var i = 0; i < 16; i++) { px(x + 8 + Math.round(i * 0.35), top - 2 - i, [150, 186, 216]); px(x + 9 + Math.round(i * 0.35), top - 2 - i, [120, 156, 190]); }
+    px(x + 13, top - 18, [220, 230, 240]); px(x + 14, top - 18, [220, 230, 240]);
+    // a book
+    ctx.fillStyle = c([150, 58, 52]); ctx.fillRect(x + 18, top - 9, 4, 9); ctx.fillStyle = c([226, 210, 170]); ctx.fillRect(x + 18, top - 9, 4, 1);
+    // a wrench
+    for (var j = 0; j < 9; j++) px(x + 27 + Math.round(j * -0.2), top - 2 - j, K.steel);
+    px(x + 24, top - 12, K.steel); px(x + 26, top - 12, K.steel); px(x + 25, top - 11, K.steel);
+    // a little potted plant
+    ctx.fillStyle = c([176, 96, 60]); ctx.fillRect(x + 33, top - 5, 5, 5);
+    [[34, -8], [35, -10], [36, -9], [33, -9], [37, -11], [35, -12], [34, -11], [36, -7]].forEach(function (p) { px(x + p[0], top + p[1], [90, 140, 72]); });
+    // a pennant on a stick
+    for (var s = 0; s < 14; s++) px(x + 42, top - 2 - s, K.woodDk);
+    ctx.fillStyle = c(K.amber); ctx.fillRect(x + 43, top - 15, 4, 1); ctx.fillRect(x + 43, top - 14, 3, 1); ctx.fillRect(x + 43, top - 13, 2, 1); ctx.fillRect(x + 43, top - 12, 1, 1);
+    // rims (back + right) drawn over the contents' bottoms
+    ctx.fillStyle = c(K.crateHi); ctx.fillRect(x + sd, rimY, fw, 1);
+    for (var r2 = 0; r2 <= su; r2++) { ctx.fillStyle = c(K.crateHi); ctx.fillRect(x + fw - 1 + Math.round(r2 * sd / su), top - r2, 1, 1); }
+    // side face with holes
+    for (var i2 = 0; i2 < sd; i2++) {
+      var o = Math.round((i2 + 1) * su / sd);
+      ctx.fillStyle = c(K.crateLo); ctx.fillRect(x + fw + i2, top - o, 1, fh);
+      for (var hy = top - o + 3; hy < top - o + fh - 3; hy += 4) if (i2 > 1 && i2 < sd - 1) { ctx.fillStyle = glow ? css([255, 190, 100], 0.9) : c(K.hole); ctx.fillRect(x + fw + i2, hy, 1, 2); }
     }
-    // top
-    for (var r = 1; r <= su; r++) {
-      var off = Math.round(r * sd / su);
-      ctx.fillStyle = c(r % 2 ? K.crateTop : dk(K.crateTop, 0.9)); ctx.fillRect(x + off - 1, top - r, fw, 1);
+    // front face: frame + grid of holes + handle slot
+    ctx.fillStyle = c(K.crate); ctx.fillRect(x, top, fw, fh);
+    for (var gy = top + 4; gy < top + fh - 3; gy += 4) for (var gx = x + 3; gx < x + fw - 4; gx += 4) {
+      ctx.fillStyle = glow ? css([255, 196, 110], 0.55 + 0.4 * ((gx + gy) % 3 === 0 ? 1 : 0.5)) : c(K.hole);
+      ctx.fillRect(gx, gy, 2, 2);
     }
-    // front slats
-    ctx.fillStyle = c(K.slat); ctx.fillRect(x, top, fw, fh);
-    for (var sy2 = top + 5; sy2 < top + fh - 1; sy2 += 6) { ctx.fillStyle = c(K.gap); ctx.fillRect(x, sy2, fw, 1); }
-    ctx.fillStyle = c(K.post); ctx.fillRect(x, top, 3, fh); ctx.fillRect(x + fw - 3, top, 3, fh);
-    ctx.fillStyle = c(dk(K.post, 0.8)); ctx.fillRect(x + 2, top, 1, fh); ctx.fillRect(x + fw - 1, top, 1, fh);
-    ctx.fillStyle = c(mix(K.slat, [255, 240, 210], 0.3)); ctx.fillRect(x, top, fw, 1);
-    // nails
-    ctx.fillStyle = c([90, 80, 70]);
-    [top + 2, top + 8, top + 14, top + 19].forEach(function (ny) { ctx.fillRect(x + 1, ny, 1, 1); ctx.fillRect(x + fw - 2, ny, 1, 1); });
+    ctx.fillStyle = glow ? css([255, 210, 130]) : c(K.hole); ctx.fillRect(x + fw / 2 - 5, top + 1, 10, 2);
+    ctx.fillStyle = c(K.crateHi); ctx.fillRect(x, top, fw, 1); ctx.fillRect(x, top, 1, fh);
+    ctx.fillStyle = c(K.crateLo); ctx.fillRect(x, top + fh - 1, fw, 1); ctx.fillRect(x + fw - 1, top, 1, fh);
     // the sticker
-    var sw = 45, sh = 9, sx = x + Math.round((fw - sw) / 2), syy = top + Math.round((fh - sh) / 2);
-    ctx.fillStyle = c(hover ? mix(K.sticker, [255, 255, 255], 0.5) : K.sticker); ctx.fillRect(sx, syy, sw, sh);
+    var sw = 45, sh = 9, sx = x + Math.round((fw - sw) / 2), syy = top + Math.round(fh * 0.55) - 4;
+    ctx.fillStyle = c(hover ? mix(K.sticker, [255, 255, 255], 0.6) : K.sticker); ctx.fillRect(sx, syy, sw, sh);
     ctx.fillStyle = c(K.stickerLn); ctx.fillRect(sx, syy + sh - 1, sw, 1); ctx.fillRect(sx + sw - 1, syy, 1, sh);
     ctx.fillStyle = c(K.amber); ctx.fillRect(sx, syy, 2, sh);
     var str = "turnaround";
     ctx.fillStyle = c(K.ink);
-    for (var k = 0; k < str.length; k++) {
-      var gl = GLYPH[str[k]];
-      for (var rr = 0; rr < 5; rr++) for (var cc = 0; cc < 3; cc++) if (gl[rr][cc] === "#") ctx.fillRect(sx + 4 + k * 4 + cc, syy + 2 + rr, 1, 1);
+    for (var kk = 0; kk < str.length; kk++) {
+      var gl = GLYPH[str[kk]];
+      for (var rr = 0; rr < 5; rr++) for (var cc = 0; cc < 3; cc++) if (gl[rr][cc] === "#") ctx.fillRect(sx + 4 + kk * 4 + cc, syy + 2 + rr, 1, 1);
     }
+    // in the dark: light rising out of the crate
+    if (glow) {
+      var pulse = 0.55 + 0.25 * Math.sin(t * 1.3);
+      for (var b = 0; b < 16; b++) { ctx.fillStyle = "rgba(255,200,110," + (pulse * (1 - b / 16) * 0.42) + ")"; ctx.fillRect(x + sd + 2, rimY - b, fw - 4, 1); }
+      motes.forEach(function (m) {
+        var ph = ((t * 0.18 * m.s + m.p) % 1 + 1) % 1;
+        var mx = x + sd + 3 + m.x * (fw - 6) + Math.sin(t + m.p * 6) * 2, my = rimY - ph * 26;
+        ctx.fillStyle = "rgba(255,226,160," + (0.8 * (1 - ph)) + ")"; ctx.fillRect(mx | 0, my | 0, 1, 1);
+      });
+    }
+  }
+
+  // ---------- bulb string ----------
+  function drawString() {
+    var g = G, ext = 0;
+    if (S.pull >= 0) ext = Math.round(Math.sin(Math.min(1, S.pull / 0.35) * Math.PI) * 4);
+    var len = 7 + ext, x = g.bulbX + 2, y0 = g.bulbY;
+    var k = night && !S.bulb ? 0.4 : 1;
+    ctx.fillStyle = css(dk(K.cord, 1)); ctx.fillRect(x, y0, 1, len);
+    ctx.fillStyle = css(dk(K.bead, k)); ctx.fillRect(x, y0 + len, 1, 2);
   }
 
   // ---------- loop ----------
@@ -656,16 +760,33 @@
     var dt = Math.min(0.1, (now - last) / 1000); last = now;
     var t = now / 1000;
     updateCat(dt);
-    ctx.drawImage(skyC, 0, 0);
+    // pull-string animation and the switch
+    if (S.pull >= 0) {
+      S.pull += dt;
+      if (S.pull > 0.17 && !S.pulled) { S.pulled = true; toggleBulb(); }
+      if (S.pull > 0.35) { S.pull = -1; S.pulled = false; }
+    }
+    if (S.flick > 0) { S.flick -= dt; }
+    ctx.drawImage(SKY.c, 0, 0);
     if (night) drawStars(t); else drawClouds(dt);
-    ctx.drawImage(scnC, 0, 0);
+    ctx.drawImage(BASE.c, 0, 0);
+    var glow = !S.bulb && S.flick <= 0;
+    if (glow) { ctx.globalAlpha = 0.65 + 0.25 * Math.sin(t * 1.3); ctx.drawImage(GLOW.c, 0, 0); ctx.globalAlpha = 1; }
+    if (S.flick > 0 && Math.floor(S.flick * 25) % 2) { ctx.fillStyle = "rgba(10,10,20,0.35)"; ctx.fillRect(G.gx, G.gTop, G.gw, G.gh); }
+    drawString();
     drawCat(t);
-    drawCrate();
+    drawCrate(t, glow);
     if (pressed >= 0) {
       pressed += dt;
       if (pressed > 0.14 && !G.navigated) { G.navigated = true; location.href = link.getAttribute("href"); }
     }
     requestAnimationFrame(frame);
+  }
+
+  function toggleBulb() {
+    S.bulb = !S.bulb;
+    if (S.bulb && !RM) S.flick = 0.25;
+    shadeAll();
   }
 
   // ---------- interaction ----------
@@ -681,18 +802,21 @@
   window.addEventListener("pageshow", function () { pressed = -1; G.navigated = false; hover = false; });
 
   cv.addEventListener("click", function (e) {
-    var rc = cv.getBoundingClientRect();
+    var rc = cv.getBoundingClientRect(), g = G;
     var x = (e.clientX - rc.left) / rc.width * W, y = (e.clientY - rc.top) / rc.height * H;
+    // the bulb's pull string
+    if (Math.abs(x - g.bulbX - 1) < 7 && y > g.bulbY - 6 && y < g.bulbY + 14) { if (S.pull < 0) { S.pull = 0; S.pulled = false; } if (RM) toggleBulb(); return; }
+    // the wall sconce
+    if (Math.abs(x - g.sconce.x - 1) < 7 && Math.abs(y - g.sconce.y) < 9) { S.porch = !S.porch; shadeAll(); return; }
     // the cat stops and looks at you
-    if ((cat.mode === "drive" || cat.mode === "roof") && Math.abs(x - cat.x - 5) < 9 && Math.abs(y - cat.y - 3) < 8 && !cat.sitting) {
-      cat.sitting = true; cat.sitT = 3; return;
-    }
-    // at night, windows can be switched on and off
+    if ((cat.mode === "drive" || cat.mode === "roof") && !cat.sitting && Math.abs(x - cat.x - 5) < 9 && Math.abs(y - cat.y - 3) < 9) { cat.sitting = true; cat.sitT = 3; return; }
+    // windows switch on and off at night
     if (!night) return;
     for (var i = 0; i < wins.length; i++) {
       var w = wins[i];
       if (x >= w.x - 2 && x < w.x + w.w + 2 && y >= w.y - 2 && y < w.y + w.h + 2) {
-        w.lit = !w.lit; glass(w); shade(); return;
+        w.lit = !w.lit;
+        var prevZone = zone; glass(w); zone = prevZone; shadeAll(); return;
       }
     }
   });
