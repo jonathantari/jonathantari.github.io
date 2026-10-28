@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>garage</title>
+<meta name="description" content="Jonathan Tari's garage.">
+<meta name="theme-color" content="#2b2f5c">
+<style>
+  html, body { margin: 0; height: 100%; background: #2b2f5c; overflow: hidden; }
+  #stage { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+  canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
+  #box {
+    position: absolute; display: block; border-radius: 2px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #box:focus-visible { outline: 3px solid #ffe9a6; outline-offset: 4px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+</style>
+</head>
+<body>
+<h1 class="sr">Jonathan Tari's garage</h1>
+<div id="stage">
+  <canvas id="c" aria-hidden="true"></canvas>
+  <a id="box" href="/turnaround/" aria-label="Turnaround"></a>
+</div>
+<script>
+(function () {
+  "use strict";
+  var canvas = document.getElementById("c");
+  var ctx = canvas.getContext("2d");
+  var stage = document.getElementById("stage");
+  var link = document.getElementById("box");
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // Minimum scene the garage needs, in logical pixels.
+  var MIN_W = 174, MIN_H = 118;
+
+  var C = {
+    sky0: "#262a55", sky1: "#2f315f", sky2: "#3a3769", sky3: "#463f74",
+    star: "#fff6d5", moon: "#f3e6b0", moonShade: "#d9c98f",
+    roof: "#3b2f3f", roofEdge: "#2c2330", trim: "#e9dccb", trimShade: "#c9b9a4",
+    siding: "#b8826a", sidingLine: "#a3705b",
+    slat: "#d9cbb6", slatLine: "#b9a990",
+    side: "#29232f", ceiling: "#221d28", back: "#322b3a", backLine: "#2c2633",
+    floor: "#3b3442", floorLine: "#352f3c", stain: "#2e2934",
+    shelf: "#5a4a3e", shelfDark: "#46392f", boxA: "#7a5a3e", boxB: "#6a4e36", can: "#6b7f8f", canTop: "#8a9cab",
+    tarp: "#46546a", tarpHi: "#56677e", tarpLo: "#3a4658",
+    crate: "#6e5236", crateLine: "#523b25", crateHi: "#82623f",
+    cord: "#141117", bulb: "#ffe9a6", glow: "#ffd98a",
+    apron: "#8d8592", apronLine: "#7f7784", walk: "#a59ea8", walkLine: "#948d98",
+    curb: "#c9c2cb", curbShade: "#aea6b0", road: "#38343f", roadLine: "#e9d38a",
+    cardboard: "#c8955a", cardDark: "#a87842", cardLight: "#dcab70", tape: "#e3c48e",
+    label: "#f1e8d6", ink: "#3a2a1c",
+    bikeFrame: "#d0504a", bikeDark: "#9e3a36", tire: "#18151c", rim: "#9c97a3", seat: "#2a2430",
+    cat: "#121016", eye: "#f2d14b"
+  };
+
+  var W, H, scale, L = {};
+  var back = document.createElement("canvas"), bctx = back.getContext("2d");
+  var front = document.createElement("canvas"), fctx = front.getContext("2d");
+  var stars = [];
+  var hover = false;
+
+  function px(g, x, y, w, h, col) { g.fillStyle = col; g.fillRect(x | 0, y | 0, w | 0, h | 0); }
+
+  function line(g, x0, y0, x1, y1, col) {
+    x0 |= 0; y0 |= 0; x1 |= 0; y1 |= 0;
+    var dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+    var dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1, err = dx + dy;
+    g.fillStyle = col;
+    for (;;) {
+      g.fillRect(x0, y0, 1, 1);
+      if (x0 === x1 && y0 === y1) break;
+      var e2 = 2 * err;
+      if (e2 >= dy) { err += dy; x0 += sx; }
+      if (e2 <= dx) { err += dx; y0 += sy; }
+    }
+  }
+
+  function ring(g, cx, cy, r, col) {
+    g.fillStyle = col;
+    var x = r, y = 0, err = 1 - r;
+    while (x >= y) {
+      [[x, y], [y, x], [-y, x], [-x, y], [-x, -y], [-y, -x], [y, -x], [x, -y]].forEach(function (p) {
+        g.fillRect(cx + p[0], cy + p[1], 1, 1);
+      });
+      y++;
+      if (err < 0) err += 2 * y + 1; else { x--; err += 2 * (y - x) + 1; }
+    }
+  }
+
+  function disk(g, cx, cy, r, col) {
+    g.fillStyle = col;
+    for (var y = -r; y <= r; y++) {
+      var w = Math.floor(Math.sqrt(r * r - y * y + r * 0.8));
+      g.fillRect(cx - w, cy + y, w * 2 + 1, 1);
+    }
+  }
+
+  function sprite(g, rows, x, y, pal, flip) {
+    for (var r = 0; r < rows.length; r++) {
+      var row = rows[r];
+      for (var i = 0; i < row.length; i++) {
+        var ch = row[i];
+        if (ch === "." || !pal[ch]) continue;
+        var cx = flip ? x + (row.length - 1 - i) : x + i;
+        g.fillStyle = pal[ch];
+        g.fillRect(cx, y + r, 1, 1);
+      }
+    }
+  }
+
+  // 3x5 pixel glyphs for the label
+  var GLYPH = {
+    t: [".#.", "###", ".#.", ".#.", "..#"],
+    u: ["...", "#.#", "#.#", "#.#", "###"],
+    r: ["...", "#.#", "##.", "#..", "#.."],
+    n: ["...", "##.", "#.#", "#.#", "#.#"],
+    a: ["...", "##.", ".##", "#.#", "###"],
+    o: ["...", ".#.", "#.#", "#.#", ".#."],
+    d: ["..#", "..#", ".##", "#.#", ".##"]
+  };
+  function text(g, str, x, y, col) {
+    for (var i = 0; i < str.length; i++) {
+      var gl = GLYPH[str[i]];
+      if (gl) sprite(g, gl, x + i * 4, y, { "#": col });
+    }
+  }
+
+  // ---------- layout ----------
+  function layout() {
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var s = Math.min(vw / MIN_W, vh / MIN_H);
+    scale = s >= 3 ? Math.floor(s) : s;
+    W = Math.ceil(vw / scale);
+    H = Math.ceil(vh / scale);
+    canvas.width = W; canvas.height = H;
+    canvas.style.width = W * scale + "px";
+    canvas.style.height = H * scale + "px";
+    back.width = front.width = W;
+    back.height = front.height = H;
+
+    L.road = H - 9;          // asphalt top
+    L.curb = L.road - 2;     // curb top
+    L.walk = L.curb - 6;     // sidewalk top
+    L.ground = L.walk - 5;   // garage floor / driveway apron top
+    L.ow = 96; L.oh = 62;
+    L.ox = Math.floor(W / 2 - L.ow / 2);
+    L.oy = L.ground - L.oh;
+    // tall screens get a taller house (with an upstairs window) instead of endless sky
+    L.wallTop = Math.min(L.oy - 12, Math.round(H * 0.4));
+    L.bx = L.ox + 14; L.by = L.oy + 10; L.bw = L.ow - 28; L.bh = 38;
+    L.bBottom = L.by + L.bh;
+    L.bulbX = L.ox + L.ow / 2 | 0;
+    L.bulbY = L.oy + 20;
+
+    // the cardboard box
+    L.boxW = 50; L.boxH = 18;
+    L.boxX = Math.floor(L.ox + L.ow / 2 - L.boxW / 2) - 6;
+    L.boxY = L.walk + 3 - L.boxH; // sits on the sidewalk edge
+
+    link.style.left = (L.boxX - 2) * scale + "px";
+    link.style.top = (L.boxY - 8) * scale + "px";
+    link.style.width = (L.boxW + 4) * scale + "px";
+    link.style.height = (L.boxH + 10) * scale + "px";
+
+    stars = [];
+    var n = Math.floor(W * Math.max(0, L.wallTop - 6) / 260);
+    for (var i = 0; i < n; i++) {
+      stars.push({ x: Math.random() * W | 0, y: Math.random() * (L.wallTop - 8) | 0, p: Math.random() * 6.28, big: Math.random() < 0.15 });
+    }
+    paintBack();
+    paintFront();
+  }
+
+  // ---------- static back layer ----------
+  function paintBack() {
+    var g = bctx;
+    g.clearRect(0, 0, W, H);
+
+    // sky in dithered bands
+    var bands = [C.sky0, C.sky1, C.sky2, C.sky3];
+    var skyH = L.wallTop;
+    for (var y = 0; y < skyH; y++) {
+      var t = y / Math.max(1, skyH) * (bands.length - 1);
+      var i = Math.floor(t), f = t - i;
+      for (var x = 0; x < W; x++) {
+        var dither = ((x + y) % 2 === 0) ? 0.25 : 0.75;
+        g.fillStyle = (f > dither && i + 1 < bands.length) ? bands[i + 1] : bands[i];
+        g.fillRect(x, y, 1, 1);
+      }
+    }
+
+    // moon (only if there's room)
+    if (L.wallTop > 30) {
+      var mx = W - 26, my = Math.min(16, L.wallTop - 14);
+      disk(g, mx, my, 6, C.moon);
+      disk(g, mx + 3, my - 2, 5, C.sky0);
+      px(g, mx - 3, my + 1, 1, 1, C.moonShade);
+      px(g, mx - 2, my - 2, 1, 1, C.moonShade);
+    }
+
+    // roof eave
+    px(g, 0, L.wallTop - 5, W, 5, C.roof);
+    px(g, 0, L.wallTop - 6, W, 1, C.roofEdge);
+    for (var x2 = 0; x2 < W; x2 += 6) px(g, x2, L.wallTop - 2, 3, 1, C.roofEdge);
+    px(g, 0, L.wallTop, W, 1, C.trim);
+
+    // siding
+    px(g, 0, L.wallTop + 1, W, L.ground - L.wallTop - 1, C.siding);
+    for (var y2 = L.wallTop + 4; y2 < L.ground; y2 += 4) px(g, 0, y2, W, 1, C.sidingLine);
+
+    // upstairs window when the house is tall enough
+    if (L.oy - L.wallTop > 44) {
+      var ww = 26, wh = 22, wx = Math.floor(W / 2 - ww / 2), wy = Math.floor(L.wallTop + (L.oy - L.wallTop) / 2 - wh / 2);
+      px(g, wx - 2, wy - 2, ww + 4, wh + 4, C.trim);
+      px(g, wx, wy, ww, wh, "#f6c978");
+      px(g, wx, wy + wh - 6, ww, 6, "#e8ad5c");
+      px(g, wx + ww / 2 - 1, wy, 2, wh, C.trim);
+      px(g, wx, wy + wh / 2 - 1, ww, 2, C.trim);
+      px(g, wx + 3, wy + wh - 5, 5, 5, "#4f7a4a"); px(g, wx + 4, wy + wh - 8, 3, 3, "#5f9058"); // plant
+      px(g, wx - 3, wy + wh + 2, ww + 6, 2, C.trimShade);
+    }
+
+    // interior: side walls, ceiling, floor, back wall (simple perspective)
+    px(g, L.ox, L.oy, L.ow, L.oh, C.side);
+    for (var y3 = L.oy; y3 < L.by; y3++) {          // ceiling trapezoid
+      var k = (y3 - L.oy) / (L.by - L.oy);
+      var lx = Math.round(L.ox + (L.bx - L.ox) * k), rx = Math.round(L.ox + L.ow - (L.ox + L.ow - (L.bx + L.bw)) * k);
+      px(g, lx, y3, rx - lx, 1, C.ceiling);
+    }
+    for (var y4 = L.bBottom; y4 < L.ground; y4++) { // floor trapezoid
+      var k2 = (y4 - L.bBottom) / (L.ground - L.bBottom);
+      var lx2 = Math.round(L.bx + (L.ox - L.bx) * k2), rx2 = Math.round(L.bx + L.bw + (L.ox + L.ow - (L.bx + L.bw)) * k2);
+      px(g, lx2, y4, rx2 - lx2, 1, C.floor);
+      if ((y4 - L.bBottom) % 5 === 4) px(g, lx2, y4, rx2 - lx2, 1, C.floorLine);
+    }
+    px(g, L.bx, L.by, L.bw, L.bh, C.back);
+    for (var x3 = L.bx + 6; x3 < L.bx + L.bw; x3 += 10) px(g, x3, L.by, 1, L.bh, C.backLine);
+    // oil stain
+    px(g, L.ox + 40, L.ground - 6, 14, 2, C.stain); px(g, L.ox + 43, L.ground - 7, 8, 1, C.stain);
+
+    // shelf on the back-left wall
+    var sx = L.bx + 3, sw = 22;
+    px(g, sx, L.by + 4, 2, L.bh - 4, C.shelfDark);
+    px(g, sx + sw - 2, L.by + 4, 2, L.bh - 4, C.shelfDark);
+    [L.by + 10, L.by + 20, L.by + 30].forEach(function (yy) { px(g, sx, yy, sw, 2, C.shelf); });
+    px(g, sx + 3, L.by + 4, 8, 6, C.boxA); px(g, sx + 12, L.by + 6, 6, 4, C.boxB);
+    px(g, sx + 3, L.by + 15, 3, 5, C.can); px(g, sx + 3, L.by + 15, 3, 1, C.canTop);
+    px(g, sx + 7, L.by + 16, 3, 4, C.can); px(g, sx + 7, L.by + 16, 3, 1, C.canTop);
+    px(g, sx + 12, L.by + 13, 8, 7, C.boxB); px(g, sx + 12, L.by + 13, 8, 1, C.boxA);
+    px(g, sx + 4, L.by + 24, 14, 6, C.boxA); px(g, sx + 10, L.by + 24, 1, 6, C.boxB);
+
+    // a ladder leaning on the back wall
+    var lad = L.bx + L.bw - 30;
+    line(g, lad, L.bBottom - 1, lad + 5, L.by + 3, C.shelf);
+    line(g, lad + 7, L.bBottom - 1, lad + 12, L.by + 3, C.shelf);
+    for (var r = 0; r < 6; r++) {
+      var ry = L.bBottom - 4 - r * 6, off = Math.round((L.bBottom - 1 - ry) * 5 / (L.bBottom - 1 - L.by - 3));
+      px(g, lad + off + 1, ry, 6, 1, C.shelfDark);
+    }
+
+    // rolled-up door + frame trim
+    px(g, L.ox, L.oy, L.ow, 7, C.slat);
+    for (var s2 = 0; s2 < 7; s2 += 2) px(g, L.ox, L.oy + s2, L.ow, 1, C.slatLine);
+    px(g, L.ox - 2, L.oy - 2, L.ow + 4, 2, C.trim);
+    px(g, L.ox - 2, L.oy, 2, L.oh, C.trim);
+    px(g, L.ox + L.ow, L.oy, 2, L.oh, C.trim);
+    px(g, L.ox + L.ow + 1, L.oy, 1, L.oh, C.trimShade);
+
+    // bulb cord
+    px(g, L.bulbX, L.oy + 7, 1, L.bulbY - L.oy - 7, C.cord);
+
+    // driveway apron, sidewalk, curb, road
+    px(g, 0, L.ground, W, L.walk - L.ground, C.apron);
+    px(g, L.ox - 2, L.ground, L.ow + 4, 1, C.apronLine);
+    px(g, 0, L.walk, W, L.curb - L.walk, C.walk);
+    for (var j = 4; j < W; j += 18) px(g, j, L.walk, 1, L.curb - L.walk, C.walkLine);
+    px(g, 0, L.curb, W, 1, C.curb); px(g, 0, L.curb + 1, W, 1, C.curbShade);
+    px(g, 0, L.road, W, H - L.road, C.road);
+    for (var d = (W % 16) / 2 | 0; d < W; d += 16) px(g, d, L.road + 4, 8, 1, C.roadLine);
+
+    // bike leaning against the wall, right of the garage
+    drawBike(g, L.ox + L.ow + 5, L.ground - 1);
+  }
+
+  function drawBike(g, x, y) {
+    var r = 6;
+    var rw = { x: x + 7, y: y - r }, fw = { x: x + 26, y: y - r };
+    ring(g, rw.x, rw.y, r, C.tire); ring(g, rw.x, rw.y, r - 1, C.tire);
+    ring(g, fw.x, fw.y, r, C.tire); ring(g, fw.x, fw.y, r - 1, C.tire);
+    ring(g, rw.x, rw.y, 2, C.rim); ring(g, fw.x, fw.y, 2, C.rim);
+    px(g, rw.x, rw.y, 1, 1, C.rim); px(g, fw.x, fw.y, 1, 1, C.rim);
+    var bb = { x: x + 15, y: y - 5 };              // bottom bracket
+    var st = { x: x + 12, y: y - 15 };             // seat tube top
+    var ht = { x: x + 23, y: y - 16 };             // head tube top
+    line(g, rw.x, rw.y, bb.x, bb.y, C.bikeDark);   // chainstay
+    line(g, rw.x, rw.y, st.x, st.y, C.bikeDark);   // seatstay
+    line(g, bb.x, bb.y, st.x, st.y, C.bikeFrame);  // seat tube
+    line(g, bb.x, bb.y, ht.x, ht.y + 2, C.bikeFrame); // down tube
+    line(g, st.x, st.y, ht.x, ht.y, C.bikeFrame);  // top tube
+    line(g, ht.x, ht.y, fw.x, fw.y, C.bikeFrame);  // fork
+    px(g, st.x - 2, st.y - 2, 5, 1, C.seat); px(g, st.x, st.y - 1, 1, 1, C.seat);
+    line(g, ht.x, ht.y, ht.x - 1, ht.y - 3, C.seat);
+    px(g, ht.x - 3, ht.y - 4, 4, 1, C.seat);
+    ring(g, bb.x, bb.y, 1, C.rim);
+  }
+
+  // ---------- static front layer (things the cat walks behind) ----------
+  function paintFront() {
+    var g = fctx;
+    g.clearRect(0, 0, W, H);
+    var fb = L.bBottom; // floor line at the back
+
+    // crate, back-left, in front of the shelf
+    var cx = L.bx + 2;
+    px(g, cx, fb - 12, 18, 13, C.crate);
+    px(g, cx, fb - 12, 18, 1, C.crateHi);
+    [fb - 8, fb - 4].forEach(function (yy) { px(g, cx, yy, 18, 1, C.crateLine); });
+    px(g, cx + 1, fb - 12, 1, 13, C.crateLine); px(g, cx + 16, fb - 12, 1, 13, C.crateLine);
+    line(g, cx + 2, fb, cx + 15, fb - 11, C.crateLine);
+    // paint can on the crate
+    px(g, cx + 5, fb - 16, 4, 4, C.can); px(g, cx + 5, fb - 16, 4, 1, C.canTop);
+
+    // tarp-covered lump, back-right
+    var tx = L.bx + L.bw - 24, tw = 26, th = 17;
+    for (var y = 0; y < th; y++) {
+      var k = y / th;
+      var half = Math.round((tw / 2) * Math.min(1, 0.45 + Math.sqrt(k) * 0.6));
+      var mid = tx + tw / 2 | 0;
+      px(g, mid - half, fb - th + y + 1, half * 2, 1, y < 3 ? C.tarpHi : (y > th - 4 ? C.tarpLo : C.tarp));
+    }
+    line(g, tx + 6, fb - 10, tx + 10, fb - 3, C.tarpLo);
+    line(g, tx + 17, fb - 12, tx + 19, fb - 4, C.tarpLo);
+    px(g, tx + 11, fb - th + 2, 5, 1, C.tarpHi);
+  }
+
+  // ---------- cat ----------
+  var CAT_WALK = [
+    ["k.k.........",
+     "kkk.......k.",
+     "ekk......k..",
+     "kkkkkkkkkk..",
+     ".kkkkkkkk...",
+     ".kkkkkkkk...",
+     ".k.k...k.k..",
+     ".k.k...k.k.."],
+    ["k.k.........",
+     "kkk........k",
+     "ekk.......k.",
+     "kkkkkkkkkk..",
+     ".kkkkkkkk...",
+     ".kkkkkkkk...",
+     "..kk...kk...",
+     "..k.....k..."]
+  ];
+  var CAT_SIT = [
+    [".k...k...",
+     ".kkkkk...",
+     ".ekkke...",
+     ".kkkkk...",
+     "..kkk....",
+     ".kkkkk...",
+     ".kkkkkk..",
+     ".kkkkkkkk",
+     ".kk.kk..k"],
+    [".k...k...",
+     ".kkkkk...",
+     ".kkkkk...",
+     ".kkkkk...",
+     "..kkk....",
+     ".kkkkk...",
+     ".kkkkkk..",
+     ".kkkkkkk.",
+     ".kk.kk.kk"]
+  ];
+
+  var cat = { state: "wait", t: 0, wait: reduceMotion ? 6 : 4, x: 0, dir: -1, sit: 0 };
+
+  function startCat() {
+    cat.dir = Math.random() < 0.6 ? -1 : 1;
+    cat.x = cat.dir < 0 ? L.bx + L.bw + 2 : L.bx - 14;
+    var gapL = L.bx + 22, gapR = L.bx + L.bw - 26;
+    cat.sitAt = gapL + Math.random() * Math.max(4, gapR - gapL - 12);
+    cat.sat = false;
+    cat.state = "walk";
+  }
+
+  function updateCat(dt) {
+    if (cat.state === "wait") {
+      cat.wait -= dt;
+      if (cat.wait <= 0) startCat();
+      return;
+    }
+    if (cat.state === "walk") {
+      cat.x += cat.dir * 5 * dt;
+      cat.t += dt;
+      if (!cat.sat && ((cat.dir < 0 && cat.x <= cat.sitAt) || (cat.dir > 0 && cat.x >= cat.sitAt))) {
+        cat.state = "sit"; cat.sit = 2.5 + Math.random() * 2.5; cat.sat = true;
+      }
+      if ((cat.dir < 0 && cat.x < L.bx - 14) || (cat.dir > 0 && cat.x > L.bx + L.bw + 2)) {
+        cat.state = "wait"; cat.wait = 14 + Math.random() * 16;
+      }
+      return;
+    }
+    if (cat.state === "sit") {
+      cat.sit -= dt; cat.t += dt;
+      if (cat.sit <= 0) cat.state = "walk";
+    }
+  }
+
+  function drawCat(g) {
+    if (cat.state === "wait") return;
+    g.save();
+    g.beginPath(); g.rect(L.bx, L.by, L.bw, L.bh + 2); g.clip();
+    var pal = { k: C.cat, e: C.eye };
+    if (cat.state === "walk") {
+      var f = Math.floor(cat.t * 4) % 2;
+      sprite(g, CAT_WALK[f], Math.round(cat.x), L.bBottom - 8, pal, cat.dir > 0);
+    } else {
+      var blink = (cat.t % 3.1) < 0.15;
+      sprite(g, CAT_SIT[blink ? 1 : 0], Math.round(cat.x), L.bBottom - 9, pal, false);
+    }
+    g.restore();
+  }
+
+  // ---------- dynamic bits ----------
+  var motes = [];
+  for (var m = 0; m < 7; m++) motes.push({ x: Math.random(), y: Math.random(), v: 0.6 + Math.random() * 0.8, p: Math.random() * 6.28 });
+
+  function drawGlow(g, time) {
+    var flick = reduceMotion ? 1 : (0.92 + 0.05 * Math.sin(time * 1.7) + (Math.random() < 0.01 ? -0.25 : 0));
+    var rings = [[26, 0.05], [19, 0.06], [13, 0.07], [8, 0.09]];
+    g.save();
+    g.beginPath(); g.rect(L.ox, L.oy, L.ow, L.oh); g.clip();
+    rings.forEach(function (r) { g.globalAlpha = r[1] * flick; disk(g, L.bulbX, L.bulbY + 2, r[0], C.glow); });
+    g.globalAlpha = 1;
+    g.restore();
+    // bulb
+    px(g, L.bulbX - 1, L.bulbY, 3, 3, C.bulb);
+    px(g, L.bulbX, L.bulbY - 1, 1, 1, C.cord);
+    // dust motes in the light
+    if (!reduceMotion) {
+      g.fillStyle = C.bulb;
+      motes.forEach(function (mo) {
+        var mx = L.bulbX - 14 + ((mo.x * 28 + Math.sin(time * 0.3 + mo.p) * 3) % 28);
+        var my = L.bulbY + 4 + (((mo.y * 30) + time * mo.v) % 30);
+        g.globalAlpha = 0.35 + 0.25 * Math.sin(time + mo.p);
+        g.fillRect(mx | 0, my | 0, 1, 1);
+      });
+      g.globalAlpha = 1;
+    }
+  }
+
+  function drawStars(g, time) {
+    stars.forEach(function (s) {
+      var a = reduceMotion ? 0.8 : 0.45 + 0.55 * Math.max(0, Math.sin(time * 0.8 + s.p));
+      g.globalAlpha = a;
+      px(g, s.x, s.y, 1, 1, C.star);
+      if (s.big && a > 0.85) {
+        px(g, s.x - 1, s.y, 1, 1, C.star); px(g, s.x + 1, s.y, 1, 1, C.star);
+        px(g, s.x, s.y - 1, 1, 1, C.star); px(g, s.x, s.y + 1, 1, 1, C.star);
+      }
+    });
+    g.globalAlpha = 1;
+  }
+
+  function drawBox(g, time) {
+    var lift = hover ? 2 : 0;
+    var x = L.boxX, y = L.boxY - lift, w = L.boxW, h = L.boxH;
+    var wig = hover && !reduceMotion ? Math.round(Math.sin(time * 10)) : 0;
+    // shadow
+    g.globalAlpha = 0.35; px(g, x + 1, L.boxY + h - 1, w, 2, "#000"); g.globalAlpha = 1;
+    // open flaps
+    for (var i = 0; i < 5; i++) {
+      px(g, x - 1 - i + (i > 2 ? wig : 0), y - 1 - i, 14, 1, C.cardLight);
+      px(g, x + w - 13 + i - (i > 2 ? wig : 0), y - 1 - i, 14, 1, C.cardDark);
+    }
+    // inside of the box, then top rim and front face
+    px(g, x + 1, y - 3, w - 2, 3, "#5e4128");
+    px(g, x, y, w, 3, C.cardDark);
+    px(g, x, y + 3, w, h - 3, C.cardboard);
+    px(g, x, y + h - 1, w, 1, C.cardDark);
+    px(g, x + w - 1, y + 3, 1, h - 3, C.cardDark);
+    px(g, x + 23, y, 4, 3, C.tape);
+    // label
+    var lw = 44, lx = x + (w - lw) / 2 | 0, ly = y + 6;
+    px(g, lx, ly, lw, 9, hover ? "#fff8e8" : C.label);
+    px(g, lx, ly + 8, lw, 1, "#d8cdb6");
+    text(g, "turnaround", lx + 3, ly + 2, C.ink);
+  }
+
+  // ---------- loop ----------
+  var last = performance.now();
+  function frame(now) {
+    var dt = Math.min(0.1, (now - last) / 1000); last = now;
+    var time = now / 1000;
+    updateCat(dt);
+    ctx.clearRect(0, 0, W, H);
+    ctx.drawImage(back, 0, 0);
+    drawStars(ctx, time);
+    drawCat(ctx);
+    ctx.drawImage(front, 0, 0);
+    drawGlow(ctx, time);
+    drawBox(ctx, time);
+    requestAnimationFrame(frame);
+  }
+
+  link.addEventListener("mouseenter", function () { hover = true; });
+  link.addEventListener("mouseleave", function () { hover = false; });
+  link.addEventListener("focus", function () { hover = true; });
+  link.addEventListener("blur", function () { hover = false; });
+
+  var rt;
+  window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(layout, 80); });
+  layout();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
