@@ -91,7 +91,7 @@
 
   // zones: 0 sky (transparent), 1 exterior, 2 garage interior, 3 far (unlit), 4 emissive, 5 ground
   var P, W, H, dpr, cssW, cssH, cssLeft, night;
-  var A, Z, SPILL, OCC, FG = 0;
+  var A, Z, SPILL, OCC, FG = 0, MASK, MK = 0, OVB = mk(), OVG = mk();
   var zone = 1, R;
   var G = {}, wins = [];
   var VIEW = { frame: null, tod: null };
@@ -103,6 +103,7 @@
     if (x < 0 || y < 0 || x >= W || y >= H) return;
     var i = y * W + x; A[i * 3] = c[0]; A[i * 3 + 1] = c[1]; A[i * 3 + 2] = c[2]; Z[i] = zone;
     if (FG) OCC[i] = 1;
+    if (MK) MASK[i] = 1;
   }
   function rect(x, y, w, h, c) {
     x = Math.round(x); y = Math.round(y); w = Math.round(w); h = Math.round(h);
@@ -233,7 +234,7 @@
   // ---------- static scene ----------
   function render() {
     var N = W * H;
-    A = new Float32Array(N * 3); Z = new Uint8Array(N); SPILL = new Uint8Array(N); OCC = new Uint8Array(N); FG = 0;
+    A = new Float32Array(N * 3); Z = new Uint8Array(N); SPILL = new Uint8Array(N); OCC = new Uint8Array(N); FG = 0; MASK = new Uint8Array(N);
     R = rng(17 + W * 7 + H * 3);
     wins = [];
     drawSky();
@@ -547,6 +548,7 @@
       }
     });
     // a taped cardboard box beside the crate, a small crate on top of it
+    MK = 1; // these two sit in front of the cat's path along the back
     var bxx = g.cx + g.fw + g.sd + 3, bw2 = 20, bh2 = 13, bsd = 5, bsu = 3, bby = g.gy - 3;
     for (var i2 = 0; i2 < bsd; i2++) { var o2 = Math.round((i2 + 1) * bsu / bsd); rect(bxx + bw2 + i2, bby - bh2 + 1 - o2, 1, bh2, K.cardDk); }
     for (var r3 = 1; r3 <= bsu; r3++) rect(bxx + Math.round(r3 * bsd / bsu) - 1, bby - bh2 + 1 - r3, bw2, 1, mix(K.card, [255, 240, 210], 0.15));
@@ -556,6 +558,7 @@
     var scx = bxx + 3, sbt = bby - bh2 - 1, sw2 = 12, sh2 = 7;
     rect(scx, sbt - sh2, sw2, sh2, K.wd); rect(scx, sbt - 4, sw2, 1, K.wdGap); rect(scx, sbt - sh2, 1, sh2, K.wdLo); rect(scx + sw2 - 1, sbt - sh2, 1, sh2, K.wdLo);
     rect(scx + 1, sbt - sh2 - 1, sw2 + 2, 1, K.wdHi); rect(scx + sw2, sbt - sh2, 2, sh2, K.wdLo);
+    MK = 0; G.boxX = bxx;
     // boxes stacked on the floor at the back-left
     rect(L + 3, Bt - 9, 12, 9, K.card); rect(L + 3, Bt - 9, 12, 1, K.tape); rect(L + 8, Bt - 9, 2, 9, K.tape);
     rect(L + 5, Bt - 15, 9, 6, K.cardDk); rect(L + 5, Bt - 15, 9, 1, K.card);
@@ -768,9 +771,15 @@
     out.x.fillStyle = css(S.porch ? K.bulbOn : dk(K.bulbOff, night ? 0.3 : 0.75));
     out.x.fillRect(g.sconce.x, g.sconce.y + 5, 2, 1);
   }
+  function cutout(src, dst) {
+    dst.c.width = W; dst.c.height = H;
+    var img = src.x.getImageData(0, 0, W, H), d = img.data;
+    for (var i = 0; i < W * H; i++) if (!MASK[i]) d[i * 4 + 3] = 0;
+    dst.x.putImageData(img, 0, 0);
+  }
   function shadeAll() {
-    shade(BASE, false);
-    if (!S.bulb) shade(GLOW, true);
+    shade(BASE, false); cutout(BASE, OVB);
+    if (!S.bulb) { shade(GLOW, true); cutout(GLOW, OVG); }
   }
 
   // ---------- dynamic ----------
@@ -823,22 +832,26 @@
     ["..........k.k", ".....kkk...kk", "k.k.kkkkk..k.", "kkk.kkkkkk.k.", "ekkkkkkkkkkk.", ".kkkkkkkkkk..", ".wk.k...k.k..", ".w..k...k.k..", ".w..w...w.w.."],
     [".........k.k.", ".....kkk..kkk", "k.k.kkkkkk.k.", "kkkkkkkkkk.k.", "ekkkkkkkkkkk.", ".kkkkkkkkkk..", ".wk.k...k.k..", ".w..k...k.k..", ".w..w...w.w.."]
   ];
-  var cat = { mode: "idle", wait: RM ? 1e9 : 2, t: 0, next: 0, path: [], i: 0, x: 0, y: 0, dir: -1, dist: 0, puff: 0 };
+  var cat = { mode: "idle", wait: RM ? 1e9 : 5, t: 0, next: 0, path: [], i: 0, x: 0, y: 0, dir: -1, dist: 0, puff: 0 };
   var PLAN = ["garage", "window", "drive", "roof", "window", "drive"];
+  var CKEY = "garage.cat.v1";
+  function saveCat(n) { try { localStorage.setItem(CKEY, String(n % PLAN.length)); } catch (e) {} }
+  try { var cv0 = parseInt(localStorage.getItem(CKEY), 10); if (cv0 >= 0 && cv0 < PLAN.length) cat.next = cv0; } catch (e) {}
   function roofFoot(x) { return G.peak + Math.abs(x + 6 - G.cxB) * G.slope - 3; }
   function catStep() { return cat.path[cat.i]; }
   function startCat(m) {
     var g = G;
-    m = m || PLAN[cat.next++ % PLAN.length];
+    if (!m) { m = PLAN[cat.next % PLAN.length]; saveCat(cat.next); cat.next++; } // a reload mid-scene replays this one
     cat.mode = m; cat.t = 0; cat.i = 0; cat.dist = 0; cat.lit = false; cat.puff = 0; cat.roof = false; cat.path = [];
     if (m === "garage") {
-      // out from behind the broom, along the back, up onto the bench, then into the crate
+      // hidden behind the boxes at the back, a few steps until the ears show, up onto the bench, then into the crate
       var b = g.bench;
-      cat.x = g.gx + g.gw - 18; cat.y = g.gy - 4; cat.dir = -1;
+      cat.x = g.boxX + 4; cat.y = g.Bt + 2; cat.dir = 1;
       cat.path = [
-        { k: "walk", x: g.R - 16, y: g.Bt + 2, v: 8 },
-        { k: "sit", d: 1.6 },
-        { k: "jump", x: b.x1 - 22, y: b.y, h: 7, d: 0.45 },
+        { k: "sit", d: 1.2 },
+        { k: "walk", x: g.boxX + 9, v: 4 },
+        { k: "sit", d: 1.4 },
+        { k: "jump", x: b.x1 - 22, y: b.y, h: 10, d: 0.5 },
         { k: "walk", x: b.x0, v: 6 },
         { k: "sit", d: 2.2 },
         { k: "jump", x: g.cx + 7, y: g.cy - g.fh + 5, h: 9, d: 0.55 },
@@ -901,7 +914,7 @@
       if (t >= 1) nextStep();
     } else if (st.e >= st.d) nextStep();
   }
-  function endCat() { cat.mode = "idle"; cat.path = []; cat.i = 0; cat.puff = 0; cat.wait = 12 + Math.random() * 14; }
+  function endCat() { if (cat.mode !== "idle") saveCat(cat.next); cat.mode = "idle"; cat.path = []; cat.i = 0; cat.puff = 0; cat.wait = 12 + Math.random() * 14; }
   function sprite(rows, x, y, flip, dim, shear) {
     for (var r = 0; r < rows.length; r++) for (var i = 0; i < rows[r].length; i++) {
       var ch = rows[r][i]; if (ch === ".") continue;
@@ -1042,6 +1055,10 @@
     drawString();
     updateBike(dt);
     drawCat(t);
+    if (cat.mode === "garage") { // put the front boxes back over the cat
+      ctx.drawImage(OVB.c, 0, 0);
+      if (glow) { ctx.globalAlpha = 0.85 + 0.06 * Math.sin(t * 0.7); ctx.drawImage(OVG.c, 0, 0); ctx.globalAlpha = 1; }
+    }
     drawCrate(t, glow);
     drawPeek(t);
     drawBike();
