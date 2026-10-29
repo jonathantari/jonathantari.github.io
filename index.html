@@ -49,11 +49,13 @@
     skyNight: ["#0e1228", "#161b3c", "#202852", "#313868", "#454273"].map(hx),
     star: hx("#fff3d6"), moon: hx("#f4e7c0"),
     // house
-    siding: hx("#45484f"), sidingLn: hx("#383b41"), sidingHi: hx("#4f525a"),
+    siding: hx("#43464c"), sidingLn: hx("#36383d"), sidingHi: hx("#4c4f56"),
+    brick: hx("#3a3d42"), mortar: hx("#2e3034"),
     shingle: hx("#4a4d54"), shingleLn: hx("#3b3e44"),
-    roofEdge: hx("#26282c"), soffit: hx("#5c5f66"),
-    upper: hx("#a29c91"), upperLn: hx("#8f897f"), slabRoof: hx("#34363b"),
-    stucco: hx("#8d8c88"), stuccoLo: hx("#7f7e7a"),
+    roofEdge: hx("#232529"), soffit: hx("#9a7350"),
+    upper: hx("#b9bcbb"), upperLn: hx("#adb0af"), upperSh: hx("#9c9f9f"),
+    stucco: hx("#c3c4c0"), stuccoLo: hx("#b5b6b2"),
+    door: hx("#a8663c"), doorLn: hx("#8a5230"), stair: hx("#2b2d32"), stairHi: hx("#4a4d54"),
     trim: hx("#f1efe9"), trimSh: hx("#c9c6be"), frame: hx("#55585f"),
     glassDay: hx("#9fc0d8"), glassDayLo: hx("#6f93b0"), glassNight: hx("#1a2038"),
     warmHi: hx("#ffcf7a"), warmLo: hx("#f09a3e"), blind: hx("#d27a2c"),
@@ -76,6 +78,7 @@
     sticker: hx("#f3eee2"), stickerLn: hx("#d6cfbd"), ink: hx("#2a2a30"), amber: hx("#f2a34b"),
     // trees
     trunk: hx("#5a4636"), leaf: hx("#4f7d3e"), leafHi: hx("#679950"), leafLo: hx("#3f6633"),
+    pine: hx("#36553a"), pineHi: hx("#446a46"), pineLo: hx("#2b452f"),
     // mountains
     mDay: hx("#7f9397"), mDayPine: hx("#73878c"), fhDay: hx("#62786c"), fhDayPine: hx("#566c61"),
     slabDay: hx("#b8a58e"), slabDayHi: hx("#cfbda4"), slabDayLo: hx("#93897f"),
@@ -88,15 +91,18 @@
 
   // zones: 0 sky (transparent), 1 exterior, 2 garage interior, 3 far (unlit), 4 emissive, 5 ground
   var P, W, H, dpr, cssW, cssH, cssLeft, night;
-  var A, Z, SPILL;
+  var A, Z, SPILL, OCC, FG = 0;
   var zone = 1, R;
   var G = {}, wins = [];
+  var VIEW = { frame: null, tod: null };
+  window.garageView = function (frame, tod) { VIEW.frame = frame; VIEW.tod = tod; layout(); };
   var S = { bulb: true, porch: true, flick: 0, pull: -1 };
 
   function put(x, y, c) {
     x = x | 0; y = y | 0;
     if (x < 0 || y < 0 || x >= W || y >= H) return;
     var i = y * W + x; A[i * 3] = c[0]; A[i * 3 + 1] = c[1]; A[i * 3 + 2] = c[2]; Z[i] = zone;
+    if (FG) OCC[i] = 1;
   }
   function rect(x, y, w, h, c) {
     x = Math.round(x); y = Math.round(y); w = Math.round(w); h = Math.round(h);
@@ -140,6 +146,7 @@
   };
 
   function isNight() {
+    if (VIEW.tod) return VIEW.tod === "night";
     var q = location.search;
     if (/[?&]night/.test(q)) return true;
     if (/[?&]day/.test(q)) return false;
@@ -152,31 +159,43 @@
   // ---------- layout ----------
   function layout() {
     dpr = window.devicePixelRatio || 1;
-    var vw = window.innerWidth, vh = window.innerHeight, dw = vw * dpr, dh = vh * dpr;
+    var vw = window.innerWidth, vh = window.innerHeight, off = 0;
+    if (VIEW.frame) {
+      var ar = VIEW.frame === "phone" ? 9 / 19.5 : 16 / 10, fw = vw, fh = vw / ar;
+      if (fh > vh - 56) { fh = vh - 56; fw = fh * ar; }
+      off = Math.round((vh - fh) / 2); vw = fw; vh = fh;
+    }
+    G.off = off;
+    var dw = vw * dpr, dh = vh * dpr;
     P = Math.max(2, Math.floor(Math.min(dw / 160, dh / 215)));
     W = Math.ceil(dw / P); H = Math.ceil(dh / P);
     [cv, SKY.c, BASE.c, GLOW.c].forEach(function (c) { c.width = W; c.height = H; });
-    cssW = W * P / dpr; cssH = H * P / dpr; cssLeft = (vw - cssW) / 2;
-    cv.style.width = cssW + "px"; cv.style.height = cssH + "px"; cv.style.left = cssLeft + "px";
+    cssW = W * P / dpr; cssH = H * P / dpr; cssLeft = (window.innerWidth - cssW) / 2;
+    cv.style.width = cssW + "px"; cv.style.height = cssH + "px"; cv.style.left = cssLeft + "px"; cv.style.bottom = G.off + "px";
 
     var g = G, tall = H / W > 1.5;
     g.tall = tall;
-    g.swH = 14;
-    g.streetH = tall ? Math.round(H * 0.22) : clamp(Math.round(H * 0.2), 34, 70);
+    g.swH = 4;
+    g.streetH = tall ? Math.round(H * 0.2) : clamp(Math.round(H * 0.17), 26, 60);
     g.gy = H - g.streetH;
-    g.gw = tall ? Math.round(W * 0.62) : clamp(Math.round(Math.min(W * 0.4, H * 0.45)), 80, 140);
+    g.gw = tall ? Math.round(W * 0.66) : clamp(Math.round(Math.min(W * 0.4, (H * 0.9 - g.streetH - 8) / 1.52)), 80, 170);
     g.gh = Math.round(g.gw * 0.62);
-    g.gx = tall ? W - 14 - g.gw : Math.round(W * 0.56 - g.gw / 2);
+    g.gx = tall ? W - 14 - g.gw : Math.round(W * 0.5 + g.gw * 0.11 - 6);
     g.gTop = g.gy - g.gh;
     g.floor = g.gTop - 8;
     g.bodyR = g.gx + g.gw + 12;
     g.bodyL = g.gx - g.gw;
     g.cxB = (g.bodyL + g.bodyR) / 2;
-    g.half = (g.bodyR - g.bodyL) / 2 + 5;
-    g.slope = 0.47;
-    g.eave = g.floor - Math.round(g.gw * 0.2);
+    g.half = (g.bodyR - g.bodyL) / 2 + 9;
+    g.slope = 0.3;
+    g.eave = g.floor - Math.round(g.gw * 0.25);
     g.peak = Math.round(g.eave - g.half * g.slope);
-    g.upTop = g.peak - Math.round(g.gw * 0.27);
+    g.brickBot = g.floor + Math.round(g.gh * 0.3);
+    // the tall stucco block behind the gable, with a shed roof falling to the right
+    g.twL = Math.round(g.bodyL - g.gw * 0.22); g.twR = Math.round(g.cxB - g.gw * 0.08);
+    g.twTop = g.peak - Math.round((g.eave - g.peak) * 1.05);
+    g.upTop = g.twTop;
+    g.doorW = Math.round(g.gw * 0.12); g.doorX = g.bodyL - g.doorW - 4;
     g.mTop = Math.max(Math.round(H * 0.06), Math.round(g.peak - (g.gy - g.peak) * 0.22));
     g.flat = g.tall ? 0.7 : 0.8;
     g.ribs = [];
@@ -204,7 +223,7 @@
   }
 
   function placeLink() {
-    var g = G, k = P / dpr, bottom = window.innerHeight - cssH;
+    var g = G, k = P / dpr, bottom = window.innerHeight - G.off - cssH;
     var x = g.cx - 3, y = g.cy - g.fh - g.su - 9, w = g.fw + g.sd + 6, h = g.fh + g.su + 13;
     var L = cssLeft + x * k, T = bottom + y * k, Wd = w * k, Ht = h * k, pad = Math.max(0, (48 - Math.min(Wd, Ht)) / 2);
     link.style.left = (L - pad) + "px"; link.style.top = (T - pad) + "px";
@@ -214,16 +233,24 @@
   // ---------- static scene ----------
   function render() {
     var N = W * H;
-    A = new Float32Array(N * 3); Z = new Uint8Array(N); SPILL = new Uint8Array(N);
+    A = new Float32Array(N * 3); Z = new Uint8Array(N); SPILL = new Uint8Array(N); OCC = new Uint8Array(N); FG = 0;
     R = rng(17 + W * 7 + H * 3);
     wins = [];
     drawSky();
     drawMountains();
-    drawUpperBox();
+    drawBackTrees();
+    drawTower();
     drawFacade();
+    FG = 1; // anything drawn from here on sits in front of the windows
     drawGarage();
     drawGround();
     drawTrees();
+    FG = 0;
+    wins.forEach(function (w) {
+      var hid = 0;
+      for (var j = 0; j < w.h; j++) for (var i = 0; i < w.w; i++) if (OCC[(w.y + j) * W + w.x + i]) hid++;
+      w.vis = 1 - hid / (w.w * w.h);
+    });
     var sv = loadLights();
     if (night && sv && sv.wins && sv.wins.length === wins.length) wins.forEach(function (w, i) { var l = !!sv.wins[i]; if (l !== w.lit) { w.lit = l; glass(w); } });
     var g = G, sp = Math.round((g.H5 = H - g.swH - g.gy) * 0.35);
@@ -294,15 +321,52 @@
     }
   }
 
-  function drawUpperBox() {
-    var g = G, x0 = Math.round(g.cxB - g.gw * 0.95), x1 = Math.round(g.cxB - 4), top = g.upTop, bot = g.peak + 20;
+  function towerTop(x) { var g = G; return g.twTop + (x - g.twL) * 0.2; }
+  function drawTower() {
+    var g = G, x0 = g.twL, x1 = g.twR;
     zone = 1;
-    for (var y = top; y < bot; y++) for (var x = x0; x < x1; x++) put(x, y, (y - top) % 4 === 3 ? K.upperLn : K.upper);
-    rect(x0 - 5, top - 3, x1 - x0 + 8, 3, K.slabRoof); rect(x0 - 5, top, x1 - x0 + 8, 1, dk(K.upper, 0.7));
-    var ww = Math.round(g.gw * 0.15), wh = Math.round(g.gw * 0.17);
-    var w1 = window2(Math.round(x0 + (x1 - x0) * 0.22), top + 6, ww, wh, false);
-    window2(Math.round(x0 + (x1 - x0) * 0.62), top + 6, Math.round(ww * 0.8), wh, night);
-    G.boxWin = w1;
+    for (var x = x0; x < x1; x++) {
+      var t = Math.round(towerTop(x));
+      for (var y = t; y < g.gy; y++) put(x, y, x >= x1 - 2 ? K.upperSh : (R() < 0.07 ? K.upperLn : K.upper));
+      put(x, t, K.upperSh); put(x, t + 1, K.upperLn); // shadow under the eave
+    }
+    // shed roof: deep overhang on the high side
+    for (var x2 = x0 - 8; x2 < x1 + 3; x2++) { var t2 = Math.round(towerTop(x2)); rect(x2, t2 - 3, 1, 3, K.roofEdge); }
+    var ww = Math.round(g.gw * 0.13), wh = Math.round(g.gw * 0.19);
+    var wx1 = Math.round(x0 + (x1 - x0) * 0.16), wx2 = Math.round(x0 + (x1 - x0) * 0.56);
+    G.boxWin = window2(wx1, Math.round(towerTop(wx1 + ww)) + 7, ww, wh, false, { room: "shelf" });
+    window2(wx2, Math.round(towerTop(wx2 + ww)) + 7, Math.round(ww * 0.85), Math.round(wh * 0.85), night, { room: "fan" });
+    // the porch: tucked under the gable's long left eave, a door with a tall sidelight
+    var L = g.bodyL, db = g.brickBot, dw = g.doorW, dx = g.doorX, dh = Math.round(g.gw * 0.3);
+    for (var px = x0 + 1; px < L; px++) {
+      var top = Math.round(g.peak + Math.abs(px + 0.5 - g.cxB) * g.slope) + 1;
+      for (var py = top; py < db; py++) put(px, py, py < top + 2 ? dk(K.upper, 0.5) : dk(K.upper, 0.64));
+    }
+    for (var j = 0; j < dh; j++) for (var i = 0; i < dw; i++) put(dx + i, db - dh + j, i % 4 === 3 ? K.doorLn : K.door);
+    rect(dx + dw - 3, db - Math.round(dh * 0.5), 1, 2, [210, 200, 180]);
+    var slw = Math.max(4, Math.round(dw * 0.4)), slx = dx - slw - 2;
+    rect(slx - 1, db - dh - 1, slw + 2, dh + 1, K.stair);
+    for (var j2 = 0; j2 < dh - 1; j2++) for (var i2 = 0; i2 < slw; i2++) put(slx + i2, db - dh + j2, j2 % 6 === 5 ? K.stair : (night ? K.glassNight : mix(K.glassDayLo, [40, 44, 52], 0.55)));
+    // landing slab
+    var s0 = x0 + 1, rise = g.gy - db, sh = 3, n = Math.floor(rise / sh);
+    rect(s0 - 2, db, L - s0 + 2, 2, K.stairHi); rect(s0 - 2, db + 2, L - s0 + 2, 1, K.stair);
+    // steel stair with open risers; it reaches further left as it comes down toward the walk
+    for (var k = 1; k <= n; k++) {
+      var ty = db + 2 + k * sh, tl = s0 - 2 - k;
+      rect(tl, ty - sh + 1, L - tl, sh - 2, dk(K.upper, 0.72));
+      rect(tl, ty - 1, L - tl, 1, K.stairHi);
+      rect(tl, ty, L - tl, 1, K.stair);
+    }
+    var bl = s0 - 2 - n, by = db + 2 + n * sh;
+    line(s0 - 3, db + 2, bl - 1, by, K.stair); line(s0 - 4, db + 2, bl - 2, by, K.stair);
+    // railing: three posts, a top rail and two mid rails, all following the stringer
+    var rh = Math.max(10, Math.round(g.gw * 0.1));
+    [0, 0.5, 1].forEach(function (f) { var x = Math.round(s0 - 4 + (bl - s0 + 2) * f), y = Math.round(db + 2 + (by - db - 2) * f); rect(x, y - rh, 1, rh, K.stair); });
+    [rh, Math.round(rh * 0.66), Math.round(rh * 0.33)].forEach(function (o, q) {
+      line(s0 - 4, db + 2 - o, bl - 2, by - o, K.stair);
+      if (!q) line(s0 - 4, db + 1 - o, bl - 2, by - 1 - o, K.stair);
+    });
+    G.stairFootX = Math.round((bl + L) / 2);
   }
 
   function window2(x, y, w, h, lit, opts) {
@@ -310,10 +374,40 @@
     zone = 1;
     rect(x - 2, y - 2, w + 4, h + 4, K.trim);
     rect(x - 2, y + h + 1, w + 4, 1, K.trimSh);
-    var win = { x: x, y: y, w: w, h: h, lit: lit, blinds: opts.blinds, split: opts.split };
+    var win = { x: x, y: y, w: w, h: h, lit: lit, blinds: opts.blinds, split: opts.split, room: opts.room, vis: 1 };
     wins.push(win);
     glass(win);
     return win;
+  }
+  // what you can make out of a lit room: a fan, a shelf, a lamp
+  function roomPx(win, i, j) {
+    var w = win.w, h = win.h, rm = win.room, sil = mix(K.warmLo, [70, 36, 22], 0.62), sil2 = mix(K.warmLo, [70, 36, 22], 0.38);
+    if (rm === "fan") {
+      var fx = Math.round(w * 0.5), by = Math.max(2, Math.round(h * 0.2));
+      if (i === fx && j < by) return sil;
+      if (j === by && Math.abs(i - fx) <= Math.round(w * 0.3)) return sil;
+      if (j === by + 1 && Math.abs(i - fx) <= 1) return sil;
+      var sb = h - Math.max(3, Math.round(h * 0.22));
+      if (j >= sb && i > w * 0.18 && i < w * 0.82) return sil2;
+      if (j >= sb - 2 && (Math.abs(i - w * 0.18) < 1.5 || Math.abs(i - w * 0.82) < 1.5)) return sil2;
+    } else if (rm === "shelf") {
+      var s0 = Math.round(w * 0.56), s1 = w - 2, st = Math.round(h * 0.15);
+      if (i >= s0 && i <= s1 && j >= st) {
+        if (i === s0 || i === s1 || (j - st) % 5 === 0) return sil;
+        if ((i * 7 + ((j - st) / 5 | 0) * 3) % 4 === 0) return sil2;
+      }
+      var f0 = Math.round(w * 0.12), f1 = Math.round(w * 0.4), g0 = Math.round(h * 0.22), g1 = Math.round(h * 0.45);
+      if (((i === f0 || i === f1) && j >= g0 && j <= g1) || ((j === g0 || j === g1) && i >= f0 && i <= f1)) return sil2;
+    } else if (rm === "lamp") {
+      var lx = Math.round(w * 0.25), t0 = Math.round(h * 0.28);
+      if (i === lx && j > t0 + 3) return sil;
+      if (j >= t0 && j <= t0 + 3 && Math.abs(i - lx) <= (j === t0 ? 1 : 2)) return sil2;
+      var px = Math.round(w * 0.74);
+      if (j >= h - 3 && Math.abs(i - px) <= 1) return sil;
+      var dy = j - (h - 6);
+      if (j >= h - 9 && j < h - 3 && (i - px) * (i - px) + dy * dy * 0.8 < 7 && bay(i, j) > 0.25) return sil2;
+    }
+    return null;
   }
   function glass(win) {
     var x = win.x, y = win.y, w = win.w, h = win.h, bl = Math.round(h * 0.52);
@@ -322,6 +416,7 @@
       var c;
       if (night && win.lit) {
         c = mix(K.warmHi, K.warmLo, j / h);
+        var rc = roomPx(win, i, j); if (rc) c = rc;
         if (win.blinds && j < bl) c = (j % 3 === 2) ? K.blind : mix(K.warmHi, K.blind, 0.25);
         if (win.blinds && j === bl) c = dk(K.blind, 0.6);
       } else if (night) {
@@ -333,6 +428,7 @@
         var dg = i + j * 0.7;
         if (Math.abs(dg - w * 0.5) < 1.1 || Math.abs(dg - w * 0.75) < 0.6) c = mix(c, [235, 245, 252], 0.55);
       }
+      if (OCC && OCC[(y + j) * W + x + i]) continue; // a tree is in front of this bit of glass
       put(x + i, y + j, c);
     }
     zone = 1;
@@ -342,38 +438,40 @@
   function drawFacade() {
     var g = G, cx = g.cxB, L = g.bodyL, Rr = g.bodyR;
     zone = 1;
-    // gable wall (shingles) + lower wall (lap siding)
-    poly([[L, g.eave + 0.5], [cx, g.peak + 2], [Rr, g.eave + 0.5], [Rr, g.floor], [L, g.floor]], function (x, y) {
-      var r = (y - g.peak) / 3 | 0, c = K.shingle;
-      if ((y - g.peak) % 3 === 2) c = K.shingleLn;
-      else if ((x + (r % 2) * 3) % 6 === 0) c = K.shingleLn;
+    // gable and upper floor: dark vertical boards
+    function rl(x) { return g.peak + Math.abs(x - cx) * g.slope + 1; }
+    poly([[L, rl(L)], [cx, g.peak + 1], [Rr, rl(Rr)], [Rr, g.floor], [L, g.floor]], function (x, y) {
+      var m = (x - L) % 5, c = m === 0 ? K.sidingLn : (m === 1 ? K.sidingHi : K.siding);
       put(x, y, c);
     });
-    for (var y = g.floor; y < g.gy; y++) for (var x = L; x < Rr; x++) {
-      var c = K.siding, k = (y - g.floor) % 4;
-      if (k === 3) c = K.sidingLn; else if (k === 0) c = K.sidingHi;
+    // gable vent
+    var vw = Math.max(6, Math.round(g.gw * 0.09)), vy = g.peak + Math.round((g.eave - g.peak) * 0.4);
+    rect(cx - vw / 2 - 1, vy - 1, vw + 2, 9, K.sidingLn);
+    for (var j = 0; j < 4; j++) rect(cx - vw / 2, vy + j * 2, vw, 1, K.sidingHi);
+    // dark brick band under the windows, light stucco below it
+    for (var y = g.floor; y < g.brickBot; y++) for (var x = L; x < Rr; x++) {
+      var row = (y - g.floor) / 3 | 0, c = K.brick;
+      if ((y - g.floor) % 3 === 2 || (x + (row % 2) * 4) % 8 === 0) c = K.mortar;
       put(x, y, c);
     }
-    // band between floors
-    rect(L, g.floor - 1, Rr - L, 2, K.sidingLn);
-    // exposed foundation at the lower left
-    var fTop = g.gy - Math.round(g.gh * 0.42);
-    for (var y2 = fTop; y2 < g.gy; y2++) for (var x2 = L; x2 < g.gx - 16; x2++) put(x2, y2, R() < 0.12 ? K.stuccoLo : K.stucco);
-    rect(L, fTop, g.gx - 16 - L, 1, dk(K.stucco, 0.8));
-    // roof edges with soffit
-    for (var x3 = Math.round(cx - g.half); x3 <= Math.round(cx + g.half); x3++) {
+    rect(L, g.floor, Rr - L, 1, K.roofEdge);
+    for (var y2 = g.brickBot; y2 < g.gy; y2++) for (var x2 = L; x2 < Rr; x2++) put(x2, y2, R() < 0.1 ? K.stuccoLo : K.stucco);
+    rect(L, g.brickBot, Rr - L, 1, dk(K.stucco, 0.82));
+    // low-pitch roof: one dark fascia, running long on the left over the porch
+    for (var x3 = Math.round(Math.min(cx - g.half, g.twL - 3)); x3 <= Math.round(cx + g.half); x3++) {
       var ry = Math.round(g.peak + Math.abs(x3 + 0.5 - cx) * g.slope);
-      rect(x3, ry - 3, 1, 3, K.roofEdge); put(x3, ry, K.soffit); put(x3, ry + 1, dk(K.shingle, 0.75));
+      rect(x3, ry - 3, 1, 4, K.roofEdge);
+      if (x3 >= L && x3 < Rr) put(x3, ry + 1, dk(K.siding, 0.72));
     }
     // upstairs windows: a wide one on the left, the cat's window over the garage
-    var wh = Math.round(g.gw * 0.25), wy = g.floor - wh - 6;
+    var wh = Math.round(g.gw * 0.21), wy = g.floor - wh - 4;
     var lw = Math.round(g.gw * 0.46), lx = Math.round(g.gx - g.gw * 0.62);
-    window2(lx, wy, lw, wh, night, { split: 0.5 });
+    window2(lx, wy, lw, wh, night, { split: 0.5, room: "fan" });
     var cw = Math.round(g.gw * 0.32), cxw = Math.round(g.gx + g.gw * 0.6 - cw / 2);
-    G.catWin = window2(cxw, wy, cw, wh, night, { split: 0.5, blinds: true });
+    G.catWin = window2(cxw, wy, cw, wh, night, { split: 0.5, blinds: true, room: "lamp" });
     // a lower window behind the shrubs on the left
     var bw = Math.round(g.gw * 0.3);
-    window2(Math.round(g.gx - g.gw * 0.55), g.gTop + 6, bw, Math.round(g.gh * 0.28), false, { split: 0.5 });
+    window2(Math.round(g.gx - g.gw * 0.55), g.brickBot + 6, bw, Math.max(5, Math.round((g.gy - g.brickBot) * 0.42)), false, { split: 0.5, room: "shelf" });
     // wall sconce by the garage
     zone = 1;
     var sc = g.sconce;
@@ -389,13 +487,13 @@
     zone = 2;
     for (var y = g.gTop; y < g.gy; y++) for (var x = g.gx; x < g.gx + g.gw; x++) {
       var c, depth;
-      if (x >= L && x < Rr && y >= T && y < Bt) { c = K.backIn; depth = 1; if (R() < 0.06) c = dk(c, 0.95); }
+      if (x >= L && x < Rr && y >= T && y < Bt) { c = K.backIn; depth = 1; }
       else {
         var hx2 = Math.abs(x + 0.5 - g.vx) / (g.gw / 2);
         var ht = y + 0.5 < g.vy ? (g.vy - y - 0.5) / (g.vy - g.gTop) : (y + 0.5 - g.vy) / (g.gy - g.vy);
         var k = Math.max(hx2, ht);
         depth = clamp((1 / k - 1) / (1 / s - 1), 0, 1);
-        if (hx2 >= ht) { c = K.wallIn; if (R() < 0.05) c = dk(c, 0.95); }
+        if (hx2 >= ht) c = K.wallIn;
         else if (y + 0.5 < g.vy) {
           c = K.ceil;
           var tu = (x + 0.5 - g.vx) / k / (g.gw / 2);
@@ -403,9 +501,6 @@
           if (Math.abs(tu) < 0.02 / k) c = K.track; // opener rail
         } else {
           c = K.floorIn;
-          if (R() < 0.07) c = dk(c, 0.94);
-          var fx = (x + 0.5 - g.vx) / k;
-          if (Math.abs(fx) < g.gw * 0.14 && depth > 0.25 && depth < 0.55 && bay(x, y) > 0.6) c = K.floorSt;
         }
       }
       put(x, y, dk(c, 1 - depth * 0.25));
@@ -426,6 +521,7 @@
     if (tw > 28) { rect(px0 + 25, py0 + 3, 3, 3, [212, 182, 60]); put(px0 + 26, py0 + 4, [60, 60, 60]); }
     // workbench
     var bTop = T + Math.round(bh * 0.58);
+    G.bench = { x0: px0 - 2, x1: px1 + 1, y: bTop };
     rect(px0 - 2, bTop, px1 - px0 + 3, 2, K.wood); rect(px0 - 2, bTop + 2, px1 - px0 + 3, 2, K.woodDk);
     rect(px0 - 1, bTop + 4, 1, Bt - bTop - 4, K.woodDk); rect(px1, bTop + 4, 1, Bt - bTop - 4, K.woodDk);
     rect(px0, Bt - 3, px1 - px0, 1, K.woodDk);
@@ -483,17 +579,47 @@
     var g = G, dl0 = g.gx - 2, dr0 = g.gx + g.gw + 2, bottom = H - g.swH, spread = Math.round((bottom - g.gy) * 0.22);
     function dl(y) { return dl0 - spread * (y - g.gy) / (bottom - g.gy); }
     function dr(y) { return dr0 + spread * (y - g.gy) / (bottom - g.gy); }
+    // the walk runs from the foot of the stairs down and to the left, to steps in the front wall
+    var wc0 = G.stairFootX, wc1 = wc0 - g.gw * 0.18;
+    function wl(y) { var t = (y - g.gy) / (bottom - g.gy); return wc0 + (wc1 - wc0) * t - (7 + 2 * t); }
+    function wr(y) { var t = (y - g.gy) / (bottom - g.gy); return wc0 + (wc1 - wc0) * t + (7 + 2 * t); }
+    var lowWall = 4, highWall = 9;
     zone = 5;
-    // lawn: raised on the left of the driveway
-    for (var y = g.gy - 3; y < bottom; y++) for (var x = 0; x < W; x++) {
+    // lawns: low on the left of the walk, raised between the walk and the driveway
+    for (var y = g.gy - 7; y < bottom; y++) for (var x = 0; x < W; x++) {
       if (x >= dl(y) - 4 && x <= dr(y)) continue;
-      if (y < g.gy && x >= g.bodyL && x < g.bodyR) continue;
+      var raised = x > wr(y) && x < dl(y) - 4;
+      if (y < g.gy) { if (!raised || x >= g.gx - 3 || x < g.bodyL) continue; if (y < g.gy - 6) continue; }
+      if (y >= bottom - (raised ? highWall : (x < wl(y) ? lowWall : 0))) continue;
+      if (x >= wl(y) && x <= wr(y)) continue;
       var c = Math.floor((x + (y - g.gy) * 0.7) / 9) % 2 ? K.grass : K.grassLo;
       var r = R();
       if (r < 0.12) c = K.grassHi; else if (r < 0.2) c = K.grassDk;
+      if (raised && y > bottom - highWall - 4 && bay(x, y) > 0.5) c = dk(c, 0.88); // the bank rolling over
       put(x, y, c);
-      if (r < 0.06 && y > g.gy) put(x, y - 1, K.grassHi); // blade tips
+      if (r < 0.06 && y > g.gy - 6) put(x, y - 1, K.grassHi);
     }
+    // the walk
+    for (var y1 = g.gy; y1 < bottom; y1++) {
+      var a1 = Math.round(wl(y1)), b1 = Math.round(wr(y1)), inWall = y1 >= bottom - highWall;
+      for (var x1 = a1; x1 <= b1; x1++) {
+        var c1 = K.walk;
+        if (inWall) c1 = (bottom - y1) % 3 === 0 ? dk(K.walk, 0.8) : ((bottom - y1) % 3 === 1 ? mix(K.walk, [255, 255, 255], 0.15) : K.walk);
+        else if ((y1 - g.gy) % 9 === 8) c1 = K.walkLn;
+        put(x1, y1, c1);
+      }
+      if (!inWall) { put(b1 + 1, y1, K.wallCap); put(b1 + 2, y1, K.wallSh); }
+    }
+    // front retaining walls along the sidewalk
+    zone = 1;
+    for (var x5 = 0; x5 < W; x5++) {
+      var hgt = 0;
+      if (x5 < wl(bottom - 1)) hgt = lowWall;
+      else if (x5 > wr(bottom - 1) + 2 && x5 < dl(bottom - 1) - 4) hgt = highWall;
+      if (!hgt) continue;
+      for (var k = 0; k < hgt; k++) put(x5, bottom - hgt + k, k === 0 ? K.wallCap : (k === hgt - 1 ? K.wallSh : (R() < 0.08 ? K.wallSh : K.wall)));
+    }
+    zone = 5;
     // driveway concrete with tyre tracks and joints
     for (var y2 = g.gy; y2 < bottom; y2++) {
       var l = dl(y2), r2 = dr(y2), w = r2 - l, mid = (l + r2) / 2;
@@ -506,34 +632,31 @@
         put(x2, y2, c2);
       }
     }
-    // retaining wall along the left edge of the driveway
+    // retaining wall along the left edge of the driveway, holding up the raised lawn
     zone = 1;
-    for (var y3 = g.gy - 3; y3 < bottom; y3++) {
-      var l3 = Math.round(dl(y3));
+    for (var y3 = g.gy - 7; y3 < bottom; y3++) {
+      var l3 = Math.round(dl(Math.max(y3, g.gy)));
       put(l3 - 4, y3, K.wallCap); put(l3 - 3, y3, K.wallCap);
       put(l3 - 2, y3, K.wall); put(l3 - 1, y3, K.wallSh);
     }
     // sidewalk
     zone = 5;
-    for (var y4 = bottom; y4 < bottom + 6; y4++) for (var x4 = 0; x4 < W; x4++) put(x4, y4, (x4 + 7) % 18 === 0 ? K.walkLn : (y4 === bottom ? dk(K.walk, 0.9) : K.walk));
-    rect(0, bottom + 6, W, 1, mix(K.walk, [255, 255, 255], 0.2)); rect(0, bottom + 7, W, 1, dk(K.walk, 0.7));
-    for (var y5 = bottom + 8; y5 < H; y5++) for (var x5 = 0; x5 < W; x5++) put(x5, y5, R() < 0.06 ? [86, 86, 92] : [70, 70, 76]);
-    G.roadY = bottom + 8;
-    // shrubs along the foundation, one with red flowers
+    for (var y4 = bottom; y4 < H; y4++) for (var x4 = 0; x4 < W; x4++) put(x4, y4, (x4 + 7) % 18 === 0 ? K.walkLn : (y4 === bottom ? dk(K.walk, 0.9) : K.walk));
+    // shrubs and roses along the raised bed under the window
     zone = 1;
-    for (var sx = g.bodyL + 4; sx < g.gx - 18; sx += 11) {
-      var flowered = sx < g.gx - 40 && ((sx / 11) | 0) % 3 === 0;
-      blob(sx + 5, g.gy - 3, 7, 6, function (x, y, d) {
-        var c = (d < 0.45 && y < g.gy - 4 && bay(x, y) > 0.4) ? K.shrubHi : K.shrub;
+    for (var sx = Math.max(g.bodyL, Math.round(wr(g.gy))) + 4; sx < g.gx - 18; sx += 11) {
+      var flowered = ((sx / 11) | 0) % 2 === 0;
+      blob(sx + 5, g.gy - 8, 7, 6, function (x, y, d) {
+        var c = (d < 0.45 && y < g.gy - 9 && bay(x, y) > 0.4) ? K.shrubHi : K.shrub;
         if (flowered && d < 0.8 && bay(x, y) > 0.9) c = K.flower;
         put(x, y, c);
       });
     }
   }
 
-  function tree(cx, baseY, r, trunkH) {
-    zone = 1;
-    rect(cx - 2, baseY - trunkH, 4, trunkH, K.trunk); rect(cx - 1, baseY - trunkH, 1, trunkH, dk(K.trunk, 0.8));
+  function tree(cx, baseY, r, trunkH, tw) {
+    zone = 1; tw = tw || 4;
+    rect(cx - tw / 2, baseY - trunkH, tw, trunkH, K.trunk); rect(cx - tw / 2 + 1, baseY - trunkH, 1, trunkH, dk(K.trunk, 0.8));
     line(cx, baseY - trunkH + 4, cx - r * 0.5, baseY - trunkH - r * 0.3, K.trunk);
     var top = baseY - trunkH;
     [[0, -0.6, 1], [-0.7, -0.2, 0.7], [0.7, -0.25, 0.72], [-0.3, -1.2, 0.75], [0.45, -1.05, 0.7], [-0.9, -0.8, 0.5]].forEach(function (b) {
@@ -547,13 +670,65 @@
       });
     });
   }
-  function drawTrees() {
-    var g = G;
-    if (g.tall) tree(W + 6, g.gTop - 4, Math.round(W * 0.2), Math.round(g.gh * 0.7));
-    else {
-      tree(Math.round(g.bodyR + g.gw * 0.32), g.gy, Math.round(g.gw * 0.3), Math.round(g.gh * 0.9));
-      if (g.bodyL > 30) tree(Math.round(g.bodyL - g.gw * 0.18), g.gy, Math.round(g.gw * 0.2), Math.round(g.gh * 0.6));
+  function pine(cx, baseY, h, w) {
+    zone = 1;
+    var top = baseY - h;
+    for (var y = top; y < baseY; y++) {
+      var t = (y - top) / h, tier = ((y - top) % 7) / 7, hw = Math.max(1, w / 2 * (0.25 + 0.75 * t) * (0.65 + 0.35 * tier));
+      for (var x = Math.round(cx - hw); x <= Math.round(cx + hw); x++) {
+        var c = K.pine, e = (x - cx) / hw;
+        if (e < -0.4 && bay(x, y) > 0.4) c = K.pineHi;
+        if (e > 0.45 || tier > 0.85) c = K.pineLo;
+        if (Math.abs(e) > 0.85 && bay(x, y) > 0.6) continue;
+        put(x, y, c);
+      }
     }
+  }
+  // evergreens standing behind the house
+  function drawBackTrees() {
+    var g = G;
+    pine(Math.round(g.twR + g.gw * 0.12), g.eave + 4, Math.round(g.gw * 0.62), Math.round(g.gw * 0.28));
+    pine(Math.round(g.bodyR + g.gw * 0.18), g.eave + 10, Math.round(g.gw * 0.7), Math.round(g.gw * 0.32));
+    if (!g.tall) pine(Math.round(g.twL - g.gw * 0.25), g.eave + 14, Math.round(g.gw * 0.5), Math.round(g.gw * 0.24));
+  }
+  function clump(bx, by, br) {
+    blob(bx, by, br, br * 0.8, function (x, y, d) {
+      var c = K.leaf, rel = (y - by) / br + (x - bx) / br * 0.4;
+      if (rel < -0.35 && bay(x, y) > 0.3) c = K.leafHi;
+      if (rel > 0.35 && bay(x, y) > 0.45) c = K.leafLo;
+      if (d > 0.78 && bay(x, y) > 0.62) return;
+      put(x, y, c);
+    });
+  }
+  // an old cottonwood: a leaning trunk with leafy clumps all the way up
+  function bigTree(cx, baseY, h, r) {
+    zone = 1;
+    var tw = Math.max(4, Math.round(r * 0.15));
+    function tx(f) { return cx + Math.sin(f * 2.4) * r * 0.12; }
+    for (var y = Math.round(baseY - h * 0.88); y < baseY; y++) {
+      var f = (baseY - y) / h, w = Math.max(2, Math.round(tw * (1 - f * 0.55))), xo = Math.round(tx(f));
+      rect(xo - w / 2, y, w, 1, K.trunk); put(xo - w / 2 + 1, y, dk(K.trunk, 0.8));
+    }
+    var C = [[-0.1, 0.4, 0.46], [0.85, 0.48, 0.56], [-0.62, 0.56, 0.58], [0.95, 0.66, 0.52], [0.2, 0.68, 0.66], [-0.45, 0.78, 0.58], [0.7, 0.84, 0.6], [-0.05, 0.94, 0.56]];
+    C.forEach(function (c) {
+      if (Math.abs(c[0]) < 0.3) return;
+      var f0 = c[1] * 0.8, x0 = tx(f0), y0 = baseY - h * f0, x1 = cx + c[0] * r * 0.8, y1 = baseY - h * c[1];
+      line(x0, y0, x1, y1, K.trunk); line(x0, y0 + 1, x1, y1 + 1, dk(K.trunk, 0.85));
+    });
+    C.forEach(function (c) { clump(cx + c[0] * r, baseY - h * c[1], r * c[2]); });
+  }
+  function drawTrees() {
+    var g = G, bottom = H - g.swH;
+    if (g.tall) {
+      tree(W + 6, g.gTop - 4, Math.round(W * 0.2), Math.round(g.gh * 0.7));
+      bigTree(Math.round(W * 0.04), bottom - 3, Math.round((bottom - g.eave) * 0.95), Math.round(W * 0.17));
+      return;
+    }
+    // a thick of trees on the right, past the driveway
+    tree(Math.round(Math.min(W + 8, g.gx + g.gw + g.gw * 0.95)), g.gy + 4, Math.round(g.gw * 0.42), Math.round(g.gh * 1.25), 5);
+    tree(Math.round(g.gx + g.gw + g.gw * 0.5), g.gy + 8, Math.round(g.gw * 0.28), Math.round(g.gh * 0.95));
+    // the big old tree in the front yard on the left, leafy all the way up past the tower
+    bigTree(Math.round(g.twL - g.gw * 0.14), bottom - 3, Math.round((bottom - g.twTop) * 0.98), Math.round(g.gw * 0.3));
   }
 
   // ---------- lighting ----------
@@ -580,7 +755,8 @@
         var dx = x + 0.5 - Lt.x, dy = (y + 0.5 - Lt.y) * (z === 5 ? 0.6 : 1);
         var f = 1 - Math.sqrt(dx * dx + dy * dy) / Lt.r;
         if (f <= 0) continue;
-        var q = Math.min(1.3, Math.floor(Math.pow(f, 1.3) * Lt.i * w * 6 + bt) / 6);
+        var q = Math.pow(f, 1.3) * Lt.i * w;
+        q = z === 2 ? Math.min(1.3, q) : Math.min(1.3, Math.floor(q * 6 + bt) / 6); // smooth light inside the garage
         lr += Lt.c[0] * q; lg += Lt.c[1] * q; lb += Lt.c[2] * q;
       }
       d[o] = Math.min(255, r * lr); d[o + 1] = Math.min(255, g2 * lg); d[o + 2] = Math.min(255, b * lb); d[o + 3] = 255;
@@ -634,60 +810,141 @@
   }
 
   // ---------- the cat (a tuxedo) ----------
+  // sprites face left; the last row is the feet. cat.y is the ground line the feet stand on.
   var WALK = [
     ["k.k.........", "kkk......k..", "ekw.....k...", "wkkkkkkkk...", ".wkkkkkkk...", ".w.k..k.k...", ".w.k..w.w..."],
     ["k.k.........", "kkk.......k.", "ekw......k..", "wkkkkkkkk...", ".wkkkkkkk...", "..wk..kw....", "..w....w...."]
   ];
   var SIT = [
-    [".k....k.", ".kk..kk.", ".kkkkkk.", ".kekkek.", ".kkwwkk.", "..kwwk..", ".kkwwkk.", "kkkwwkkk", "kkwwwwkkk"],
-    [".k....k.", ".kk..kk.", ".kkkkkk.", ".kkkkkk.", ".kkwwkk.", "..kwwk..", ".kkwwkk.", "kkkwwkkk", "kkwwwwkk."]
+    [".k.k.......", ".kkk.......", "kekk.......", ".kkw.......", "..kwk......", "..kwkk.....", "..kwkkk....", "..kwkkkk...", "..wwkkkk.kk", "..wwkkkkkk."],
+    [".k.k.......", ".kkk.......", "kkkk.......", ".kkw.......", "..kwk......", "..kwkk.....", "..kwkkk....", "..kwkkkk...", "..wwkkkk.kk", "..wwkkkkkk."]
   ];
-  var cat = { mode: "idle", wait: RM ? 1e9 : 2.5, t: 0, next: 0 };
-  var PLAN = ["drive", "window", "roof", "window", "drive"];
-  function roofY(x) { return Math.round(G.peak + Math.abs(x + 5.5 - G.cxB) * G.slope) - 10; }
-  function startCat() {
-    var g = G, m = PLAN[cat.next++ % PLAN.length];
-    cat.mode = m; cat.t = 0; cat.sat = false; cat.sitting = false;
-    if (m === "drive") {
-      cat.dir = -1; cat.y = Math.round(g.gy + (H - g.swH - g.gy) * 0.5); cat.x = W + 2;
-      cat.sitAt = g.gx + g.gw * 0.55; cat.sitFor = 5;
+  var PUFF = [
+    ["..........k.k", ".....kkk...kk", "k.k.kkkkk..k.", "kkk.kkkkkk.k.", "ekkkkkkkkkkk.", ".kkkkkkkkkk..", ".wk.k...k.k..", ".w..k...k.k..", ".w..w...w.w.."],
+    [".........k.k.", ".....kkk..kkk", "k.k.kkkkkk.k.", "kkkkkkkkkk.k.", "ekkkkkkkkkkk.", ".kkkkkkkkkk..", ".wk.k...k.k..", ".w..k...k.k..", ".w..w...w.w.."]
+  ];
+  var cat = { mode: "idle", wait: RM ? 1e9 : 2, t: 0, next: 0, path: [], i: 0, x: 0, y: 0, dir: -1, dist: 0, puff: 0 };
+  var PLAN = ["garage", "window", "drive", "roof", "window", "drive"];
+  function roofFoot(x) { return G.peak + Math.abs(x + 6 - G.cxB) * G.slope - 3; }
+  function catStep() { return cat.path[cat.i]; }
+  function startCat(m) {
+    var g = G;
+    m = m || PLAN[cat.next++ % PLAN.length];
+    cat.mode = m; cat.t = 0; cat.i = 0; cat.dist = 0; cat.lit = false; cat.puff = 0; cat.roof = false; cat.path = [];
+    if (m === "garage") {
+      // out from behind the broom, along the back, up onto the bench, then into the crate
+      var b = g.bench;
+      cat.x = g.gx + g.gw - 18; cat.y = g.gy - 4; cat.dir = -1;
+      cat.path = [
+        { k: "walk", x: g.R - 16, y: g.Bt + 2, v: 8 },
+        { k: "sit", d: 1.6 },
+        { k: "jump", x: b.x1 - 22, y: b.y, h: 7, d: 0.45 },
+        { k: "walk", x: b.x0, v: 6 },
+        { k: "sit", d: 2.2 },
+        { k: "jump", x: g.cx + 7, y: g.cy - g.fh + 5, h: 9, d: 0.55 },
+        { k: "hide", d: 1.2 },
+        { k: "peek", d: 4.5 },
+        { k: "hide", d: 0.4 }
+      ];
+    } else if (m === "drive") {
+      cat.x = W + 2; cat.y = Math.round(g.gy + (H - g.swH - g.gy) * 0.45); cat.dir = -1;
+      cat.path = [{ k: "walk", x: g.gx + g.gw * 0.45, v: 9 }, { k: "sit", d: 5 }, { k: "walk", x: -16, v: 9 }];
     } else if (m === "roof") {
-      cat.dir = -1; cat.x = Math.min(W + 2, g.cxB + g.half); cat.sitAt = g.cxB - 5; cat.sitFor = 8;
-    } else { cat.sitFor = 14; }
+      // a leap from the tree onto the eave, up to the ridge for a look around, down the far side and off
+      var xr = Math.round(g.cxB + g.half - 18), xl = Math.round(g.cxB - g.half + 4);
+      cat.x = xr + 16; cat.y = Math.round(roofFoot(xr) + 14); cat.dir = -1;
+      cat.path = [
+        { k: "jump", x: xr, y: roofFoot(xr), h: 9, d: 0.55, roof: true },
+        { k: "walk", x: Math.round(g.cxB - 6), v: 5 },
+        { k: "sit", d: 6 },
+        { k: "walk", x: xl, v: 5 },
+        { k: "jump", x: xl - 16, y: roofFoot(xl) + 18, h: 5, d: 0.5, off: true },
+        { k: "hide", d: 0.2 }
+      ];
+    } else cat.sitFor = 12;
   }
+  function nextStep() {
+    var st = catStep();
+    if (st && st.roof) cat.roof = true;
+    if (st && st.off) cat.roof = false;
+    cat.i++;
+    if (cat.i >= cat.path.length) endCat();
+  }
+  function setWin(w, on) { w.lit = on; var pz = zone; glass(w); zone = pz; shadeAll(); }
   function updateCat(dt) {
     if (cat.mode === "idle") { cat.wait -= dt; if (cat.wait <= 0) startCat(); return; }
     cat.t += dt;
-    if (cat.mode === "window") { if (cat.t > cat.sitFor) endCat(); return; }
-    if (cat.sitting) { cat.sitT -= dt; if (cat.sitT <= 0) { cat.sitting = false; if (cat.mode === "roof") cat.dir = 1; } return; }
-    cat.x += cat.dir * (cat.mode === "roof" ? 6 : 9) * dt;
-    if (cat.mode === "roof") cat.y = roofY(cat.x);
-    if (!cat.sat && ((cat.dir < 0 && cat.x <= cat.sitAt) || (cat.dir > 0 && cat.x >= cat.sitAt))) { cat.sat = true; cat.sitting = true; cat.sitT = cat.sitFor; }
-    if (cat.x < -16 || cat.x > W + 4 || (cat.mode === "roof" && cat.dir > 0 && cat.x > G.cxB + G.half)) endCat();
+    if (cat.mode === "window") {
+      // at night, the room light comes on before the cat leaves so you see its outline; off again after
+      var w = G.catWin;
+      if (night && !w.lit && !cat.lit && cat.t > cat.sitFor - 4.5) { cat.lit = true; setWin(w, true); }
+      if (cat.t > cat.sitFor) { if (cat.lit) setWin(w, false); endCat(); }
+      return;
+    }
+    // a passing bike puts the cat's fur up
+    if (bike && cat.mode === "drive" && Math.abs(bike.x - cat.x) < W * 0.7) cat.puff = Math.max(cat.puff, 1.4);
+    if (cat.puff > 0) { cat.puff -= dt; return; }
+    var st = catStep();
+    if (!st) { endCat(); return; }
+    st.e = (st.e || 0) + dt;
+    if (st.k === "walk") {
+      var dx = st.x - cat.x, ty = st.y != null ? st.y : cat.y, dy = ty - cat.y, d = Math.sqrt(dx * dx + dy * dy), v = st.v * dt;
+      if (Math.abs(dx) > 0.01) cat.dir = dx < 0 ? -1 : 1;
+      cat.dist += Math.min(v, d);
+      if (d <= v) { cat.x = st.x; cat.y = ty; nextStep(); } else { cat.x += dx / d * v; cat.y += dy / d * v; }
+      if (cat.roof) cat.y = roofFoot(cat.x);
+    } else if (st.k === "jump") {
+      if (st.sx == null) { st.sx = cat.x; st.sy = cat.y; }
+      var t = Math.min(1, st.e / st.d);
+      cat.dir = st.x < st.sx ? -1 : 1;
+      cat.x = st.sx + (st.x - st.sx) * t; cat.y = st.sy + (st.y - st.sy) * t - st.h * 4 * t * (1 - t);
+      if (t >= 1) nextStep();
+    } else if (st.e >= st.d) nextStep();
   }
-  function endCat() { cat.mode = "idle"; cat.sitting = false; cat.wait = 12 + Math.random() * 14; }
-  function sprite(rows, x, y, flip, dim) {
+  function endCat() { cat.mode = "idle"; cat.path = []; cat.i = 0; cat.puff = 0; cat.wait = 12 + Math.random() * 14; }
+  function sprite(rows, x, y, flip, dim, shear) {
     for (var r = 0; r < rows.length; r++) for (var i = 0; i < rows[r].length; i++) {
       var ch = rows[r][i]; if (ch === ".") continue;
       var c = ch === "e" ? (night ? K.eye : dk(K.eye, 0.6)) : ch === "w" ? dk(K.catW, dim) : K.cat;
+      var cx = flip ? rows[r].length - 1 - i : i, sy = shear ? Math.round((cx - rows[r].length / 2) * shear) : 0;
       ctx.fillStyle = css(c);
-      ctx.fillRect(flip ? x + rows[r].length - 1 - i : x + i, y + r, 1, 1);
+      ctx.fillRect(x + cx, y + r + sy, 1, 1);
     }
   }
+  function catDim() { return cat.mode === "garage" ? (night ? (S.bulb ? 0.8 : 0.3) : (S.bulb ? 0.95 : 0.6)) : (night ? 0.45 : 1); }
   function drawCat(t) {
     if (cat.mode === "idle") return;
-    var blink = (t % 3.7) < 0.15, dim = night ? 0.45 : 1;
+    var blink = (t % 3.7) < 0.15, dim = catDim();
     if (cat.mode === "window") {
-      var w = G.catWin;
+      var w = G.catWin, sp = SIT[blink ? 1 : 0];
       ctx.save(); ctx.beginPath(); ctx.rect(w.x, w.y, w.w, w.h); ctx.clip();
       var rise = Math.min(1, cat.t / 1), fall = Math.max(0, (cat.t - cat.sitFor + 1) / 1);
-      sprite(SIT[blink ? 1 : 0], w.x + Math.round(w.w * 0.55) - 4, w.y + w.h - 9 + Math.round((1 - rise + fall) * 10), false, night && w.lit ? 0.75 : dim);
+      sprite(sp, w.x + Math.round(w.w * 0.5) - 5, w.y + w.h - sp.length + Math.round((1 - rise + fall) * (sp.length + 1)), false, night && w.lit ? 0.7 : dim);
       ctx.restore(); return;
     }
-    var x = Math.round(cat.x);
-    if (!night && cat.mode === "drive") { ctx.fillStyle = "rgba(0,0,0,0.16)"; ctx.fillRect(x + 1, cat.y + 7, 10, 1); }
-    if (cat.sitting) sprite(SIT[blink ? 1 : 0], x + 2, cat.y - 2, false, dim);
-    else sprite(WALK[Math.floor(cat.t * 5) % 2], x, cat.y, cat.dir > 0, dim);
+    var st = catStep();
+    if (!st || st.k === "hide" || st.k === "peek") return;
+    var x = Math.round(cat.x), fy = Math.round(cat.y), rows, shear = 0;
+    if (cat.puff > 0) rows = PUFF[Math.floor(t * 6) % 2];
+    else if (st.k === "sit") rows = SIT[blink ? 1 : 0];
+    else if (st.k === "jump") rows = WALK[1];
+    else {
+      rows = WALK[Math.floor(cat.dist / 2.2) % 2];
+      if (cat.roof) shear = (cat.x + 6 < G.cxB ? -1 : 1) * G.slope; // body follows the pitch
+    }
+    if (!night && cat.mode === "drive") { ctx.fillStyle = "rgba(0,0,0,0.16)"; ctx.fillRect(x + 1, fy, 10, 1); }
+    sprite(rows, x, fy - rows.length, cat.dir > 0, dim, shear);
+  }
+  // ears and eyes over the crate's back rim
+  function drawPeek(t) {
+    var st = catStep();
+    if (cat.mode !== "garage" || !st || st.k !== "peek") return;
+    var g = G, rim = g.cy - g.fh + 1 - g.su, up = Math.min(1, st.e / 0.4, (st.d - st.e) / 0.4);
+    var rows = (t % 2.9) < 0.15 ? ["k..k", "kkkk", "kkkk"] : ["k..k", "kkkk", "keek"];
+    var y0 = rim - Math.round(up * 3), x0 = g.cx + g.sd + 9;
+    ctx.save(); ctx.beginPath(); ctx.rect(x0 - 2, 0, 10, rim); ctx.clip();
+    sprite(rows, x0, y0, false, catDim());
+    ctx.restore();
   }
 
   // ---------- the crate ----------
@@ -783,9 +1040,11 @@
     if (glow) { ctx.globalAlpha = 0.85 + 0.06 * Math.sin(t * 0.7); ctx.drawImage(GLOW.c, 0, 0); ctx.globalAlpha = 1; }
     if (S.flick > 0 && Math.floor(S.flick * 25) % 2) { ctx.fillStyle = "rgba(10,10,20,0.35)"; ctx.fillRect(G.gx, G.gTop, G.gw, G.gh); }
     drawString();
+    updateBike(dt);
     drawCat(t);
     drawCrate(t, glow);
-    drawCar(dt);
+    drawPeek(t);
+    drawBike();
     if (pressed >= 0) {
       pressed += dt;
       if (pressed > 0.14 && !G.navigated) { G.navigated = true; location.href = link.getAttribute("href"); }
@@ -806,34 +1065,63 @@
     try { localStorage.setItem(LKEY, JSON.stringify({ bulb: S.bulb, porch: S.porch, wins: wins.map(function (w) { return w.lit ? 1 : 0; }) })); } catch (e) {}
   }
 
-  // ---------- a car, once in a long while ----------
-  var car = null, carWait = 25 + Math.random() * 30;
-  var CAR_COLS = [[176, 52, 48], [222, 222, 216], [52, 70, 104], [96, 104, 92], [28, 30, 34]];
-  function drawCar(dt) {
-    if (RM) return;
-    if (!car) {
-      carWait -= dt;
-      if (carWait > 0) return;
-      var dir = Math.random() < 0.5 ? 1 : -1;
-      car = { dir: dir, x: dir > 0 ? -40 : W + 40, v: W / (1.2 + Math.random() * 0.6), col: CAR_COLS[(Math.random() * CAR_COLS.length) | 0] };
+  // ---------- a bike, once in a long while ----------
+  // the street is just out of frame, so only the rider and the top of the bike show along the bottom edge
+  var bike = null, bikeWait = 120 + Math.random() * 150;
+  var SHIRTS = [[58, 110, 120], [196, 152, 58], [160, 70, 56], [52, 66, 104], [110, 120, 80]];
+  var SKINS = [[230, 190, 160], [200, 146, 108], [150, 102, 72], [100, 68, 48]];
+  var HELMS = [[232, 232, 226], [44, 44, 48], [196, 84, 62], [70, 120, 150]];
+  var FRAMES = [[60, 100, 140], [178, 60, 50], [40, 40, 44], [222, 212, 190], [70, 110, 80]];
+  function pick(a) { return a[(Math.random() * a.length) | 0]; }
+  function spawnBike() {
+    var u = Math.max(2, Math.round(G.gw / 42)), dir = Math.random() < 0.5 ? 1 : -1;
+    bike = { u: u, dir: dir, x: dir > 0 ? -16 * u : W + 16 * u, v: W / (4.5 + Math.random() * 1.5), ph: 0, shirt: pick(SHIRTS), skin: pick(SKINS), helm: pick(HELMS), frame: pick(FRAMES) };
+  }
+  function updateBike(dt) {
+    if (!bike) { if (RM) return; bikeWait -= dt; if (bikeWait <= 0) spawnBike(); return; }
+    bike.x += bike.dir * bike.v * dt; bike.ph += bike.v * dt / (bike.u * 8);
+    if (bike.x < -20 * bike.u || bike.x > W + 20 * bike.u) { bike = null; bikeWait = 240 + Math.random() * 300; }
+  }
+  function drawBike() {
+    if (!bike) return;
+    var b = bike, u = b.u, hubY = H + 3 * u, k = night ? 0.45 : 1;
+    function P(p) { return [b.x + p[0] * u * b.dir, hubY + p[1] * u]; }
+    function seg(a, c, wd, col) {
+      a = P(a); c = P(c);
+      var dx = c[0] - a[0], dy = c[1] - a[1], n = Math.max(1, Math.ceil(Math.max(Math.abs(dx), Math.abs(dy)))), sz = Math.max(1, Math.round(wd * u));
+      ctx.fillStyle = css(dk(col, k));
+      for (var i = 0; i <= n; i++) ctx.fillRect(Math.round(a[0] + dx * i / n - sz / 2), Math.round(a[1] + dy * i / n - sz / 2), sz, sz);
     }
-    car.x += car.dir * car.v * dt;
-    if (car.x < -60 || car.x > W + 60) { car = null; carWait = 50 + Math.random() * 60; return; }
-    var x = Math.round(car.x), base = H - 1, col = night ? dk(car.col, 0.45) : car.col, fl = car.dir > 0;
-    function bx(dx) { return fl ? x + dx : x + 30 - dx; }
-    function r(dx, y, w, h, c) { ctx.fillStyle = c; ctx.fillRect(fl ? x + dx : x + 30 - dx - w, y, w, h); }
-    if (night) { // headlight wash ahead of the car
-      ctx.fillStyle = "rgba(255,240,200,0.10)";
-      for (var k = 0; k < 24; k++) ctx.fillRect(bx(30 + k), base - 6 - Math.floor(k / 6), 1, 4 + Math.floor(k / 3));
+    function disc(p, r, col, half) {
+      var c = P(p); ctx.fillStyle = css(dk(col, k));
+      for (var yy = -r * u; yy <= (half ? 0 : r * u); yy++) for (var xx = -r * u; xx <= r * u; xx++) if (xx * xx + yy * yy <= r * r * u * u) ctx.fillRect(Math.round(c[0] + xx), Math.round(c[1] + yy), 1, 1);
     }
-    r(9, base - 12, 13, 1, css(dk(col, 0.85)));
-    r(7, base - 11, 17, 4, css(col));
-    r(9, base - 10, 6, 3, css(night ? [40, 46, 70] : [150, 180, 205])); r(16, base - 10, 6, 3, css(night ? [40, 46, 70] : [150, 180, 205]));
-    r(1, base - 7, 29, 5, css(col)); r(1, base - 7, 29, 1, css(mix(col, [255, 255, 255], 0.25)));
-    r(1, base - 3, 29, 1, css(dk(col, 0.7)));
-    r(29, base - 6, 1, 2, css(night ? [255, 244, 200] : [235, 230, 200]));
-    r(0, base - 6, 1, 2, css(night ? [255, 60, 50] : [190, 50, 44]));
-    [5, 22].forEach(function (wx) { r(wx, base - 3, 5, 3, "rgb(22,22,26)"); r(wx + 2, base - 2, 1, 1, "rgb(150,150,158)"); });
+    function wheel(cx) {
+      for (var a = 0; a < 64; a++) { var t1 = a / 64 * 6.283, t2 = (a + 1) / 64 * 6.283; seg([cx + Math.cos(t1) * 9, Math.sin(t1) * 9], [cx + Math.cos(t2) * 9, Math.sin(t2) * 9], 1.1, [30, 30, 34]); }
+      for (var sp = 0; sp < 6; sp++) { var th = b.ph + sp * 1.047; seg([cx, 0], [cx + Math.cos(th) * 8.3, Math.sin(th) * 8.3], 0.3, [150, 150, 158]); }
+    }
+    function leg(a, col) {
+      var hip = [-4, -14], ft = [-1 + 3 * Math.sin(a), 1 - 3 * Math.cos(a)];
+      var dx = ft[0] - hip[0], dy = ft[1] - hip[1], d = Math.min(18.6, Math.sqrt(dx * dx + dy * dy)), hgt = Math.sqrt(Math.max(0, 9.4 * 9.4 - d * d / 4));
+      var nx = -dy / d, ny = dx / d; if (nx < 0) { nx = -nx; ny = -ny; }
+      var knee = [hip[0] + dx / 2 + nx * hgt, hip[1] + dy / 2 + ny * hgt];
+      seg(hip, knee, 2.6, col); seg(knee, ft, 2, col); seg(ft, [ft[0] + 1.6, ft[1]], 1.2, [36, 36, 40]);
+    }
+    var pants = [44, 46, 54], a = b.ph;
+    leg(a + Math.PI, dk(pants, 0.8));
+    wheel(-10); wheel(10);
+    seg([-1, 1], [-10, 0], 0.9, b.frame); seg([-4, -11], [-10, 0], 0.9, b.frame);
+    seg([-1, 1], [-4, -11], 1.1, b.frame); seg([-1, 1], [8, -7], 1.2, b.frame); seg([-4, -10], [7, -10], 1.1, b.frame);
+    seg([7, -11], [8, -7], 1.2, b.frame); seg([8, -7], [10, 0], 1, b.frame);
+    seg([7, -11], [7.5, -13], 0.8, [60, 60, 66]); seg([7, -13], [9.5, -13], 0.9, [36, 36, 40]);
+    seg([-6, -12.4], [-2.6, -12.4], 1, [30, 30, 34]);
+    leg(a, pants);
+    seg([-4, -14], [3, -23], 3.4, b.shirt);
+    seg([3, -22], [6, -18], 1.5, b.shirt); seg([6, -18], [8.6, -13.6], 1.3, b.skin);
+    seg([3.5, -23.5], [4.6, -24.6], 1.2, b.skin);
+    disc([5.4, -26.6], 2.3, b.skin);
+    disc([5.1, -27.2], 2.6, b.helm, true); seg([6.4, -27.2], [8.4, -27], 0.6, dk(b.helm, 0.8));
+    if (night) { var hl = P([9.6, -12]); ctx.fillStyle = "rgba(255,244,200,0.9)"; ctx.fillRect(Math.round(hl[0]), Math.round(hl[1]), u, u); }
   }
 
   // ---------- interaction ----------
@@ -856,12 +1144,13 @@
     // the wall sconce
     if (Math.abs(x - g.sconce.x - 1) < 7 && Math.abs(y - g.sconce.y) < 9) { S.porch = !S.porch; shadeAll(); saveLights(); return; }
     // the cat stops and looks at you
-    if ((cat.mode === "drive" || cat.mode === "roof") && !cat.sitting && Math.abs(x - cat.x - 5) < 9 && Math.abs(y - cat.y - 3) < 9) { cat.sitting = true; cat.sitT = 3; return; }
+    var cs = catStep();
+    if ((cat.mode === "drive" || cat.mode === "roof") && cs && cs.k === "walk" && Math.abs(x - cat.x - 6) < 9 && Math.abs(y - cat.y + 4) < 9) { cat.path.splice(cat.i, 0, { k: "sit", d: 3 }); return; }
     // windows switch on and off at night
     if (!night) return;
     for (var i = 0; i < wins.length; i++) {
       var w = wins[i];
-      if (x >= w.x - 2 && x < w.x + w.w + 2 && y >= w.y - 2 && y < w.y + w.h + 2) {
+      if (w.vis > 0.6 && x >= w.x - 2 && x < w.x + w.w + 2 && y >= w.y - 2 && y < w.y + w.h + 2) {
         w.lit = !w.lit;
         var prevZone = zone; glass(w); zone = prevZone; shadeAll(); saveLights(); return;
       }
@@ -871,6 +1160,7 @@
   var rt;
   window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(layout, 100); });
   setInterval(function () { if (isNight() !== night) layout(); }, 60000);
+  window.garageDebug = { bike: function () { if (!bike) spawnBike(); }, cat: function (m) { if (m) startCat(m); else { endCat(); cat.wait = 0; } } };
   layout();
   requestAnimationFrame(frame);
 })();
