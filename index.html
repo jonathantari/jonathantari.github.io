@@ -874,7 +874,12 @@
         { k: "jump", x: xl - 16, y: roofFoot(xl) + 18, h: 5, d: 0.5, off: true },
         { k: "hide", d: 0.2 }
       ];
-    } else cat.sitFor = 12;
+    } else {
+      // window: walk in along the inside sill from the right, sit and look out, then drop out of sight
+      var w = g.catWin;
+      cat.wx0 = w.x + w.w; cat.wx1 = w.x + Math.round(w.w * 0.5) - 5;
+      cat.tWalk = (cat.wx0 - cat.wx1) / 6; cat.sitFor = cat.tWalk + 10;
+    }
   }
   function nextStep() {
     var st = catStep();
@@ -929,10 +934,15 @@
     if (cat.mode === "idle") return;
     var blink = (t % 3.7) < 0.15, dim = catDim();
     if (cat.mode === "window") {
-      var w = G.catWin, sp = SIT[blink ? 1 : 0];
+      var w = G.catWin, wd = night && w.lit ? 0.7 : dim, sill = w.y + w.h;
       ctx.save(); ctx.beginPath(); ctx.rect(w.x, w.y, w.w, w.h); ctx.clip();
-      var rise = Math.min(1, cat.t / 1), fall = Math.max(0, (cat.t - cat.sitFor + 1) / 1);
-      sprite(sp, w.x + Math.round(w.w * 0.5) - 5, w.y + w.h - sp.length + Math.round((1 - rise + fall) * (sp.length + 1)), false, night && w.lit ? 0.7 : dim);
+      if (cat.t < cat.tWalk) {
+        var wx = cat.wx0 - cat.t * 6, wr = WALK[Math.floor(cat.t * 6 / 2.2) % 2];
+        sprite(wr, Math.round(wx), sill - wr.length, false, wd);
+      } else {
+        var sp = SIT[blink ? 1 : 0], fall = Math.max(0, (cat.t - cat.sitFor + 1) / 1);
+        sprite(sp, cat.wx1, sill - sp.length + Math.round(fall * (sp.length + 1)), false, wd);
+      }
       ctx.restore(); return;
     }
     var st = catStep();
@@ -1084,7 +1094,7 @@
 
   // ---------- a bike, once in a long while ----------
   // the street is just out of frame, so only the rider and the top of the bike show along the bottom edge
-  var bike = null, bikeWait = 120 + Math.random() * 150;
+  var bike = null, bikeWait = 20 + Math.random() * 40;
   var SHIRTS = [[58, 110, 120], [196, 152, 58], [160, 70, 56], [52, 66, 104], [110, 120, 80]];
   var SKINS = [[230, 190, 160], [200, 146, 108], [150, 102, 72], [100, 68, 48]];
   var HELMS = [[232, 232, 226], [44, 44, 48], [196, 84, 62], [70, 120, 150]];
