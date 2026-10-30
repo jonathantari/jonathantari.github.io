@@ -1,0 +1,79 @@
+/* the landing scene, as on the live page */
+html, body { margin: 0; height: 100%; background: #c7c2b9; overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none; overscroll-behavior: none; }
+#c, #g { position: fixed; bottom: 0; display: block; image-rendering: pixelated; image-rendering: crisp-edges; -webkit-tap-highlight-color: transparent; }
+canvas.ico { image-rendering: pixelated; image-rendering: crisp-edges; }
+#crate { position: fixed; display: block; border-radius: 6px; -webkit-tap-highlight-color: transparent; }
+#crate:focus-visible { outline: 2px solid #f2a34b; outline-offset: 3px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+[hidden] { display: none !important; }
+
+/* the game */
+#g { left: 0; top: 0; bottom: auto; z-index: 2; background: #000; }
+:root { --ink: #f4f0e6; --box: #1c1a26; --edge: #f4f0e6; --hi: #f2a34b; --font: "Press Start 2P", ui-monospace, Menlo, Consolas, monospace; }
+
+#box {
+  position: fixed; z-index: 10; left: 50%; transform: translateX(-50%);
+  bottom: max(12px, env(safe-area-inset-bottom)); width: min(680px, calc(100vw - 24px)); box-sizing: border-box;
+  background: var(--box); color: var(--ink); font: 13px/1.75 var(--font);
+  border: 4px solid var(--edge); box-shadow: 0 0 0 4px var(--box), 0 6px 0 4px rgba(0,0,0,.35);
+  border-radius: 4px; padding: 14px 18px 16px; margin: 0; cursor: pointer;
+}
+#boxText { margin: 0; min-height: 1.75em; white-space: pre-wrap; }
+#box.more:after { content: "▼"; position: absolute; right: 12px; bottom: 6px; font-size: 10px; animation: bob .8s steps(2) infinite; }
+@keyframes bob { 50% { transform: translateY(3px); } }
+#boxChoices { list-style: none; margin: 8px 0 0; padding: 0; }
+#boxChoices:empty { display: none; }
+#boxChoices.grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 8px; }
+#boxChoices li { padding: 6px 4px 6px 26px; position: relative; cursor: pointer; border-radius: 2px; }
+#boxChoices li.sel:before { content: "▶"; position: absolute; left: 6px; color: var(--hi); animation: nudge .6s steps(2) infinite; }
+#boxChoices li.sel { color: #fff; }
+@keyframes nudge { 50% { left: 9px; } }
+
+#cap {
+  position: fixed; z-index: 9; left: 12px; top: max(12px, env(safe-area-inset-top)); max-width: min(520px, calc(100vw - 150px));
+  font: 10px/1.8 var(--font); color: var(--ink); background: rgba(28,26,38,.82); padding: 8px 12px; border-radius: 3px;
+  opacity: 0; transform: translateY(-4px); transition: opacity .35s steps(4), transform .35s steps(4); pointer-events: none;
+}
+#cap.on { opacity: 1; transform: none; }
+
+#hud { position: fixed; z-index: 9; right: 10px; top: max(10px, env(safe-area-inset-top)); display: flex; gap: 8px; }
+#hud button { width: 48px; height: 48px; padding: 8px; border: 3px solid var(--edge); background: var(--box); border-radius: 6px; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,.35); }
+#hud button:active { transform: translateY(2px); box-shadow: none; }
+#hud button:focus-visible, #box:focus-visible { outline: 2px solid var(--hi); outline-offset: 2px; }
+#hud svg { width: 100%; height: 100%; display: block; }
+
+#stick { position: fixed; z-index: 8; width: 96px; height: 96px; margin: -48px 0 0 -48px; border-radius: 50%; border: 3px solid rgba(244,240,230,.45); pointer-events: none; }
+#stick i { position: absolute; left: 30px; top: 30px; width: 30px; height: 30px; border-radius: 50%; background: rgba(244,240,230,.6); }
+
+#fade { position: fixed; inset: 0; z-index: 20; background: #0b0a10; opacity: 0; pointer-events: none; transition: opacity .5s steps(6); }
+#fade.on { opacity: 1; }
+#fade.flash { background: #fff; opacity: .85; transition: none; }
+
+/* the backpack: a big friendly bag */
+#pack { position: fixed; inset: 0; z-index: 15; background: rgba(12,10,18,.55); display: flex; align-items: center; justify-content: center; padding: 12px; }
+.bag { width: min(560px, 100%); max-height: calc(100% - 24px); overflow: auto; background: #d9a441; border: 4px solid #5a3e1a; border-radius: 22px 22px 10px 10px; box-shadow: inset 0 -10px 0 #b8862c, 0 8px 0 rgba(0,0,0,.35); font: 11px/1.7 var(--font); color: #3a2810; padding: 0 14px 18px; box-sizing: border-box; }
+.flap { display: flex; align-items: center; justify-content: space-between; background: #b8862c; margin: 0 -14px 12px; padding: 14px 16px; border-radius: 18px 18px 0 0; border-bottom: 4px solid #5a3e1a; color: #fff6dc; letter-spacing: 2px; }
+.flap button { font: 14px var(--font); background: none; border: 0; color: #fff6dc; cursor: pointer; width: 40px; height: 40px; }
+.tabs { display: flex; gap: 8px; margin-bottom: 10px; }
+.tabs button { flex: 1; font: 10px var(--font); padding: 10px 6px; border: 3px solid #5a3e1a; background: #e8c070; color: #3a2810; border-radius: 4px; cursor: pointer; }
+.tabs button.on { background: #fff6dc; }
+#packHint { min-height: 1.7em; margin: 6px 2px 10px; }
+.slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.slot { aspect-ratio: 1.15; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: #fff6dc; border: 3px solid #5a3e1a; border-radius: 8px; font: 8px/1.5 var(--font); color: #3a2810; cursor: pointer; padding: 6px; text-align: center; }
+.slot.empty { background: #e8c070; border-style: dashed; cursor: default; }
+.ico { width: 40px; height: 40px; image-rendering: pixelated; }
+.ico.big { width: 56px; height: 50px; }
+.pup { display: flex; align-items: center; gap: 12px; background: #fff6dc; border: 3px solid #5a3e1a; border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; font-size: 9px; }
+.album { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.album img { width: 100%; image-rendering: pixelated; border: 4px solid #fff6dc; box-shadow: 0 3px 0 #5a3e1a; cursor: zoom-in; background: #fff6dc; }
+.album img.zoom { grid-column: 1 / -1; cursor: zoom-out; }
+.none { text-align: center; padding: 20px 0; }
+
+@media (max-width: 480px) {
+  #box { font-size: 11px; padding: 12px 14px 14px; }
+  #cap { font-size: 9px; max-width: calc(100vw - 190px); }
+  .slots { gap: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #box.more:after, #boxChoices li.sel:before { animation: none; }
+}
