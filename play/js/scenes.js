@@ -37,31 +37,32 @@
   // ---------- street ground (also used by wander blocks) ----------
   function streetGround(P) {
     var se = P.season, wet = P.wet, cross = P.cross, drives = P.drives, patches = P.patches || [];
+    var RD = 3.3, CB = 3.6, WK = 5.0; // road half-width, curb, sidewalk edge: a narrow old street
     var asph = wet ? COL.asphaltWet : COL.asphalt;
     return function (x, z, o, dist) {
       var ax = x < 0 ? -x : x, near = dist < 32;
       var dc = cross == null ? 99 : Math.abs(z - cross);
-      if (ax < 3.9 || dc < 3.9) {
+      if (ax < RD || dc < RD) {
         set(o, asph);
         if (near) { var q = h2(Math.floor(x * 4), Math.floor(z * 4)); if (q < 0.12) set(o, COL.asphaltLo); else if (q > 0.94) set(o, COL.asphaltHi); }
-        if (dc < 3.9 && ax > 3.9) return;
-        if (dc >= 3.9 && ax < 0.09 && (((z % 6) + 6) % 6) < 3) set(o, COL.yellow);
-        if (cross != null && dc < 5.2 && dc > 4.0 - 0.1 && ax < 3.9 && (((x + 40) % 1.1) < 0.55)) set(o, COL.white);
+        if (dc < RD && ax > RD) return;
+        if (dc >= RD && ax < 0.08 && (((z % 6) + 6) % 6) < 3) set(o, COL.yellow);
+        if (cross != null && dc < RD + 1.3 && dc > RD + 0.1 && ax < RD && (((x + 40) % 1.1) < 0.55)) set(o, COL.white);
         if (se === "winter" && P.snowy && near && h2(Math.floor(x * 2), Math.floor(z * 2)) > 0.8) set(o, COL.snowLo);
         return;
       }
-      if (cross != null && dc < 4.3 && ax >= 3.9) { // corners of the cross street: curb
+      if (cross != null && dc < CB && ax >= RD) { // corners of the cross street: curb
         set(o, COL.curb); return;
       }
-      if (ax < 4.3 && dc >= 4.3) { set(o, ax < 4.02 ? COL.gutter : COL.curb); return; }
-      var inWalk = ax < 5.9 || (cross != null && dc < 5.9);
+      if (ax < CB && dc >= CB) { set(o, ax < RD + 0.12 ? COL.gutter : COL.curb); return; }
+      var inWalk = ax < WK || (cross != null && dc < WK);
       // driveways
       for (var i = 0; i < drives.length; i++) {
         var d = drives[i];
         if ((x < 0) === (d.side < 0) && z > d.z0 && z < d.z1 && ax < d.x1) {
           set(o, COL.drive);
           if (near && Math.abs(z - (d.z0 + d.z1) / 2) < 0.06) set(o, COL.driveLn);
-          if (inWalk && near && Math.abs(ax - 5.9) < 0.05) set(o, COL.driveLn);
+          if (inWalk && near && Math.abs(ax - WK) < 0.05) set(o, COL.driveLn);
           return;
         }
       }
@@ -97,45 +98,66 @@
     return ["#9fc0d8", false];
   }
   // a house facing the street. side -1 = left side (front faces +x)
+  var TRIMS = ["#f1efe9", "#f1efe9", "#2a3a4a", "#5a3a2a", "#e8e0c8"], SHUT = ["#2f5a7a", "#3a6a4a", "#7a3a3a", "#2a2a30", "#c8a040"];
   function house(E, r, side, zc, o) {
     o = o || {};
-    var m = new Mesh(), fx = o.fx || (8.5 + r() * 2.5), w = o.w || (8 + r() * 3), d = o.d || (8.5 + r() * 2), h = o.h || (3.4 + r() * 0.6) * (r() < 0.45 ? 2 : 1);
+    var m = new Mesh(), fx = o.fx || (6.4 + r() * 1.4), w = o.w || (7 + r() * 3), d = o.d || (7 + r() * 1.6), h = o.h || (3.2 + r() * 0.5) * (r() < 0.55 ? 2 : 1);
     var x0 = side < 0 ? -(fx + w) : fx, x1 = side < 0 ? -fx : fx + w, z0 = zc - d / 2, z1 = zc + d / 2;
-    var wall = o.wall || U.pick(r, WALLS), roof = o.roof || U.pick(r, ROOFS), trim = "#f1efe9";
+    var wall = o.wall || U.pick(r, WALLS), roof = o.roof || U.pick(r, ROOFS), trim = U.pick(r, TRIMS), shut = r() < 0.5 ? U.pick(r, SHUT) : null;
     var face = side < 0 ? "e" : "w";
     var dec = [], two = h > 5;
-    // windows: one or two rows
+    // siding lines or brick courses so walls aren't flat
+    if (r() < 0.5) for (var sl = 1; sl < (two ? 14 : 7); sl++) dec.push([0, sl / (two ? 14 : 7) - 0.006, 1, sl / (two ? 14 : 7), U.dk(U.hx(wall), 0.9)]);
     var rows = two ? [[0.14, 0.38], [0.6, 0.84]] : [[0.3, 0.7]];
-    var garage = o.garage != null ? o.garage : r() < 0.5;
+    var garage = o.garage != null ? o.garage : r() < 0.45;
     rows.forEach(function (rw, ri) {
-      var cols = ri === 0 && garage ? [[0.1, 0.3]] : [[0.1, 0.3], [0.62, 0.84]];
-      if (ri === 1) cols = [[0.12, 0.36], [0.62, 0.86]];
+      var cols = ri === 0 && garage ? [[0.08, 0.28]] : [[0.08, 0.28], [0.62, 0.86]];
+      if (ri === 1) cols = r() < 0.3 ? [[0.1, 0.9]] : [[0.12, 0.36], [0.62, 0.86]];
       cols.forEach(function (cl) {
         var wc = windowCol(E, r);
+        if (shut && cl[1] - cl[0] < 0.4) { dec.push([cl[0] - 0.07, rw[0], cl[0] - 0.025, rw[1], shut]); dec.push([cl[1] + 0.025, rw[0], cl[1] + 0.07, rw[1], shut]); }
         dec.push([cl[0] - 0.02, rw[0] - 0.03, cl[1] + 0.02, rw[1] + 0.03, trim]);
         dec.push([cl[0], rw[0], cl[1], rw[1], wc[0], wc[1]]);
         dec.push([(cl[0] + cl[1]) / 2 - 0.006, rw[0], (cl[0] + cl[1]) / 2 + 0.006, rw[1], trim]);
+        if (ri === 0 && r() < 0.5) { dec.push([cl[0] - 0.02, rw[0] - 0.09, cl[1] + 0.02, rw[0] - 0.03, "#7a5034"]); dec.push([cl[0], rw[0] - 0.07, cl[1], rw[0] - 0.04, U.pick(r, ["#d8423e", "#e8b830", "#c86aa8", "#5b8a4f"])]); }
       });
     });
-    var doorU = garage ? 0.38 : 0.42;
-    dec.push([doorU, 0, doorU + 0.12, two ? 0.33 : 0.62, o.door || U.pick(r, ["#a8663c", "#3a5a7a", "#7a3a3a", "#3a6a4a", "#e8c040"])]);
+    var doorU = garage ? 0.36 : 0.42, doorTop = two ? 0.33 : 0.62;
+    dec.push([doorU - 0.015, 0, doorU + 0.135, doorTop + 0.02, trim]);
+    dec.push([doorU, 0, doorU + 0.12, doorTop, o.door || U.pick(r, ["#a8663c", "#3a5a7a", "#7a3a3a", "#3a6a4a", "#e8c040", "#c8402a"])]);
     if (garage) {
-      dec.push([0.56, 0, 0.94, two ? 0.36 : 0.7, "#e4e0d8"]);
-      for (var g = 1; g < 4; g++) dec.push([0.56, (two ? 0.36 : 0.7) * g / 4 - 0.01, 0.94, (two ? 0.36 : 0.7) * g / 4, "#c8c4bc"]);
+      dec.push([0.54, 0, 0.95, two ? 0.36 : 0.7, "#e4e0d8"]);
+      for (var g = 1; g < 4; g++) dec.push([0.54, (two ? 0.36 : 0.7) * g / 4 - 0.01, 0.95, (two ? 0.36 : 0.7) * g / 4, "#c8c4bc"]);
     }
-    var porch = E.tod !== "day";
-    if (porch) dec.push([doorU + 0.14, two ? 0.27 : 0.5, doorU + 0.17, two ? 0.3 : 0.56, "#ffe2a0", true]);
+    var lit = E.tod !== "day";
+    if (lit) dec.push([doorU + 0.14, doorTop - 0.06, doorU + 0.17, doorTop - 0.01, "#ffe2a0", true]);
     var decs = {}; decs[face] = dec;
     m.box(x0, x1, 0, h, z0, z1, wall, decs);
     var axis = o.axis || (r() < 0.5 ? "x" : "z");
-    m.gable(x0, x1, z0, z1, h, 1.6 + r() * 1.2, axis, roof, wall, 0.45);
-    if (r() < 0.4) { var cx = side < 0 ? x0 + w * 0.3 : x1 - w * 0.3; m.box(cx - 0.4, cx + 0.4, h, h + 2.6, zc + d * 0.2, zc + d * 0.2 + 0.8, "#8a5a4a"); }
+    m.gable(x0, x1, z0, z1, h, 1.6 + r() * 1.4, axis, roof, wall, 0.5);
+    // a front porch with a little roof and two posts
+    var fxx = side < 0 ? x1 : x0, out = side < 0 ? 1 : -1;
+    if (!garage || r() < 0.5) {
+      var pz0 = z0 + d * (side < 0 ? doorU - 0.12 : 1 - doorU - 0.25), pz1 = pz0 + d * 0.38, px = fxx + out * 1.3;
+      m.box(Math.min(fxx, px), Math.max(fxx, px), 0, 0.35, pz0, pz1, "#b8b0a0");
+      m.box(Math.min(fxx, px) - 0.1, Math.max(fxx, px) + 0.1, 2.4, 2.6, pz0 - 0.15, pz1 + 0.15, U.dk(U.hx(roof), 1.1));
+      [pz0 + 0.1, pz1 - 0.2].forEach(function (zz) { m.box(px - 0.08 - (out > 0 ? 0.1 : 0), px + 0.08 - (out > 0 ? 0.1 : 0), 0.35, 2.4, zz, zz + 0.12, trim); });
+    }
+    if (r() < 0.45) { var cx = side < 0 ? x0 + w * 0.3 : x1 - w * 0.3; m.box(cx - 0.4, cx + 0.4, h, h + 2.6, zc + d * 0.2, zc + d * 0.2 + 0.8, U.pick(r, ["#8a5a4a", "#6a6a6e"])); }
     m.done();
-    var res = { m: m, solid: [x0 - 0.2, x1 + 0.2, z0 - 0.2, z1 + 0.2], door: { x: side < 0 ? x1 + 0.6 : x0 - 0.6, z: z0 + d * (1 - doorU - 0.06) }, front: side < 0 ? x1 : x0 };
+    var res = { m: m, solid: [x0 - 0.2, x1 + 0.2, z0 - 0.2, z1 + 0.2], door: { x: side < 0 ? x1 + 0.6 : x0 - 0.6, z: z0 + d * (1 - doorU - 0.06) }, front: fxx };
     if (side > 0) res.door.z = z1 - d * (doorU + 0.06);
-    if (porch) res.light = { x: res.door.x + side * -0.4, z: res.door.z, r: 5, i: 0.9, c: [1, 0.82, 0.55] };
-    res.drive = garage ? { side: side, z0: side < 0 ? z0 + d * 0.56 : z1 - d * 0.94, z1: side < 0 ? z0 + d * 0.94 : z1 - d * 0.56, x1: fx } : null;
+    if (lit) res.light = { x: res.door.x + side * -0.4, z: res.door.z, r: 5, i: 0.9, c: [1, 0.82, 0.55] };
+    res.drive = garage ? { side: side, z0: side < 0 ? z0 + d * 0.54 : z1 - d * 0.95, z1: side < 0 ? z0 + d * 0.95 : z1 - d * 0.54, x1: fx } : null;
     return res;
+  }
+  // a picket fence or a low stone wall along the front of a lot
+  function frontage(m, r, side, z0, z1, kind) {
+    var x = side * 5.25;
+    if (kind === "fence") {
+      m.box(x - 0.04, x + 0.04, 0.5, 0.62, z0, z1, "#f2efe6");
+      for (var z = z0; z < z1; z += 0.45) m.box(x - 0.05, x + 0.05, 0, 0.9, z, z + 0.16, "#f2efe6");
+    } else m.box(x - 0.25, x + 0.25, 0, 0.55, z0, z1, { all: "#9f9d97", t: "#bab8b2" });
   }
   // our house, as seen on the landing page: front gable, dark siding, brick band, open garage, tall stucco tower
   function homeHouse(E) {
@@ -213,78 +235,86 @@
     var r = U.rng(opt.seed || 1234), sc = base("street", E);
     var cross = 124;
     var drives = [], home = homeHouse(E);
-    sc.meshes.push(home.m); home.solids.forEach(function (s) { sc.solids.push(s); });
+    sc.meshes.push(home.m); home.solids.forEach(function (s2) { sc.solids.push(s2); });
     drives.push(home.drive);
     if (home.light) sc.lights.push(home.light);
     sc.marks.home = { x: -9.5, z: 2.8 };
-    // a big old tree out front, pines behind
     sc.props.push(prop(S.tree(E.season, 3, E.season === "winter" && E.snowy), -11, -8.5, 11));
-    sc.posts.push({ x: -11, z: -8.5, r: 0.5 });
     sc.props.push(prop(S.pine(2, E.snowy), -23, 9, 10), prop(S.pine(5, E.snowy), -24, -3, 11), prop(S.pine(1, E.snowy), -16, 10, 9));
     [-6.5, -8.0].forEach(function (zz, i) { sc.props.push(prop(S.bush(E.season, i), -10.6, zz + 1.4 * i - 2, 1.0)); });
-    var houses = [];
-    [-32, -16, 16, 32, 48, 64, 80, 96, 140, 156].forEach(function (z) { houses.push([-1, z]); });
-    [-24, -8, 8, 24, 40, 56, 72, 88, 104, 140, 156].forEach(function (z) { houses.push([1, z]); });
-    houses.forEach(function (hz) {
+    // houses shoulder to shoulder, both sides, the right side leaving a gap across from home
+    var L = [], Rt = [];
+    for (var z = -30; z < 116; z += 9.5 + r() * 2) if (z < -7 || z > 9) L.push(z);
+    for (var z2 = -26; z2 < 116; z2 += 9 + r() * 2.5) if (z2 < -5 || z2 > 8) Rt.push(z2);
+    [138, 150, 162].forEach(function (zz) { L.push(zz); Rt.push(zz + 4); });
+    L.map(function (z3) { return [-1, z3]; }).concat(Rt.map(function (z3) { return [1, z3]; })).forEach(function (hz) {
       var hh = house(E, r, hz[0], hz[1]);
       sc.meshes.push(hh.m); sc.solids.push(hh.solid);
       if (hh.drive) drives.push(hh.drive);
       if (hh.light) sc.lights.push(hh.light);
       sc.doors.push(hh.door);
-      if (r() < 0.5) sc.props.push(prop(S.mailbox(), hz[0] * 6.3, hz[1] - 3.2, 1.2));
+      var fm = new Mesh(), q = r(), d2 = hh.drive;
+      if (q < 0.55 && hz[1] < cross - 8) {
+        var zA = hz[1] - 4.5, zB = hz[1] + 4.5;
+        if (d2) { if (d2.z0 - zA > 0.6) frontage(fm, r, hz[0], zA, d2.z0 - 0.2, q < 0.3 ? "fence" : "wall"); }
+        else frontage(fm, r, hz[0], zA, zB, q < 0.3 ? "fence" : "wall");
+        if (fm.polys.length) { fm.done(); sc.meshes.push(fm); }
+      }
+      if (r() < 0.45) sc.props.push(prop(S.bush(E.season, (r() * 5) | 0), hz[0] * 5.8, hz[1] + (r() - 0.5) * 5, 1.0 + r() * 0.5));
+      if (r() < 0.35) sc.props.push(prop(S.mailbox(), hz[0] * 4.85, hz[1] - 2.5, 1.1));
     });
-    // the cross street at the corner: houses facing it, and the road uphill to the left
-    [[-24, 1], [-40, 1], [24, 1], [40, 1], [-24, -1], [24, -1], [40, -1]].forEach(function (p) {
-      var zc = cross + p[1] * 12, m = new Mesh(), w = 9, d = 8, hh = 3.6 + r() * 3.4;
-      m.box(p[0] - w / 2, p[0] + w / 2, 0, hh, zc - d / 2, zc + d / 2, U.pick(r, WALLS), {});
-      m.gable(p[0] - w / 2, p[0] + w / 2, zc - d / 2, zc + d / 2, hh, 1.8, "z", U.pick(r, ROOFS), U.pick(r, WALLS));
+    // the cross street at the corner, with its own row of houses and parked cars
+    [[-20, 1], [-30, 1], [-40, 1], [20, 1], [30, 1], [40, 1], [-20, -1], [-30, -1], [20, -1], [30, -1], [40, -1]].forEach(function (p) {
+      var zc = cross + p[1] * 9.5, m = new Mesh(), w = 8, d = 7, hh2 = 3.4 + r() * 3.4;
+      m.box(p[0] - w / 2, p[0] + w / 2, 0, hh2, zc - d / 2, zc + d / 2, U.pick(r, WALLS), {});
+      m.gable(p[0] - w / 2, p[0] + w / 2, zc - d / 2, zc + d / 2, hh2, 1.8, "z", U.pick(r, ROOFS), U.pick(r, WALLS));
       m.done(); sc.meshes.push(m);
     });
-    sc.props.push(prop(S.sign("street"), -5.2, cross - 5.2, 3.2), prop(S.sign("trail"), -6.4, cross - 4.8, 2.2, { id: "trailsign" }));
-    // parked cars
-    var carZ = [-12, 22, 36, 74, 92, 112].filter(function () { return r() < 0.75; });
-    carZ.forEach(function (z, i) {
-      var side = (i + (r() < 0.5 ? 1 : 0)) % 2 ? 1 : -1, cc = car(E, side * 2.85, z, U.pick(r, CARS), "z");
-      sc.meshes.push(cc.m); sc.solids.push(cc.solid); sc.marks["car" + i] = { x: side * 2.85, z: z, side: side };
+    [-11, -18, 12, 19, 27].forEach(function (x, i) { var cc = car(E, x, cross + (i % 2 ? 2.55 : -2.55), U.pick(r, CARS), "x"); sc.meshes.push(cc.m); });
+    sc.props.push(prop(S.sign("street"), -4.3, cross - 4.4, 3.2), prop(S.sign("trail"), -4.6, cross - 5.2, 2.0, { id: "trailsign" }), prop(S.sign("stop"), 4.3, cross - 4.4, 2.6));
+    // parked cars nose to tail along both curbs, the way they are on the real street
+    [-1, 1].forEach(function (side) {
+      for (var cz = -28; cz < cross - 7; cz += 5.2 + r() * 3) {
+        if (side < 0 && cz > -5 && cz < 9) continue;
+        if (drives.some(function (dr) { return (dr.side < 0) === (side < 0) && cz + 2.3 > dr.z0 && cz - 2.3 < dr.z1; })) continue;
+        if (r() < 0.22) continue;
+        var cc2 = car(E, side * 2.5, cz, U.pick(r, CARS), "z", { tall: r() < 0.25, len: 4.0 + r() * 0.8 });
+        sc.meshes.push(cc2.m); sc.marks["car" + sc.meshes.length] = { x: side * 2.5, z: cz, side: side };
+      }
     });
-    // street trees, poles and wires, a streetlight or two
-    for (var tz = -28; tz < 116; tz += 13) {
-      [-1, 1].forEach(function (s) {
-        var zz = tz + (s > 0 ? 6 : 0) + r() * 3;
-        if (drives.some(function (d) { return (d.side < 0) === (s < 0) && zz > d.z0 - 1.5 && zz < d.z1 + 1.5; })) return;
-        if (s < 0 && zz > -9 && zz < 8) return;
-        if (r() < 0.25) return;
-        sc.props.push(treeProp(E, r, s * 7.4, zz)); sc.posts.push({ x: s * 7.4, z: zz, r: 0.4 });
+    // big old trees in the parking strip, their crowns meeting over the street
+    for (var tz = -30; tz < cross - 6; tz += 7 + r() * 4) {
+      [-1, 1].forEach(function (s3) {
+        var zz = tz + (s3 > 0 ? 3.5 : 0) + r() * 2;
+        if (s3 < 0 && zz > -10 && zz < 8) return;
+        if (r() < 0.2) return;
+        sc.props.push(r() < 0.18 ? prop(S.pine((r() * 9) | 0, E.snowy), s3 * 5.6, zz, 9 + r() * 3) : prop(S.tree(E.season, (r() * 9) | 0, E.season === "winter" && E.snowy), s3 * 5.5, zz, 10 + r() * 4));
       });
     }
     var poles = [-20, 4, 28, 52, 76, 100];
-    poles.forEach(function (z) { sc.meshes.push(pole(6.7, z)); sc.posts.push({ x: 6.7, z: z, r: 0.3 }); });
-    for (var p = 0; p + 1 < poles.length; p++) {
+    poles.forEach(function (z4) { sc.meshes.push(pole(5.0, z4)); });
+    for (var p2 = 0; p2 + 1 < poles.length; p2++) {
       [-0.75, 0.75].forEach(function (o) {
-        var a = [6.7 + o, 7.2, poles[p]], b = [6.7 + o, 7.2, poles[p + 1]], mid = [6.7 + o, 6.6, (poles[p] + poles[p + 1]) / 2];
+        var a = [5.0 + o, 7.2, poles[p2]], b = [5.0 + o, 7.2, poles[p2 + 1]], mid = [5.0 + o, 6.6, (poles[p2] + poles[p2 + 1]) / 2];
         sc.lines.push({ k: "line", a: a, b: mid, c: "#2a2a2e" }, { k: "line", a: mid, b: b, c: "#2a2a2e" });
       });
     }
-    sc.marks.wire = { x: 6.7 + 0.75, y: 6.62, z: 40 };
-    [30, 66, 104].forEach(function (z) { lamp(sc, E, -6.6, z); });
-    sc.props.push(prop(S.hydrant(), 5.0, 46, 0.8));
-    sc.props.push(prop(S.hydrant(), -5.0, 84, 0.8));
+    sc.marks.wire = { x: 5.75, y: 6.62, z: 40 };
+    [22, 58, 94].forEach(function (z5) { lamp(sc, E, -4.6, z5); });
+    sc.props.push(prop(S.hydrant(), 4.1, 47, 0.8), prop(S.hydrant(), -4.1, 86, 0.8));
     sc.ground = streetGround({ season: E.season, wet: E.wet, snowy: E.snowy, cross: cross, drives: drives });
     sc.drives = drives;
     sc.cross = cross;
-    sc.walk = function (x, z) {
-      if (z < -34 || z > cross + 4.5) return false;
-      if (Math.abs(z - cross) < 4.2) return Math.abs(x) < 18;
-      return Math.abs(x) < 12.5;
-    };
+    sc.lanes = 1; sc.laneW = 1.05;
+    if (opt.mode === "return") { sc.dir = -1; sc.zMin = 2.8; sc.zMax = cross; }
+    else { sc.dir = 1; sc.zMin = -20; sc.zMax = cross - 1; }
     sc.marks.event = { z: 54 };
     return sc;
   }
   function lamp(sc, E, x, z) {
     var on = E.tod !== "day";
     sc.props.push(prop(S.streetlight(on), x, z, 5.2, { emit: false }));
-    sc.posts.push({ x: x, z: z, r: 0.25 });
-    if (on) { sc.lights.push({ x: x + (x < 0 ? 0.6 : -0.6), z: z, r: 8, i: 0.95, c: [1, 0.86, 0.6] }); sc.glows.push({ x: x + (x < 0 ? 0.25 : -0.25), y: 5.05, z: z }); }
+    if (on) { sc.lights.push({ x: x + (x < 0 ? 1.2 : -1.2), z: z, r: 8, i: 1.0, c: [1, 0.86, 0.6] }); sc.glows.push({ x: x + (x < 0 ? 0.25 : -0.25), y: 5.05, z: z }); }
   }
 
   function base(kind, E) {
@@ -305,17 +335,18 @@
     });
     // houses behind you and past the corner
     [-12, cross + 16].forEach(function (zz) { [-1, 1].forEach(function (s) { var hh = house(E, r, s, zz); sc.meshes.push(hh.m); sc.solids.push(hh.solid); }); });
-    for (var z = 10; z < len; z += 22) lamp(sc, E, (z / 22) % 2 < 1 ? 6.6 : -6.6, z);
+    for (var z = 10; z < len; z += 22) lamp(sc, E, (z / 22) % 2 < 1 ? 4.6 : -4.6, z);
     var carN = 2 + ((r() * 3) | 0);
-    for (var c = 0; c < carN; c++) { var s2 = r() < 0.5 ? -1 : 1, zz2 = 12 + r() * 70, cc = car(E, s2 * 2.85, zz2, U.pick(r, CARS), "z"); sc.meshes.push(cc.m); sc.solids.push(cc.solid); }
+    for (var c = 0; c < carN + 3; c++) { var s2 = r() < 0.5 ? -1 : 1, zz2 = 4 + r() * 86, cc = car(E, s2 * 2.5, zz2, U.pick(r, CARS), "z"); sc.meshes.push(cc.m); }
     [[-24, cross], [24, cross]].forEach(function (p) { var m = new Mesh(); m.box(p[0] - 5, p[0] + 5, 0, 4 + r() * 4, p[1] + 7, p[1] + 16, U.pick(r, WALLS)); m.done(); sc.meshes.push(m); });
     sc.ground = streetGround({ season: E.season, wet: E.wet, snowy: E.snowy, cross: cross, drives: drives, patches: patches });
     sc.cross = cross;
-    sc.walk = function (x, z) { if (z < -8 || z > cross + 4.5) return false; if (Math.abs(z - cross) < 4.2) return Math.abs(x) < 16; return Math.abs(x) < 12.5; };
+    sc.lanes = 1; sc.laneW = 1.05; sc.dir = 1; sc.zMin = -8; sc.zMax = cross - 1;
+    for (var tz = 2; tz < len; tz += 9 + r() * 6) { var s4 = r() < 0.5 ? -1 : 1; if (!sc.lotsAt.some(function (l) { return l.side === s4 && tz > l.z0 && tz < l.z1 && l.lot.kind !== "park"; })) sc.props.push(treeProp(E, r, s4 * 5.5, tz, true)); }
     return sc;
   }
   function buildLot(sc, E, r, lot, side, z0, patches) {
-    var night = E.tod === "night", fx = 6.2, X = function (d) { return side * (fx + d); }, zc = z0 + 15;
+    var night = E.tod === "night", fx = 5.2, X = function (d) { return side * (fx + d); }, zc = z0 + 15;
     var kind = lot.kind;
     function addMesh(m) { m.done(); sc.meshes.push(m); return m; }
     function shopFront(name, wallC, awn, open) {
@@ -381,7 +412,19 @@
   }
 
   // ---------- the trail (C0, C1, C2/C6) ----------
-  function trailX(z) { return z < 26 ? 0 : Math.sin((z - 26) * 0.035) * 6 + Math.sin((z - 26) * 0.011) * 9; }
+  function trailX(z) { var s2 = Math.max(0, z - 26), k = Math.min(1, s2 / 25); return (Math.sin(s2 * 0.055) * 6 + Math.sin(s2 * 0.019) * 9) * k; }
+  // the climb: steady uphill with switchback swells; the path is cut into a hillside that
+  // rises on one side and drops away on the other, swapping sides as it twists
+  function trailBase(z) { var s2 = Math.max(0, z - 22); return s2 * 0.17 + Math.sin(s2 * 0.045) * 2.2 * Math.min(1, s2 / 30); }
+  function trailH(x, z) {
+    var b = trailBase(z);
+    if (z < 22) return 0;
+    var off = x - trailX(z), a = Math.abs(off) - 1.5;
+    if (a <= 0) return b;
+    var up = Math.sin(z * 0.022 + 0.8) > 0 ? 1 : -1;
+    var rise = off * up > 0 ? Math.pow(a, 1.1) * 0.42 : -a * 0.4;
+    return b + rise + Math.sin(x * 0.6) * Math.sin(z * 0.45) * 0.35 * Math.min(1, a);
+  }
   function trailGround(E) {
     var se = E.season, wet = E.wet;
     return function (x, z, o, dist) {
@@ -398,6 +441,8 @@
         return;
       }
       if (se === "winter") { set(o, q < 0.12 ? COL.snowLo : COL.snow); if (q > 0.97) set(o, COL.pebble); return; }
+      var up = Math.sin(z * 0.022 + 0.8) > 0 ? 1 : -1;
+      if ((x - cx) * up > 6 + Math.sin(z * 0.3) * 2 && z > 30 && h2(Math.floor(x * 0.5), Math.floor(z * 0.5)) > 0.35) { set(o, q < 0.3 ? COL.rockLo : q > 0.85 ? COL.rockHi : COL.rock); return; }
       var band = (Math.floor((x * 0.6 + z) / 2.4) & 1);
       var A = se === "spring" ? COL.grass : COL.dry, B = se === "spring" ? COL.grassLo : COL.dryLo;
       if (se === "autumn") { A = [176, 160, 96]; B = [160, 144, 84]; }
@@ -421,7 +466,7 @@
       var cx = trailX(z);
       [-1, 1].forEach(function (s) {
         if (r() < 0.35) return;
-        var off = 3.2 + r() * 14, x = cx + s * off, t = r();
+        var off = 2.4 + r() * 13, x = cx + s * off, t = r();
         if (z < 24 && Math.abs(x) < 14) return;
         if (t < 0.45) { sc.props.push(prop(S.pine((r() * 9) | 0, E.snowy, true), x, z, 6 + r() * 6)); sc.posts.push({ x: x, z: z, r: 0.5 }); }
         else if (t < 0.7) sc.props.push(prop(S.bush(E.season, (r() * 5) | 0), x, z, 0.9 + r() * 0.6));
@@ -432,17 +477,14 @@
     // pickups beside the path
     var pool = GG.data.trail.pickups[E.season] || GG.data.trail.pickups.summer;
     for (var p = 0; p < 7; p++) {
-      var pz = 34 + p * 26 + r() * 10, side = r() < 0.5 ? -1 : 1, px = trailX(pz) + side * (1.6 + r() * 1.4), id = U.pick(r, pool);
+      var pz = 34 + p * 26 + r() * 10, px = trailX(pz) + ((r() * 3) | 0) * 0.85 - 0.85, id = U.pick(r, pool);
       var spr = id === "pinecone" || id === "acorn" ? S.pinecone() : id === "rock" ? S.rock(2, false) : id === "leaf" ? S.bush("autumn", 1) : S.flower(id);
       var h = id === "pinecone" || id === "acorn" ? 0.35 : id === "rock" ? 0.3 : id === "leaf" ? 0.3 : 0.75;
       sc.actors.push({ pickup: id, x: px, z: pz, h: h, spr: spr });
     }
-    sc.walk = function (x, z) {
-      if (z < 0) return false;
-      if (z < 22) return Math.abs(x) < 4.1 || (x > 4 && x < 13 && z > 2);
-      if (z > len + 6) return false;
-      return Math.abs(x - trailX(z)) < 7;
-    };
+    sc.height = trailH;
+    sc.trackX = function (z) { return z < 22 ? 0 : trailX(z); };
+    sc.lanes = 1; sc.laneW = 0.85; sc.dir = 1; sc.zMin = 0; sc.zMax = len;
     sc.marks.encounter = { z: 150 };
     sc.marks.end = { z: len };
     sc.marks.early = { z: 85 };
@@ -488,7 +530,7 @@
     };
     for (var i = 0; i < 6; i++) { var x = (r() - 0.5) * 22, z = 4 + r() * 20; sc.props.push(prop(S.pine((r() * 9) | 0, E.snowy, true), x, z + 6, 5 + r() * 4)); sc.posts.push({ x: x, z: z + 6, r: 0.5 }); }
     [[-5, 2], [6, 5], [3, -2]].forEach(function (p) { sc.props.push(prop(S.rock(p[0] > 0 ? 1 : 0, E.snowy), p[0], p[1], 1.2)); sc.posts.push({ x: p[0], z: p[1], r: 0.8 }); });
-    sc.walk = function (x, z) { return inside(x, z) && z > -5.5 && z < 26 && Math.abs(x) < 12; };
+    sc.free = true;
     return sc;
   }
 
@@ -516,11 +558,16 @@
     for (var i = 0; i < 70; i++) { var x = 10 + r() * 18, z = -10 + r() * 80; sc.props.push(prop(S.blade((r() * 9) | 0), x, z, 6 + r() * 6, { shadow: false })); }
     for (var j = 0; j < 8; j++) sc.props.push(prop(S.rock((r() * 4) | 0, false), -8 + r() * 14, -5 + r() * 70, 1 + r() * 2));
     sc.props.push(prop(S.flower("aster"), 14, 30, 16, { shadow: false }), prop(S.flower("columbine"), 18, 50, 18, { shadow: false }));
-    sc.props.push(prop(S.anthill(), -3, 2, 2.2, { id: "hill" }));
+    sc.props.push(prop(S.anthill(), -3, 3, 2.2, { id: "hill" }));
     sc.posts.push({ x: -3, z: 2, r: 2.2 });
-    sc.marks.crumb = { x: 2, z: 60 };
-    sc.marks.hill = { x: -3, z: 4.2 };
-    sc.marks.hose = { x: 7, z: 12 };
+    sc.marks.crumb = { x: 1, z: 60 };
+    sc.marks.hill = { x: -3, z: 3 };
+    sc.marks.hose = { x: 2.2, z: 14 };
+    sc.trackX = function () { return 1; }; sc.lanes = 1; sc.laneW = 1.3; sc.dir = 1; sc.zMin = -3; sc.zMax = 60.5;
+    sc.blocked = function (x, z) {
+      for (var i = 0; i < cracks.length; i++) { var c = cracks[i]; if (Math.abs(z - c.z) < c.w + 0.4 && Math.abs(x - 1) > 0.65) return GG.data.street.ball.tiny.canyon; }
+      return false;
+    };
     sc.walk = function (x, z) {
       if (x < -12 || x > 30 || z < -8 || z > 70) return false;
       for (var i = 0; i < cracks.length; i++) { var c = cracks[i], cz = c.z + Math.sin(x * 0.25) * 1.2; if (Math.abs(z - cz) < c.w && Math.abs(x - 1) > 0.65) return false; }

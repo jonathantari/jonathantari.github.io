@@ -36,6 +36,7 @@ GG.data.world = {
     photo: "Snap! Saved to the album in your backpack.",
     packFull: "Your backpack is full.",
     noPhotos: "No photos yet. Tap the camera to take one.",
-    emptyPack: "Nothing in here but crumbs."
+    emptyPack: "Nothing in here but crumbs.",
+    controls: "You walk on your own. Swipe ← → (or arrow keys) to change lanes. Swipe ↓ or tap to stop, ↑ to go."
   }
 };

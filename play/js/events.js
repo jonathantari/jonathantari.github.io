@@ -52,7 +52,7 @@
     // 0.5: back up the driveway
     sc.away = opt.mode === "return" || opt.mode === "resume";
     G.trigger({
-      test: function (p) { if (p.z > 12) sc.away = true; return sc.away && p.x < -5.6 && p.z > 0.3 && p.z < 5.3; },
+      test: function (p) { if (p.z > 12) sc.away = true; return sc.away && (sc.dir || 1) < 0 && p.z < 3.4; },
       rearm: true, fn: homePrompt
     });
 
@@ -87,13 +87,14 @@
         var part = U.pick(rnd, wd.todWord[E.tod]);
         if (E.tod === "day") part = E.date.getHours() < 12 ? "morning" : "afternoon";
         caption(day + " " + part + ". " + U.pick(rnd, wd.weatherWord[E.weather] || wd.weatherWord.clear), 4.5);
+        setTimeout(function () { caption(wd.ui.controls, 6); }, 5000);
       });
   }
 
   function homePrompt() {
     var h = D().world.home;
     return UI.choose(h.prompt, h.choices).then(function (i) {
-      if (i !== 0) return;
+      if (i !== 0) { G.scene.dir = 1; G.scene.zMax = G.scene.cross - 1; G.player.heading = 0; G.cam.yaw = 0; G.player.walking = false; return; }
       G.lock();
       return G.walkTo(-6.4, 2.8, 2.6).then(function () {
         G.camTo(function () { return { x: -1.5, y: 2.6, z: 2.8, yaw: -Math.PI / 2, pitch: 0.12 }; }, 1.6);
@@ -119,23 +120,23 @@
     var kinds = B.kinds.filter(function (k) { return !k.seasons || k.seasons.indexOf(E.season) >= 0; });
     var kind = U.weighted(rnd, kinds), waiter = U.weighted(rnd, B.waiters), talker = U.weighted(rnd, B.talkers);
     if (E.tod === "night") { raccoonInstead(sc, ev); return; }
-    var wx = 7.8, wz = ev + 12.5, wa;
+    var wx = 4.3, wz = ev + 12, wa;
     if (waiter.id === "dog") wa = A.animal("dog", wx, wz, -Math.PI / 2);
     else wa = A.person(waiter.look, wx, wz, -Math.PI / 2);
     wa.tick = function () { if (!wa.path.length) { var p = G.player; wa.heading = Math.atan2(p.x - wa.x, p.z - wa.z); } };
     G.addActor(wa);
-    var ball = A.ball(kind.id, 9.2, ev + 10);
+    var ball = A.ball(kind.id, 4.4, ev + 9.5);
     ball.hidden = true;
     G.addActor(ball);
     var ctx = { sc: sc, ev: ev, kind: kind, waiter: waiter, talker: talker, wa: wa, ball: ball, done: false };
     // A0: it rolls out and stops a few steps ahead; you keep control
     G.trigger({ test: function (p) { return p.z > ev - 3; }, fn: function () {
-      ball.hidden = false; ball.vx = -8.4; ball.vz = -0.5; GG.sfx && GG.sfx.boing();
+      ball.hidden = false; ball.vx = -3.9; ball.vz = -0.2; GG.sfx && GG.sfx.boing();
       caption(U.fmt(B.rolls[0], { ball: kind.name }), 4);
       setTimeout(function () { if (!ctx.done) caption(waiter.call[0], 4); }, 3800);
     } });
     // walk into it: pick it up
-    G.trigger({ test: function (p) { return !ball.hidden && !ball.rolling && !ctx.done && near(p, ball.x, ball.z, 0.95); }, fn: function () { return ballBeat(ctx); } });
+    G.trigger({ test: function (p) { return !ball.hidden && !ctx.done && Math.abs(p.x - ball.x) < 0.7 && Math.abs(p.z - ball.z) < 0.9; }, fn: function () { G.player.walking = true; return ballBeat(ctx); } });
     // walk past it: A4
     G.trigger({ test: function (p) { return !ball.hidden && !ctx.done && p.z > ball.z + 5; }, fn: function () {
       ctx.done = true; sv().ballDone = true; GG.save.write();
@@ -171,7 +172,7 @@
       return U.wait(1).then(function () { return UI.say(q === "good" ? w.good : w.bad); })
         .then(function () { if (q === "good" && w.gift) return G.give(w.gift); })
         .then(function () {
-          if (q !== "good") { wa.go([{ x: tx, z: tz }], 2.4, function () { b.hidden = true; wa.go([{ x: 7.8, z: ctx.ev + 12.5 }], 2); }); }
+          if (q !== "good") { wa.go([{ x: tx, z: tz }], 2.4, function () { b.hidden = true; wa.go([{ x: 4.3, z: ctx.ev + 12 }], 2); }); }
           if (w.invites) return invite(ctx);
         })
         .then(function () { caption(B.after[0], 4); });
@@ -217,27 +218,19 @@
     });
   }
   function hideAndSeek(ctx, game) {
-    var sc = G.scene, P = G.player, wa = ctx.wa;
-    // pick a tree or a parked car out ahead, and hide on the far side of it
-    var spots = sc.posts.filter(function (p) { return p.z > P.z - 6 && p.z < P.z + 26 && Math.abs(p.x) > 5 && Math.abs(p.x) < 9; });
-    Object.keys(sc.marks).forEach(function (k) { var m = sc.marks[k]; if (/^car/.test(k) && m.z > P.z - 6 && m.z < P.z + 30) spots.push({ x: m.x, z: m.z, r: 1.4, car: true }); });
-    var sp = spots.length ? U.pick(rnd, spots) : { x: 7.4, z: P.z + 12, r: 0.5 };
-    var dx = sp.x - P.x, dz = sp.z - P.z, d = Math.hypot(dx, dz) || 1, off = (sp.r || 0.5) + 0.7;
-    return UI.fadeTo(true, 0.4).then(function () {
-      wa.x = sp.x + dx / d * off; wa.z = sp.z + dz / d * off; wa.path = [];
-      return UI.say(["One... two... three...", "...nine... TEN! Ready or not!"]);
-    }).then(function () { return UI.fadeTo(false, 0.4); }).then(function () {
-      var t0 = Date.now(), hints = game.hint.slice();
-      return new Promise(function (res) {
-        G.unlock(); // you search on your own
-        var iv = setInterval(function () {
-          var s = (Date.now() - t0) / 1000;
-          if (hints.length && s > 18 + (2 - hints.length) * 16) caption(hints.shift(), 4);
-          if (near(G.player, wa.x, wa.z, 1.7)) { clearInterval(iv); G.lock(); res(); }
-        }, 200);
+    var spots = ["▶ Behind the parked cars", "▶ Behind the big tree", "▶ Behind the hedge", "▶ Under the porch steps"];
+    var where = (rnd() * spots.length) | 0, tries = 0;
+    function look() {
+      return UI.choose("Where do you look?", spots).then(function (i) {
+        tries++;
+        if (i === where) return UI.say(game.found);
+        if (tries >= 2) return UI.say(["'BOO!' The kid pops out from " + spots[where].replace("▶ Behind", "behind").replace("▶ Under", "under").toLowerCase() + ".", "'Ha! You were SO close.'"]);
+        return UI.say([U.pick(rnd, game.hint)]).then(look);
       });
-    }).then(function () { wa.heading = Math.atan2(G.player.x - wa.x, G.player.z - wa.z); return UI.say(game.found); })
-      .then(function () { wa.go([{ x: 7.8, z: ctx.ev + 12.5 }], 2.2); });
+    }
+    return UI.fadeTo(true, 0.4).then(function () { ctx.wa.hidden = true; return UI.say(["One... two... three...", "...nine... TEN! Ready or not!"]); })
+      .then(function () { return UI.fadeTo(false, 0.4); }).then(look)
+      .then(function () { ctx.wa.hidden = false; ctx.wa.go([{ x: 4.3, z: ctx.ev + 12 }], 2.2); });
   }
 
   // ---------- 1.1 later visits: one card from the street deck ----------
@@ -246,9 +239,9 @@
     function onNear(r, fn, zz) { G.trigger({ test: function (p) { return p.z > (zz || ev) - r; }, fn: fn }); }
     var t = c.type;
     if (t === "truck") {
-      var m = truckMesh(E, "#f2f0e8", ["#f08aa8", "#5ab0e0"]), tr = A.vehicle(m, 2.2, ev + 40, 0, -2.6);
+      var m = truckMesh(E, "#f2f0e8", ["#f08aa8", "#5ab0e0"]), tr = A.vehicle(m, 0.6, ev + 40, 0, -2.6);
       tr.update = function (dt) {
-        var p = G.player, block = Math.abs(p.x - tr.x) < 2.2 && p.z < tr.z && p.z > tr.z - 6;
+        var p = G.player, block = p.z < tr.z && p.z > tr.z - 6.5;
         var v = tr.stop || block ? 0 : tr.vz; tr.z += v * dt; m.ox = tr.x; m.oz = tr.z;
       };
       G.addActor(tr);
@@ -257,39 +250,38 @@
         return UI.say(c.lines).then(function () { return offer(c); }).then(function () { tr.stop = false; });
       } });
     } else if (t === "sale") {
-      G.addActor({ x: 7.6, z: ev + 2, update: function () {}, draw: function (l) { l.push({ k: "spr", spr: S.stand("sale"), x: 7.6, z: ev + 2, h: 1.0, shadow: true }); } });
-      var seller = A.person({ shirt: "#5a8ab0", pants: "#6a5a4a", hair: "#a87a4a", hat: "bun", pack: "none" }, 9.2, ev + 3, -Math.PI / 2);
+      G.addActor({ x: 5.9, z: ev + 2, update: function () {}, draw: function (l) { l.push({ k: "spr", spr: S.stand("sale"), x: 5.9, z: ev + 2, h: 1.0, shadow: true }); } });
+      var seller = A.person({ shirt: "#5a8ab0", pants: "#6a5a4a", hair: "#a87a4a", hat: "bun", pack: "none" }, 6.8, ev + 3, -Math.PI / 2);
       seller.tick = function () { var p = G.player; seller.heading = Math.atan2(p.x - seller.x, p.z - seller.z); };
       G.addActor(seller);
       onNear(9, function () { return UI.say(c.lines).then(function () { return offer(c); }); });
     } else if (t === "poster") {
-      G.addActor({ x: 6.5, z: ev, update: function () {}, draw: function (l) { l.push({ k: "spr", spr: S.sign("poster"), x: 6.0, z: ev, h: 3.2, shadow: false }); } });
+      G.addActor({ x: 6.5, z: ev, update: function () {}, draw: function (l) { l.push({ k: "spr", spr: S.sign("poster"), x: 4.5, z: ev, h: 3.2, shadow: false }); } });
       onNear(6, function () { return UI.say(c.lines); });
     } else if (t === "bike") {
-      var rider = A.person({ shirt: "#e8b830", pants: "#3a5a8a", hair: "#2a2026", hat: "cap", cap: "#3a6ad0", kid: true, pack: "none" }, 11, ev + 8, -Math.PI / 2);
+      var rider = A.person({ shirt: "#e8b830", pants: "#3a5a8a", hair: "#2a2026", hat: "cap", cap: "#3a6ad0", kid: true, pack: "none" }, 7, ev + 8, -Math.PI / 2);
       rider.y = 0.45; rider.speed = 7; rider.hidden = true;
       rider.extra = function (l) { l.push({ k: "spr", spr: bikeSpr(), x: rider.x, z: rider.z + 0.01, h: 0.8, flip: A.sideFlip(rider), shadow: true }); };
       G.addActor(rider);
       onNear(14, function () { rider.hidden = false; rider.go([{ x: -14, z: ev + 8 }], 7, function () { rider.hidden = true; }); GG.sfx && GG.sfx.ding(); captions(c.lines, 3.2); });
     } else if (t === "van") {
       var vm = GG.scenes.car(E, 0, 0, "#8a5a3a", "z", { tall: true, len: 5, wid: 2.1, cabDec: { e: [[0.1, 0.4, 0.9, 0.85, "#f2e0c0"]], w: [[0.1, 0.4, 0.9, 0.85, "#f2e0c0"]] } }).m;
-      G.addActor(A.vehicle(vm, 2.85, ev + 4));
-      G.scene.solids.push([2.85 - 1.2, 2.85 + 1.2, ev + 1.3, ev + 6.7]);
-      var drv = A.person({ shirt: "#8a5a3a", pants: "#4a3a2a", hair: "#2a2026", hat: "cap", cap: "#8a5a3a", pack: "none" }, 4.6, ev + 2, 0);
+      G.addActor(A.vehicle(vm, 1.7, ev + 4));
+      var drv = A.person({ shirt: "#8a5a3a", pants: "#4a3a2a", hair: "#2a2026", hat: "cap", cap: "#8a5a3a", pack: "none" }, 3.3, ev + 2, 0);
       G.addActor(drv);
-      onNear(12, function () { drv.go([{ x: 6.2, z: ev + 2 }, { x: 9.5, z: ev + 6 }], 2.4); return UI.say(c.lines); });
+      onNear(12, function () { drv.go([{ x: 4.4, z: ev + 2 }, { x: 6.6, z: ev + 5 }], 2.4); return UI.say(c.lines); });
     } else if (t === "sprinkler") {
-      G.addActor(A.swarm("sprinkler", 8.8, ev + 3, { side: -1 }));
+      G.addActor(A.swarm("sprinkler", 6.0, ev + 3, { side: -1 }));
       onNear(10, function () { captions(c.lines, 3.5); });
       var wet = false;
-      G.trigger({ test: function (p) { return !wet && near(p, 7.5, ev + 3, 2.6); }, fn: function () { wet = true; caption(c.touch[0], 4); } });
+      G.trigger({ test: function (p) { return !wet && p.x > 0.5 && Math.abs(p.z - ev - 3) < 2; }, fn: function () { wet = true; caption(c.touch[0], 4); } });
     } else if (t === "raccoon") {
-      var rc = A.animal("raccoon", -10, ev + 4, Math.PI / 2);
+      var rc = A.animal("raccoon", -6, ev + 4, Math.PI / 2);
       rc.speed = 1.6; G.addActor(rc);
       onNear(16, function () {
         rc.go([{ x: 0.5, z: ev + 4 }], 1.8, function () {
           setTimeout(function () {
-            rc.go([{ x: 11, z: ev + 4 }], 1.6);
+            rc.go([{ x: 7, z: ev + 4 }], 1.6);
             if (c.leaves) G.addActor(A.pickup({ pickup: c.leaves.item, line: c.leaves.line, x: 0.4, z: ev + 3.6, h: 0.22, spr: GG.spr.icon(Object.assign({ id: c.leaves.item }, D().items[c.leaves.item])) }));
           }, 2600);
         });
@@ -302,11 +294,11 @@
         captions(c.lines, 3.4);
       });
     } else if (t === "npc") {
-      var n = A.person(c.look, 5.2, ev + 6, Math.PI);
+      var n = A.person(c.look, 4.3, ev + 6, Math.PI);
       n.tick = function () { var p = G.player; if (near(p, n.x, n.z, 9)) n.heading = Math.atan2(p.x - n.x, p.z - n.z); };
       n.talk = function () { return UI.say(c.lines); };
       G.addActor(n);
-      if (c.dog) { var dg = A.animal("dog", 6.2, ev + 6.4, Math.PI); dg.h = 0.6; G.addActor(dg); }
+      if (c.dog) { var dg = A.animal("dog", 4.4, ev + 7.2, Math.PI); dg.h = 0.6; G.addActor(dg); }
       onNear(8, function () { return UI.say(c.lines); });
     } else if (t === "fireflies") {
       G.addActor(A.swarm("fireflies", 8, ev + 10)); G.addActor(A.swarm("fireflies", -8, ev + 16));
@@ -367,17 +359,17 @@
     // crack warning
     var warned = false;
     G.trigger({ test: function (p) { return !warned && sc.cracks.some(function (c) { return Math.abs(p.z - c.z) < c.w + 1.2 && Math.abs(p.x - 1) > 1.5; }); }, fn: function () { warned = true; caption(T.canyon, 4); } });
-    G.trigger({ test: function (p) { return !crumb.got && near(p, crumb.x, crumb.z, 1.6); }, fn: function () { crumb.got = true; P.carry = S.crumb(); return UI.say(T.grab); } });
-    G.trigger({ test: function (p) { return crumb.got && P.carry && near(p, M.hill.x, M.hill.z, 3.4); }, fn: function () {
+    G.trigger({ test: function (p) { return !crumb.got && p.z > crumb.z - 1.6; }, fn: function () { crumb.got = true; P.carry = S.crumb(); return UI.say(T.grab).then(function () { sc.dir = -1; sc.zMin = 4; sc.zMax = 60.5; P.walking = true; return G.turnTo(Math.PI, 0.5); }); } });
+    G.trigger({ test: function (p) { return crumb.got && P.carry && p.z < 5; }, fn: function () {
       P.carry = null; GG.sfx && GG.sfx.get();
       friend.x = M.hill.x + 2.5; friend.z = M.hill.z + 1.5;
-      return UI.say(T.home).then(function () { drip.on = true; });
+      return UI.say(T.home).then(function () { drip.on = true; sc.dir = 1; sc.zMin = 3; sc.zMax = 14; P.walking = true; return G.turnTo(0, 0.5); });
     } });
-    G.trigger({ test: function (p) { return drip.on && near(p, drip.x, drip.z, 1.8); }, fn: function () {
+    G.trigger({ test: function (p) { return drip.on && p.z > 12.5; }, fn: function () {
       GG.sfx && GG.sfx.grow(); UI.flash();
       return UI.say(T.hose).then(function () {
         var b = opt.back || { ev: 54 };
-        return G.swap("street", { mode: "resume", spawn: { x: 2.4, z: b.ev + 4, h: 0 } });
+        return G.swap("street", { mode: "resume", spawn: { x: 0, z: b.ev + 4, h: 0 } });
       }).then(function () { caption(D().street.ball.after[0], 4); });
     } });
   }
@@ -425,7 +417,7 @@
     var forced = /[?&]lion/.test(location.search);
     if (!sv().puppy || forced) lionSetup(sc, sc.marks.encounter.z);
     else encounter(sc, sc.marks.encounter.z, null);
-    G.trigger({ test: function (p) { return p.z > sc.marks.end.z - 3; }, fn: function () { return G.swap("summit", { spawn: { x: 0, z: 18, h: 0 } }); } });
+    G.trigger({ test: function (p) { return p.z > sc.marks.end.z - 3; }, fn: function () { return G.swap("summit", { spawn: { x: 0, z: 18, h: 0 }, still: true }); } });
   }
   function encounter(sc, z, card) {
     var E = sc.E, T = D().trail;

@@ -257,6 +257,52 @@
     }
   };
 
+
+  // hilly ground: march each screen column out from the camera over scene.height(x,z),
+  // front to back, filling down to what's already drawn. Keeps a depth per pixel so
+  // sprites behind a ridge stay hidden.
+  R3.prototype.drawTerrain = function (scene) {
+    var W = this.W, H = this.H, u = this.u32, k = this.cam, f = this.f, out = this.gOut;
+    var env = this.env, fc = this.fogC, fn = env.fogNear, ff = env.fogFar, amb = this.amb, L = this.lights, nL = L.length;
+    if (!this.zbuf || this.zbuf.length !== W * H) this.zbuf = new Float32Array(W * H);
+    var zb = this.zbuf; zb.fill(1e9);
+    var hf = scene.height, cyw = this.cyw, syw = this.syw, cp = this.cp, sp = this.sp, cy0 = this.cy0;
+    for (var x = 0; x < W; x++) {
+      var xr = (x + 0.5 - W / 2) / f; // camera-space direction with zr = 1 (horizontal)
+      var dx = xr * cyw + syw, dz = -xr * syw + cyw, len = Math.sqrt(1 + xr * xr);
+      var ybot = H, d = 0.6, step = 0.12;
+      while (d < ff * 1.1 && ybot > 0) {
+        var wx = k.x + dx * d, wz = k.z + dz * d, h = hf(wx, wz);
+        // project (depth along view, height) -> screen row
+        var dy = h - k.y, y2 = dy * cp + d * sp, z2 = d * cp - dy * sp;
+        if (z2 > 0.05) {
+          var sy = Math.floor(cy0 - f * y2 / z2);
+          if (sy < ybot) {
+            scene.ground(wx, wz, out, d * len, x, sy);
+            var r = out[0], g = out[1], b = out[2];
+            // shade slopes: compare with a step further on
+            var h2 = hf(wx + dx * 0.4, wz + dz * 0.4), sl = U.clamp((h2 - h) * 0.6, -0.3, 0.3) - Math.abs(U.clamp((h2 - h) * 0.5, -0.25, 0.25));
+            var lr = amb[0], lg = amb[1], lb = amb[2];
+            for (var i = 0; i < nL; i++) {
+              var Lt = L[i], ex = wx - Lt.x, ez = wz - Lt.z, dd = ex * ex + ez * ez;
+              if (dd >= Lt.r2) continue;
+              var q = Math.floor((1 - Math.sqrt(dd) / Lt.r) * Lt.i * 5 + 0.5) / 5;
+              lr += Lt.c[0] * q; lg += Lt.c[1] * q; lb += Lt.c[2] * q;
+            }
+            var sh = 1 + sl;
+            r *= lr * sh; g *= lg * sh; b *= lb * sh;
+            var fg = U.clamp((d * len - fn) / (ff - fn), 0, 1);
+            if (fg > 0) { r += (fc[0] - r) * fg; g += (fc[1] - g) * fg; b += (fc[2] - b) * fg; }
+            var col = U.pack(r > 255 ? 255 : r | 0, g > 255 ? 255 : g | 0, b > 255 ? 255 : b | 0);
+            for (var yy = Math.max(0, sy); yy < ybot; yy++) { u[yy * W + x] = col; zb[yy * W + x] = z2; }
+            ybot = Math.max(0, sy);
+          }
+        }
+        d += step; step *= 1.012;
+      }
+    }
+  };
+
   // light at a world point -> multipliers
   R3.prototype.lightAt = function (x, z, out) {
     var a = this.amb; out[0] = a[0]; out[1] = a[1]; out[2] = a[2];
@@ -360,7 +406,7 @@
 
   // sprite: {w,h,d: Uint8ClampedArray rgba}
   R3.prototype.drawSprite = function (o) {
-    var t = this.toCam(o.x, o.y || 0, o.z);
+    var t = this.toCam(o.x, (o.y || 0) + (this.hfn ? this.hfn(o.x, o.z) : 0), o.z);
     if (t[2] < 0.2) return;
     var W = this.W, H = this.H, u = this.u32, s = o.spr, z = t[2];
     var sx = W / 2 + this.f * t[0] / z, sy = this.cy0 - this.f * t[1] / z;
@@ -384,7 +430,7 @@
         u[yy * W + xx] = U.pack(((q & 255) * 0.72) | 0, (((q >> 8) & 255) * 0.72) | 0, (((q >> 16) & 255) * 0.74) | 0);
       }
     }
-    var d = s.d, flip = o.flip;
+    var d = s.d, flip = o.flip, zb = this.hfn ? this.zbuf : null;
     for (var y = Math.max(0, y0); y < Math.min(H, y1); y++) {
       var v = Math.min(s.h - 1, ((y - y0) / sc) | 0), row = y * W;
       for (var x = Math.max(0, x0); x < Math.min(W, x1); x++) {
@@ -393,6 +439,7 @@
         var i = (v * s.w + uu) * 4;
         if (d[i + 3] < 128) continue;
         if (al < 1 && al < bay(x, y)) continue;
+        if (zb && zb[row + x] < z - 0.4) continue;
         var r = d[i] * lt[0] * k, g = d[i + 1] * lt[1] * k, b = d[i + 2] * lt[2] * k;
         if (s.e && s.e[v * s.w + uu]) { r = d[i]; g = d[i + 1]; b = d[i + 2]; }
         r += (fc[0] - r) * fg; g += (fc[1] - g) * fg; b += (fc[2] - b) * fg;
@@ -402,7 +449,7 @@
     o._sx = sx; o._sy = sy; o._sc = sc;
   };
   R3.prototype.drawPt = function (o) {
-    var t = this.toCam(o.x, o.y, o.z);
+    var t = this.toCam(o.x, o.y + (this.hfn ? this.hfn(o.x, o.z) : 0), o.z);
     if (t[2] < 0.2) return;
     var W = this.W, H = this.H, u = this.u32;
     var sx = W / 2 + this.f * t[0] / t[2], sy = this.cy0 - this.f * t[1] / t[2];

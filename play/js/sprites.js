@@ -413,6 +413,11 @@
       if (kind === "street") return make(14, 24, function (p) {
         p.r(6, 4, 2, 20, "#7a7e86"); p.r(0, 0, 14, 4, "#2f7a4a"); p.r(1, 1, 12, 2, "#3f8a5a"); p.r(2, 2, 9, 1, "#e8f0e8");
       });
+      if (kind === "stop") return make(10, 26, function (p) {
+        p.r(4, 8, 2, 18, "#7a7e86");
+        for (var y = 0; y < 9; y++) { var c = y === 0 || y === 8 ? 3 : y === 1 || y === 7 ? 1 : 0; p.r(c, y, 10 - c * 2, 1, "#c8302a"); }
+        p.r(2, 3, 6, 1, "#f2eee0"); p.r(2, 5, 6, 1, "#f2eee0"); p.px(2, 4, "#f2eee0"); p.px(7, 4, "#f2eee0");
+      });
       if (kind === "poster") return make(8, 30, function (p) {
         p.r(3, 0, 2, 30, "#7a5a3c"); p.r(0, 10, 8, 9, "#f2eee0"); p.r(1, 11, 6, 1, "#c8402a"); p.r(2, 13, 4, 3, "#c98a4b"); p.r(1, 17, 6, 1, "#8a8a8a");
       });

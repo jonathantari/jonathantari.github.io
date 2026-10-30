@@ -4,9 +4,50 @@
   var GG = window.GG, ac = null, vol = 0.05, muted = false;
   try { muted = localStorage.getItem("garage.game.mute") === "1"; } catch (e) {}
   function unlock() {
-    if (ac || muted) return;
-    try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ac = null; }
+    if (muted) return;
+    if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ac = null; } }
+    if (ac && ac.state === "suspended") ac.resume();
+    if (ac) music.start();
   }
+
+  // ---------- music: a slow, soft lo-fi loop, made up as it goes ----------
+  // four-chord loop on a warm triangle pad, a quiet bass, a sparse pentatonic melody,
+  // all through a low-pass filter. Night swaps to a minor, slower loop.
+  var music = (function () {
+    var bus = null, timer = null, next = 0, step = 0, rnd = Math.random;
+    var DAY = { bpm: 78, prog: [[60, 64, 67, 71], [57, 60, 64, 67], [53, 57, 60, 64], [55, 59, 62, 65]], scale: [60, 62, 64, 67, 69, 72, 74, 76] };
+    var NIGHT = { bpm: 66, prog: [[57, 60, 64, 67], [53, 57, 60, 64], [48, 52, 55, 59], [55, 59, 62, 65]], scale: [57, 60, 62, 64, 67, 69, 72] };
+    function hz(n) { return 440 * Math.pow(2, (n - 69) / 12); }
+    function note(n, t, d, type, v, cut) {
+      var o = ac.createOscillator(), g = ac.createGain();
+      o.type = type; o.frequency.value = hz(n);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + Math.min(0.08, d * 0.2)); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      o.connect(g); g.connect(bus); o.start(t); o.stop(t + d + 0.05);
+    }
+    function mood() { var G = GG.game; return (G && G.E && G.E.tod === "night") || (window.GGLanding && window.GGLanding.get && window.GGLanding.get().night && G.mode() === "landing") ? NIGHT : DAY; }
+    function tick() {
+      if (!ac || muted) return;
+      while (next < ac.currentTime + 0.4) {
+        var M = mood(), beat = 60 / M.bpm / 2, bar = (step >> 3) % 4, ch = M.prog[bar], i = step % 8;
+        if (i === 0) { ch.forEach(function (n) { note(n, next, beat * 8, "triangle", 0.05); }); note(ch[0] - 24, next, beat * 3, "square", 0.035); }
+        if (i === 4) note(ch[0] - 24 + (rnd() < 0.5 ? 7 : 0), next, beat * 3, "square", 0.03);
+        var sw = i % 2 ? beat * 0.12 : 0; // a little swing
+        if (rnd() < (i % 2 ? 0.22 : 0.38)) note(M.scale[(rnd() * M.scale.length) | 0] + 12, next + sw, beat * (rnd() < 0.3 ? 3 : 1.5), "square", 0.022);
+        next += beat; step++;
+      }
+    }
+    return {
+      start: function () {
+        if (timer || !ac) return;
+        bus = ac.createGain(); bus.gain.value = 0.9;
+        var lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1500; lp.Q.value = 0.4;
+        bus.connect(lp); lp.connect(ac.destination);
+        next = ac.currentTime + 0.1; step = 0;
+        timer = setInterval(tick, 120);
+      },
+      stop: function () { clearInterval(timer); timer = null; if (bus) { try { bus.disconnect(); } catch (e) {} bus = null; } }
+    };
+  })();
   function tone(f, d, type, v, slide, delay) {
     if (!ac || muted) return;
     var t = ac.currentTime + (delay || 0), o = ac.createOscillator(), g = ac.createGain();
@@ -24,7 +65,7 @@
   }
   GG.sfx = {
     unlock: unlock,
-    toggle: function () { muted = !muted; try { localStorage.setItem("garage.game.mute", muted ? "1" : "0"); } catch (e) {} if (!muted) unlock(); return muted; },
+    toggle: function () { muted = !muted; try { localStorage.setItem("garage.game.mute", muted ? "1" : "0"); } catch (e) {} if (!muted) unlock(); else music.stop(); return muted; },
     muted: function () { return muted; },
     blip: function () { tone(520 + Math.random() * 40, 0.03, "square", 0.35); },
     tick: function () { tone(880, 0.04, "square", 0.4); },
