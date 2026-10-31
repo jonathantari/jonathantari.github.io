@@ -106,9 +106,18 @@
     return true;
   }
 
-  function caption(s, secs) {
+  // a caption marked "hold" (the controls tip) can't be pushed off early; others wait their turn
+  var capHold = 0, capQ = [];
+  function caption(s, secs, hold) {
+    if (Date.now() < capHold && !hold) { capQ.push([s, secs]); return; }
     cap.textContent = s; cap.classList.add("on");
-    clearTimeout(capT); capT = setTimeout(function () { cap.classList.remove("on"); }, (secs || 3.5) * 1000);
+    var ms = (secs || 3.5) * 1000;
+    capHold = hold ? Date.now() + ms : 0;
+    clearTimeout(capT); capT = setTimeout(function () {
+      cap.classList.remove("on"); capHold = 0;
+      var n = capQ.shift(); if (n) setTimeout(function () { caption(n[0], n[1]); }, 400);
+      capQ = capQ.slice(-1); // only the latest of anything else that piled up
+    }, ms);
   }
   function fadeTo(on, secs) {
     return new Promise(function (res) {

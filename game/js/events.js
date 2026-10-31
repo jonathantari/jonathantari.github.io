@@ -36,7 +36,7 @@
     var w = sc.marks.wire, bird = { x: w.x, y: w.y, z: w.z, vy: 0, vz: 0, fly: false, seen: false };
     bird.update = function (dt) {
       var p = G.player;
-      if (!bird.seen && p.z > w.z - 16) { bird.seen = true; captions(D().street.quiet.bird, 3.4); }
+      if (!bird.seen && p.z > w.z - 6) { bird.seen = true; captions(D().street.quiet.bird, 3.4); }
       if (!bird.fly && Math.hypot(p.x - bird.x, p.z - bird.z) < 5.5) { bird.fly = true; bird.vy = 2.2; bird.vz = 5; setTimeout(function () { caption(D().street.quiet.birdFly); }, 600); }
       if (bird.fly) { bird.y += bird.vy * dt; bird.z += bird.vz * dt; bird.x += 1.5 * dt; }
     };
@@ -88,8 +88,8 @@
         var day = E.date.toLocaleDateString("en-US", { weekday: "long" });
         var part = U.pick(rnd, wd.todWord[E.tod]);
         if (E.tod === "day") part = E.date.getHours() < 12 ? "morning" : "afternoon";
-        caption(day + " " + part + ". " + U.pick(rnd, wd.weatherWord[E.weather] || wd.weatherWord.clear), 4.5);
-        setTimeout(function () { caption(wd.ui.controls, 11); }, 5000);
+        caption(day + " " + part + ". " + U.pick(rnd, wd.weatherWord[E.weather] || wd.weatherWord.clear), 3.8);
+        setTimeout(function () { UI.caption(wd.ui.controls, 12, true); }, 4000);
       });
   }
 

@@ -37,12 +37,9 @@ GG.data.world = {
     packFull: "Your backpack is full.",
     noPhotos: "No photos yet. Tap the camera to take one.",
     emptyPack: "Nothing in here but crumbs.",
-    controls: "You walk on your own. Swipe ← → to change lanes. Swipe ↓ to stop; swipe ↓ again to turn round. Tap (i) to see this again.",
+    controls: "Your legs know the way. Swipe ← → to change lanes, ↓ to stop, ↓ again to turn round.",
     help: [
-      "You walk on your own. Swipe left or right (or ← →) to change lanes.",
-      "Swipe down (↓) to stop. Swipe down again to turn round and head back the way you came.",
-      "Swipe up (↑) to walk again. Tap to talk, or to stop and go.",
-      "The backpack button opens your backpack. Every road leads home eventually."
+      "Legs go on their own. Swipe ← → to dodge, ↓ to stop, ↓↓ to turn round and go home. Tap to say hi. That's it, really."
     ]
   }
 };

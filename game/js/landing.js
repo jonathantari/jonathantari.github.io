@@ -1,5 +1,5 @@
-// The garage landing scene, copied from garage.jonathantari.com (index.html)
-// with a few hooks so the game can draw the player into it. Keep in step with the live page.
+// The garage landing scene (garage.jonathantari.com), with a few hooks so the game can
+// draw the player into it. This is the live page's scene now: edit it here, then publish.
 (function () {
   "use strict";
   var cv = document.getElementById("c"), ctx = cv.getContext("2d");
@@ -79,7 +79,7 @@
   window.garageView = function (frame, tod) { VIEW.frame = frame; VIEW.tod = tod; layout(); };
   var S = { bulb: true, porch: true, flick: 0, pull: -1 };
   // hooks for the game: draw on top, take clicks, pause while the 3D world runs
-  var HOOK = window.GGLanding = { draw: null, click: null, paused: false, get: function () { return { G: G, W: W, H: H, P: P, dpr: dpr, night: night, cssW: cssW, cssH: cssH, cssLeft: cssLeft, K: K, S: S, canvas: cv }; } };
+  var HOOK = window.GGLanding = { draw: null, click: null, paused: false, get: function () { return { G: G, W: W, H: H, P: P, dpr: dpr, night: night, cssW: cssW, cssH: cssH, cssLeft: cssLeft, K: K, S: S, canvas: cv, cat: cat }; } };
 
   function put(x, y, c) {
     x = x | 0; y = y | 0;

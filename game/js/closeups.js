@@ -157,65 +157,103 @@
 
   // ---------- C2: the standoff ----------
   // cfg: { data, foe(roaring) -> sprite, ledge, ground, cower } (defaults: the lion on its ledge)
+  // Each fight deals a random hand of moves from data.pool; how well each works rolls within
+  // its calm range, flops happen, and a random twist can land between turns.
   CL.battle = function (cfg) {
     cfg = cfg || {};
     var L = cfg.data || GG.data.trail.lion, E = GG.game.E;
     var foe = cfg.foe || function (r) { return S.lion(r ? 1 : 0, true); }, ledge = cfg.ledge !== false, cower = cfg.cower !== false;
+    var pool = (L.pool || L.actions).slice(), hand = [];
+    while (pool.length && hand.length < (L.pick || 4)) hand.push(pool.splice((R() * pool.length) | 0, 1)[0]);
+    GG.game.musicMood = "battle";
     return new Promise(function (res) {
-      var t = 0, shake = 0, step = 0, roar = 0, calm = 0, last = null;
+      var t = 0, shake = 0, step = 0, roar = 0, calm = 0, last = null, act = null, toss = null;
       var se = E.season, night = E.tod === "night";
       var ground = cfg.ground || (se === "winter" ? "#e8eef2" : se === "spring" ? "#7aa858" : "#aab070"), rockC = "#a89480";
+      function playAnim(kind, extra) { act = { kind: kind, t: 0 }; toss = extra || null; }
       start({
-        update: function (dt) { t += dt; shake = Math.max(0, shake - dt); roar = Math.max(0, roar - dt); },
+        update: function (dt) { t += dt; shake = Math.max(0, shake - dt); roar = Math.max(0, roar - dt); if (act) { act.t += dt; if (act.t > 2.2) act = null; } },
         draw: function (ctx, W, H) {
           var sky = night ? ["#161b3c", "#313868"] : E.tod === "dusk" ? ["#6a508a", "#e08a6a"] : ["#67a2d6", "#c6def0"];
-          var hz = Math.round(H * 0.3), s0 = U.hx(sky[0]), s1 = U.hx(sky[1]);
+          var k = Math.max(2, Math.round(Math.min(W / 80, H / 72))), fs = foe(roar > 0);
+          var hz = Math.round(Math.max(H * 0.14, H * 0.06 + fs.h * k - 4 * k)), s0 = U.hx(sky[0]), s1 = U.hx(sky[1]); // the ground starts at the ledge
           for (var b2 = 0; b2 < 4; b2++) { ctx.fillStyle = U.css(U.mix(s0, s1, b2 / 3)); ctx.fillRect(0, Math.round(hz * b2 / 4), W, Math.ceil(hz / 4)); }
-          // far ridge
           ctx.fillStyle = night ? "#1c2243" : "#7f9397";
           for (var x = 0; x < W; x++) { var ry = hz - 6 - Math.round(Math.abs(Math.sin(x * 0.05)) * 8 + Math.sin(x * 0.17) * 2); ctx.fillRect(x, ry, 1, hz - ry); }
           ctx.fillStyle = ground; ctx.fillRect(0, hz, W, H - hz);
           ctx.fillStyle = U.css(U.dk(U.hx(ground), 0.9)); for (var i = 0; i < 60; i++) ctx.fillRect((i * 37) % W, hz + 2 + ((i * 53) % (H - hz)), 3, 1);
           var sx = shake > 0 ? Math.round(Math.sin(t * 60) * 2) : 0;
-          var k = Math.max(2, Math.round(Math.min(W / 100, H / 72)));
-          // the ledge, and the lion on it (facing you)
-          var fs = foe(roar > 0), lw = fs.w * k, lx = Math.round(W * 0.92 - lw) + sx + step * k * 3, ly = Math.round(H * 0.06), foot = ly + fs.h * k;
+          var lw = fs.w * k, lx = Math.round(W * 0.92 - lw) + sx + step * k * 3, ly = Math.round(H * 0.06), foot = ly + fs.h * k;
           if (ledge) {
             ctx.fillStyle = rockC; ctx.beginPath(); ctx.ellipse(lx + lw * 0.5, foot - k, lw * 0.62, 5 * k, 0, 0, 7); ctx.fill();
             ctx.fillStyle = U.css(U.dk(U.hx(rockC), 0.8)); ctx.fillRect(Math.round(lx - lw * 0.1), foot - k, Math.round(lw * 1.2), 6 * k);
           } else { ctx.fillStyle = "rgba(0,0,0,0.18)"; ctx.beginPath(); ctx.ellipse(lx + lw * 0.5, foot, lw * 0.45, 2 * k, 0, 0, 7); ctx.fill(); }
           spr(ctx, fs, lx, ly + (roar > 0 ? Math.round(Math.sin(t * 40) * k) : 0), k, false);
-          if (cower) { // the puppy, cowering below the ledge
+          if (cower) {
             var pp = S.puppy(0, "front");
-            spr(ctx, pp, Math.round(W * 0.5), foot + 5 * k - pp.h * k + (Math.sin(t * 20) > 0.6 ? 1 : 0), k);
+            spr(ctx, pp, Math.round(Math.min(W * 0.5, lx - pp.w * k - k)), foot + 5 * k - pp.h * k + (Math.sin(t * 20) > 0.6 ? 1 : 0), k);
           }
-          // you, from behind
-          var ps = S.person(Object.assign({}, GG.game.player.look, { dir: "back", frame: 0 }));
-          spr(ctx, ps, Math.round(W * 0.12), Math.round(H * 0.62 - ps.h * k * 1.3), Math.round(k * 1.3));
+          // you, from behind, acting out the move
+          var ps = S.person(Object.assign({}, GG.game.player.look, { dir: "back", frame: act && (act.kind === "dance" || act.kind === "slide") ? (((act.t * 8) | 0) % 4) : 0 }));
+          var pk = Math.round(k * 1.3), pw = ps.w * pk, ph = ps.h * pk, px = Math.round(W * 0.12), py = Math.round(H * 0.62 - ph);
+          var sxk = 1, syk = 1, ox = 0, oy = 0, a = act ? Math.min(1, act.t / 0.35) * Math.max(0, Math.min(1, (2.2 - act.t) / 0.4)) : 0;
+          if (act) {
+            if (act.kind === "bow") { syk = 1 - 0.28 * a; oy = ph * 0.28 * a; }
+            else if (act.kind === "tall") { syk = 1 + 0.18 * a; sxk = 1 + 0.25 * a * (0.8 + 0.2 * Math.sin(act.t * 10)); oy = -ph * 0.18 * a; }
+            else if (act.kind === "dance") { oy = -Math.abs(Math.sin(act.t * 9)) * 4 * k; ox = Math.sin(act.t * 6) * 2 * k; }
+            else if (act.kind === "slide") ox = Math.sin(act.t * 3) * 8 * k;
+            else if (act.kind === "stare") { sxk = syk = 1 + 0.08 * a; ox = -pw * 0.04 * a; oy = -ph * 0.08 * a; }
+          }
+          ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(ps.cv, Math.round(px + ox - pw * (sxk - 1) / 2), Math.round(py + oy), Math.round(pw * sxk), Math.round(ph * syk));
+          // effects over the top
+          if (act) {
+            var hx = px + pw / 2 + ox, hy = py + oy;
+            if (act.kind === "notes" || act.kind === "honk") {
+              for (var n = 0; n < 4; n++) {
+                var f = ((act.t * 0.7 + n * 0.25) % 1), nx = hx + Math.sin(f * 6 + n) * 6 * k + n * 3 * k, ny = hy - f * 20 * k;
+                ctx.fillStyle = act.kind === "honk" ? "#f2eee0" : ["#f2dc70", "#f08aa8", "#6ab0e0", "#90d080"][n];
+                if (act.kind === "honk") { ctx.fillRect(nx, ny, 4 * k, 2 * k); ctx.fillStyle = "#2a2a30"; ctx.fillRect(nx + k, ny + k * 0.5, 2 * k, k); }
+                else { ctx.fillRect(nx, ny, k * 2, k * 2); ctx.fillRect(nx + k * 1.5, ny - k * 4, k * 0.8, k * 4); }
+              }
+            } else if (act.kind === "swirl") {
+              for (var q = 0; q < 10; q++) { var an = act.t * 4 + q * 0.63, rr = (q + act.t * 6) % 10 * k * 1.5; ctx.fillStyle = q % 2 ? "#a878d8" : "#d8b8f8"; ctx.fillRect(hx + Math.cos(an) * rr, hy - 4 * k + Math.sin(an) * rr * 0.6, k, k); }
+            } else if (act.kind === "toss" && toss) {
+              var tf = Math.min(1, act.t / 0.9), tx = U.lerp(hx, lx + lw * 0.3, tf), ty = U.lerp(hy, ly + fs.h * k * 0.5, tf) - Math.sin(tf * Math.PI) * 18 * k;
+              if (tf < 1) spr(ctx, toss, tx, ty, k);
+            }
+          }
           if (roar > 0) { ctx.fillStyle = "rgba(255,255,255," + (roar * 0.3) + ")"; ctx.fillRect(0, 0, W, H); }
         }
       });
       var turn = 0;
+      function rollCalm(c) { if (Array.isArray(c)) return c[0] + ((R() * (c[1] - c[0] + 1)) | 0); return c; }
       function go() {
-        var acts = L.actions;
-        return GG.ui.choose(turn === 0 ? L.start + " " + L.prompt : L.prompt, acts.map(function (a) { return "▶ " + a.label; })).then(function (i) {
-          var a = acts[i], gain = a.calm, lines = a.lines, vars = {};
+        return GG.ui.choose(turn === 0 ? L.start + " " + L.prompt : L.prompt, hand.map(function (a) { return "▶ " + a.label; })).then(function (i) {
+          var a = hand[i], gain = rollCalm(a.calm), lines = a.lines, vars = {}, icon = null;
           if (a.needs === "snack") {
             var idx = GG.save.findSnack();
             if (idx < 0) { gain = 0; lines = a.none; }
-            else { var id = GG.save.removeAt(idx); vars.item = GG.data.items[id].name.toLowerCase(); }
-          } else if (a.flopChance && R() < a.flopChance) { gain = 1; lines = a.flop; }
+            else { var id = GG.save.removeAt(idx); vars.item = GG.data.items[id].name.toLowerCase(); icon = GG.spr.icon(Object.assign({ id: id }, GG.data.items[id])); }
+          } else if (a.flopChance && R() < a.flopChance) { gain = 0; lines = a.flop; }
           if (last === a.id) gain = Math.floor(gain / 2);
+          playAnim(a.anim || "tall", icon);
           last = a.id; calm += gain; turn++;
-          if (gain >= 2) { shake = 0.4; step += 1; }
+          setTimeout(function () { if (gain >= 2) { shake = 0.4; step += 1; } }, 500);
           return GG.ui.say(lines, vars).then(function () {
-            if (calm >= L.need) return "win";
-            if (turn >= L.turns) { roar = 1.2; shake = 0.8; return "lose"; }
-            return GG.ui.say(L.react[Math.min(L.react.length - 1, Math.floor(calm / 2))]).then(go);
+            if (L.twists && calm < L.need && R() < (L.twistChance || 0)) {
+              var tw = L.twists[(R() * L.twists.length) | 0]; calm += tw.calm;
+              if (tw.calm > 0) shake = 0.3;
+              return GG.ui.say(tw.lines);
+            }
+          }).then(function () {
+            if (calm >= L.need) return GG.ui.say(L.finish ? [L.finish.win[(R() * L.finish.win.length) | 0]] : []).then(function () { return "win"; });
+            if (turn >= L.turns) { roar = 1.2; shake = 0.8; return GG.ui.say(L.finish ? [L.finish.lose[(R() * L.finish.lose.length) | 0]] : []).then(function () { return "lose"; }); }
+            return GG.ui.say(L.react[Math.max(0, Math.min(L.react.length - 1, Math.floor(calm / 2)))]).then(go);
           });
         });
       }
-      go().then(function (v) { setTimeout(function () { end(); res(v); }, v === "lose" ? 700 : 200); });
+      go().then(function (v) { GG.game.musicMood = null; setTimeout(function () { end(); res(v); }, v === "lose" ? 700 : 200); });
     });
   };
 

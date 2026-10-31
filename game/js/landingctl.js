@@ -5,7 +5,7 @@
   var GG = window.GG, U = GG.util, S = GG.spr;
   var LP = { on: false, x: 0, y: 0, dir: "back", moving: false, dist: 0, target: null, res: null, busy: false };
   var C = GG.landingCtl = {};
-  var keyBuf = [], swipes = [], sw = null;
+  var keyBuf = [];
 
   function L() { return window.GGLanding.get(); }
   function geom() {
@@ -115,16 +115,23 @@
       var s = keyBuf.join(",");
       if (/arrowup,arrowup,arrowdown,arrowdown$/.test(s) || /p,l,a,y$/.test(s)) { keyBuf = []; C.egg(); }
     });
-    // 0.2 on mobile: two quick upward swipes on the scene
-    var c = document.getElementById("c");
-    c.addEventListener("pointerdown", function (e) { sw = { x: e.clientX, y: e.clientY, t: performance.now() }; });
-    c.addEventListener("pointerup", function (e) {
-      if (!sw || LP.on) return;
-      var dx = e.clientX - sw.x, dy = e.clientY - sw.y, dt = performance.now() - sw.t; sw = null;
-      if (dy < -40 && Math.abs(dx) < Math.abs(dy) && dt < 800) {
-        var now = performance.now(); swipes = swipes.filter(function (t) { return now - t < 1600; }); swipes.push(now);
-        if (swipes.length >= 2) { swipes = []; C.egg(); }
+    // 0.2 on any screen: tap the cat three times, or tap anywhere five times in a row
+    var taps = [], catTaps = [];
+    function onCat(x, y) {
+      var l = L(), c = l.cat, g = l.G;
+      if (!c || c.mode === "idle") return false;
+      if (c.mode === "window") { var w = g.catWin; return x > w.x - 3 && x < w.x + w.w + 3 && y > w.y - 3 && y < w.y + w.h + 3; }
+      return x > c.x - 4 && x < c.x + 16 && y > c.y - 13 && y < c.y + 4;
+    }
+    var prevClick = H.click;
+    H.click = function (x, y) {
+      if (!LP.on && GG.game.mode() === "landing") {
+        var now = performance.now();
+        taps = taps.filter(function (t) { return now - t < 3500; }); taps.push(now);
+        if (onCat(x, y)) { catTaps = catTaps.filter(function (t) { return now - t < 2500; }); catTaps.push(now); }
+        if (catTaps.length >= 3 || (taps.length >= 5 && now - taps[taps.length - 5] < 3500)) { taps = []; catTaps = []; C.egg(); return true; }
       }
-    });
+      return prevClick(x, y);
+    };
   };
 })();

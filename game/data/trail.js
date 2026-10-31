@@ -23,16 +23,31 @@ GG.data.trail = {
     spot: ["Up ahead, a puppy is backed against a rock.", "And on the ledge above it: a mountain lion. Very still. Very big."],
     start: "The mountain lion won't budge.",
     prompt: "What do you do?",
-    actions: [
-      { id: "tall", label: "Stand tall", lines: ["You stand up tall and spread your arms. You are, briefly, a coat rack of great authority."], calm: 2 },
-      { id: "snack", label: "Toss a snack", lines: ["You toss the {item}. The lion sniffs it... and eats it. Huh. Okay."], calm: 3, needs: "snack",
+    // each face-off deals 4 moves from this pool. calm: [least, most] it can help. anim: what you do on screen.
+    pick: 4,
+    pool: [
+      { id: "tall", label: "Stand tall", anim: "tall", lines: ["You stand up tall and spread your arms. You are, briefly, a coat rack of great authority."], calm: [1, 3] },
+      { id: "snack", label: "Toss a snack", anim: "toss", lines: ["You toss the {item}. The lion sniffs it... and eats it. Huh. Okay."], calm: [2, 4], needs: "snack",
         none: ["You pat your pockets. Lint. You toss the lint. The lion watches it float."] },
-      { id: "whistle", label: "Whistle", lines: ["A long, clear whistle. The lion's ears go flat. It does not care for that."], calm: 2,
-        flop: ["You whistle. It comes out as a sad little wheeze. The lion tilts its head."], flopChance: 0.4 },
-      { id: "tongues", label: "Whisper in tongues", lines: ["You whisper: 'Blorp vesh ala-kanoo, mimsy toast.' The lion looks deeply unsettled."], calm: 3,
-        flop: ["You whisper something. Even you don't know what it was. The lion leans in, curious."], flopChance: 0.5 }
+      { id: "whistle", label: "Whistle", anim: "notes", lines: ["A long, clear whistle. The lion's ears go flat."], calm: [1, 3],
+        flop: ["You whistle. It comes out as a sad little wheeze."], flopChance: 0.35 },
+      { id: "tongues", label: "Whisper in tongues", anim: "swirl", lines: ["'Blorp vesh ala-kanoo, mimsy toast.' The lion looks deeply unsettled."], calm: [1, 4],
+        flop: ["You whisper something. Even you don't know what. The lion leans in, curious."], flopChance: 0.4 },
+      { id: "bow", label: "Bow deeply", anim: "bow", lines: ["You bow, very deeply. The lion, confused, almost bows back."], calm: [1, 3] },
+      { id: "dance", label: "Do a little dance", anim: "dance", lines: ["You do a little dance. It's not good. It's very confident."], calm: [0, 4] },
+      { id: "stare", label: "Stare it down", anim: "stare", lines: ["You stare. The lion stares. Somewhere, a bird gives up and leaves."], calm: [1, 3],
+        flop: ["You blink first. Rookie mistake."], flopChance: 0.4 },
+      { id: "yodel", label: "Yodel", anim: "notes", lines: ["Yo-de-lay-hee-hoo! It echoes off three different mountains."], calm: [0, 4] }
     ],
-    // shown after each turn, by how calm the lion is so far
+    // things that might just happen mid-standoff
+    twists: [
+      { lines: ["A butterfly lands on the lion's nose. Everyone takes a breath."], calm: 2 },
+      { lines: ["The puppy sneezes. The lion flinches. Ha."], calm: 1 },
+      { lines: ["A hiker's radio somewhere plays smooth jazz. The mood shifts."], calm: 1 },
+      { lines: ["A pinecone drops on your head. The lion seems to enjoy that."], calm: -1 }
+    ],
+    twistChance: 0.25,
+    finish: { win: ["The lion yawns. It's over this.", "The lion decides it has a dentist appointment."], lose: ["The lion has had enough of your nonsense.", "Thunder rumbles. The lion takes that as a sign."] },
     react: ["The lion's tail twitches.", "The lion shifts its weight. It's thinking it over.", "The lion takes one step back."],
     need: 5, turns: 4,
     win: ["The lion huffs, turns, and pours itself off the ledge into the scrub. Gone.", "The puppy wobbles over and sits on your foot.", "Looks like you have a friend now."],

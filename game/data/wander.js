@@ -17,15 +17,27 @@ GG.data.wander = {
     spot: ["A goose plants itself in the middle of the path.", "It looks at you. It has decided you are the problem."],
     start: "The goose spreads its wings.",
     prompt: "What do you do?",
-    actions: [
-      { id: "bow", label: "Bow politely", lines: ["You bow. Deeply. The goose considers this."], calm: 2 },
-      { id: "snack", label: "Offer a snack", lines: ["You offer the {item}. The goose snatches it and eats it without saying thank you."], calm: 3, needs: "snack",
+    pick: 4,
+    pool: [
+      { id: "bow", label: "Bow politely", anim: "bow", lines: ["You bow. Deeply. The goose considers this."], calm: [1, 3] },
+      { id: "snack", label: "Offer a snack", anim: "toss", lines: ["You offer the {item}. The goose snatches it without saying thank you."], calm: [2, 4], needs: "snack",
         none: ["You hold out an empty hand. The goose is insulted on your behalf."] },
-      { id: "honk", label: "Honk back", lines: ["You honk. It's a good honk. The goose blinks."], calm: 2,
-        flop: ["You honk. It comes out as a squeak. The goose honks louder. You lose this round."], flopChance: 0.5 },
-      { id: "moonwalk", label: "Moonwalk past", lines: ["You moonwalk. Smoothly. The goose has never seen anything like it."], calm: 3,
-        flop: ["You moonwalk into a bench. The goose watches, delighted."], flopChance: 0.55 }
+      { id: "honk", label: "Honk back", anim: "honk", lines: ["You honk. It's a good honk. The goose blinks."], calm: [1, 3],
+        flop: ["You honk. It comes out as a squeak."], flopChance: 0.45 },
+      { id: "moonwalk", label: "Moonwalk past", anim: "slide", lines: ["You moonwalk. Smoothly. The goose has never seen anything like it."], calm: [1, 4],
+        flop: ["You moonwalk into a bench. The goose is delighted."], flopChance: 0.5 },
+      { id: "flap", label: "Flap your arms", anim: "tall", lines: ["You flap. You are now also a goose, as far as anyone can tell."], calm: [0, 4] },
+      { id: "compliment", label: "Compliment its neck", anim: "bow", lines: ["'That is a very long, very good neck.' The goose preens. It knows."], calm: [2, 3] },
+      { id: "sing", label: "Sing a lullaby", anim: "notes", lines: ["You sing softly. The goose's eyelids droop. Then snap open. Then droop."], calm: [1, 3] },
+      { id: "spin", label: "Spin around", anim: "dance", lines: ["You spin. The goose spins. Nobody wins. Everybody's dizzy."], calm: [0, 3] }
     ],
+    twists: [
+      { lines: ["A kid throws bread somewhere else. The goose is torn."], calm: 2 },
+      { lines: ["Another goose honks from the pond. Yours looks embarrassed."], calm: 1 },
+      { lines: ["A sprinkler turns on. Nobody is ready for that."], calm: -1 }
+    ],
+    twistChance: 0.25,
+    finish: { win: ["The goose suddenly remembers something it left at the pond.", "The goose loses interest. Geese do that."], lose: ["The goose unfolds to its full, terrible size.", "The goose has seen enough."] },
     react: ["The goose hisses, but quieter.", "The goose tilts its head. It's thinking.", "The goose takes a step back and fluffs up."],
     need: 5, turns: 4,
     win: ["The goose turns and waddles off, very slowly, so it looks like its own idea.", "It leaves a feather behind. A peace offering, maybe."],
