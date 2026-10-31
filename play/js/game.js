@@ -107,9 +107,17 @@
     if (k === "left") player.lane = Math.max(-n, player.lane - 1);
     else if (k === "right") player.lane = Math.min(n, player.lane + 1);
     else if (k === "up") player.walking = true;
-    else if (k === "down") player.walking = false;
+    else if (k === "down") { if (player.walking) player.walking = false; else return G.turnAround(); }
     GG.sfx && GG.sfx.tick();
   }
+  // stop, then swipe down again to turn round and walk back the way you came
+  G.turnAround = function () {
+    if (!scene || scene.free || scene.noTurn || lock) return;
+    scene.dir = -(scene.dir || 1);
+    if (scene.onTurn) scene.onTurn(scene.dir);
+    GG.sfx && GG.sfx.ok();
+    G.beat(function () { return G.turnTo(player.heading + Math.PI, 0.45); }).then(function () { player.walking = true; });
+  };
   // the track: scene.trackX(z) is its centre line, scene.dir which way is forward
   function trackX(z) { return scene.trackX ? scene.trackX(z) : 0; }
   function trackYaw(z) { return Math.atan2(trackX(z + 0.5) - trackX(z - 0.5), 1); } // slope of the centre line, ignoring direction
@@ -238,6 +246,10 @@
     else if (scene.onInteract) G.beat(GG.events.interact);
     else if (!scene.free) { player.walking = !player.walking; GG.sfx && GG.sfx.tick(); }
   }
+  G.help = function () {
+    if (UI.boxOpen()) return;
+    G.beat(function () { return UI.say(GG.data.world.ui.help); });
+  };
   G.setPup = function () { pup = GG.actors.puppy(player); };
   G.togglePack = function () {
     if (UI.boxOpen()) return;

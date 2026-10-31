@@ -15,7 +15,7 @@
       e.preventDefault(); advance();
     });
     $("btnPack").addEventListener("click", function (e) { e.stopPropagation(); GG.game.togglePack(); });
-    $("btnCam").addEventListener("click", function (e) { e.stopPropagation(); GG.game.photo(); });
+    $("btnInfo").addEventListener("click", function (e) { e.stopPropagation(); GG.game.help(); });
     $("packClose").addEventListener("click", function () { closePack(); });
     $("tabItems").addEventListener("click", function () { renderPack("items"); });
     $("tabAlbum").addEventListener("click", function () { renderPack("album"); });
@@ -138,6 +138,7 @@
   function renderPack(tab) {
     var body = $("packBody"), save = GG.save, opts = state.packOpts;
     $("tabItems").classList.toggle("on", tab === "items"); $("tabAlbum").classList.toggle("on", tab === "album");
+    $("tabAlbum").hidden = !save.photos().length; // the album only shows once there's a photo in it
     $("packHint").textContent = opts && opts.hint ? opts.hint : "";
     body.innerHTML = "";
     if (tab === "items") {

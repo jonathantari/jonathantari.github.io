@@ -12,6 +12,27 @@ GG.data.wander = {
     { id: "play", kind: "playground", name: "a playground", day: "A playground. One swing is still swinging, all by itself.", night: "The playground at night. The slide is cold. You go down it anyway." },
     { id: "garden", kind: "park", name: "a community garden", day: "A community garden. Tomatoes, sunflowers, and one huge zucchini nobody will claim.", night: "The garden is asleep under the streetlight." }
   ],
+  // the second face-off: a park goose that will not let you by. Same shape as the trail lion.
+  goose: {
+    spot: ["A goose plants itself in the middle of the path.", "It looks at you. It has decided you are the problem."],
+    start: "The goose spreads its wings.",
+    prompt: "What do you do?",
+    actions: [
+      { id: "bow", label: "Bow politely", lines: ["You bow. Deeply. The goose considers this."], calm: 2 },
+      { id: "snack", label: "Offer a snack", lines: ["You offer the {item}. The goose snatches it and eats it without saying thank you."], calm: 3, needs: "snack",
+        none: ["You hold out an empty hand. The goose is insulted on your behalf."] },
+      { id: "honk", label: "Honk back", lines: ["You honk. It's a good honk. The goose blinks."], calm: 2,
+        flop: ["You honk. It comes out as a squeak. The goose honks louder. You lose this round."], flopChance: 0.5 },
+      { id: "moonwalk", label: "Moonwalk past", lines: ["You moonwalk. Smoothly. The goose has never seen anything like it."], calm: 3,
+        flop: ["You moonwalk into a bench. The goose watches, delighted."], flopChance: 0.55 }
+    ],
+    react: ["The goose hisses, but quieter.", "The goose tilts its head. It's thinking.", "The goose takes a step back and fluffs up."],
+    need: 5, turns: 4,
+    win: ["The goose turns and waddles off, very slowly, so it looks like its own idea.", "It leaves a feather behind. A peace offering, maybe."],
+    lose: ["HONK. The goose charges. You take the long way round the park.", "It watches you the whole way. Next time, goose."]
+  },
+  gooseChance: 0.45,
+
   // what you might pass in the middle of the block
   extras: ["A cat watches you from a porch rail, unimpressed.", "Someone is practicing the trumpet. Badly. Beautifully.", "A wind chime somewhere goes tink.", "Chalk on the sidewalk: an arrow and the word 'THIS WAY'.", "A mailbox shaped like a fish. Sure."]
 };

@@ -482,6 +482,26 @@
     });
   }
 
+  // a park goose: small side view for the world, big front view for the face-off
+  function goose(f, big) {
+    return memo("goose" + f + big, function () {
+      if (big) return make(22, 26, function (p) {
+        p.blob(11, 18, 9, 6.5, function (x, y) { return y > 20 ? "#d8d4cc" : x > 15 ? "#8a8a8e" : "#a8a8ac"; });
+        p.r(9, 5, 4, 12, "#2a2a30"); p.r(10, 13, 2, 3, "#f2efe6");
+        p.blob(11, 4, 3.5, 3.5, function () { return "#2a2a30"; });
+        p.r(9, 3, 1, 2, "#f2efe6"); p.r(12, 3, 1, 2, "#f2efe6"); p.px(9, 3, "#1a1a20"); p.px(12, 3, "#1a1a20");
+        p.r(10, 6, 2, f ? 4 : 2, "#e8a030"); if (f) p.r(10, 8, 2, 1, "#7a2a2a");
+        p.r(7, 24, 3, 2, "#e8a030"); p.r(12, 24, 3, 2, "#e8a030");
+      });
+      return make(14, 13, function (p) {
+        var s2 = f % 2;
+        p.blob(6, 8, 5.5, 3.5, function (x, y) { return y > 9 ? "#d8d4cc" : "#a8a8ac"; });
+        p.r(10, 1, 2, 7, "#2a2a30"); p.r(10, 0, 3, 2, "#2a2a30"); p.r(13, 1, 1, 1, "#e8a030"); p.px(11, 4, "#f2efe6");
+        p.r(5, 11, 1, 2 - s2, "#e8a030"); p.r(8, 11, 1, 1 + s2, "#e8a030");
+      });
+    });
+  }
+
   // item icon from data art
   function icon(item) {
     return memo("icon" + item.id, function () { return art(item.art, item.pal); });
@@ -490,6 +510,6 @@
   GG.spr = {
     make: make, art: art, person: person, puppy: puppy, dog: dog, cat: cat, raccoon: raccoon, lion: lion, deer: deer, marmot: marmot, owl: owl, eagle: eagle, bird: bird, bug: bug,
     tree: tree, pine: pine, bush: bush, tuft: grassTuft, blade: blade, flower: flower, pinecone: pinecone, rock: rock, streetlight: streetlight, sign: sign,
-    hydrant: hydrant, mailbox: mailbox, cone: cone, bench: bench, cafeTable: cafeTable, stand: stand, hose: hose, crumb: crumb, anthill: anthill, drop: sprinklerDrop, ball: ball, icon: icon
+    hydrant: hydrant, mailbox: mailbox, cone: cone, bench: bench, cafeTable: cafeTable, stand: stand, hose: hose, goose: goose, crumb: crumb, anthill: anthill, drop: sprinklerDrop, ball: ball, icon: icon
   };
 })();

@@ -59,22 +59,27 @@
 
   function puppy(player) {
     var a = mover({ x: player.x - 1, z: player.z - 1, heading: player.heading, speed: 4.2, h: 0.55, stride: 0.25 });
+    var flip = false;
     a.spr = function (f, fr) {
       if (!a.moving && f.dir === "front") return S.puppy(0, "front");
-      return { s: S.puppy(a.moving ? fr : 0, "side"), flip: sideFlip(a) };
+      // only change which way it faces when it's clearly moving sideways on screen (no flicker)
+      var cam = GG.game.cam, rx = Math.sin(a.heading) * Math.cos(cam.yaw) - Math.cos(a.heading) * Math.sin(cam.yaw);
+      if (Math.abs(rx) > 0.35) flip = rx < 0;
+      return { s: S.puppy(a.moving ? fr : 0, "side"), flip: flip };
     };
-    a.update = function (dt, t) {
+    a.update = function (dt) {
       if (a.stay) { a.moving = false; return; }
-      var side = Math.sin(t * 0.3) > 0 ? 1 : -1;
-      var tx = player.x - Math.sin(player.heading) * 1.3 + Math.cos(player.heading) * 0.9 * side;
-      var tz = player.z - Math.cos(player.heading) * 1.3 - Math.sin(player.heading) * 0.9 * side;
+      // trot beside you, a little ahead, where the flashlight falls
+      var h = player.heading, tx = player.x + Math.sin(h) * 0.5 + Math.cos(h) * 0.85, tz = player.z + Math.cos(h) * 0.5 - Math.sin(h) * 0.85;
       var dx = tx - a.x, dz = tz - a.z, d = Math.hypot(dx, dz);
       if (d > 14) { a.x = tx; a.z = tz; return; }
-      if (d < 0.45) { a.moving = false; if (Math.hypot(player.x - a.x, player.z - a.z) < 3) a.heading = Math.atan2(player.x - a.x, player.z - a.z); return; }
-      a.heading = Math.atan2(dx, dz);
-      var sp = Math.min(d, (d > 3 ? 6 : 3.4) * dt);
+      if (d < 0.25) { a.moving = player.moving; a.heading = h; return; }
+      a.heading = d > 0.6 ? Math.atan2(dx, dz) : h;
+      var sp = Math.min(d, Math.max(3.4, d * 3) * dt);
       a.x += dx / d * sp; a.z += dz / d * sp; a.dist += sp; a.moving = true;
     };
+    var base = a.draw;
+    a.draw = function (list, t) { var n = list.length; base(list, t); if (list[n] && GG.game.E && GG.game.E.tod !== "day") list[n].tint = 1.7; };
     return a;
   }
 

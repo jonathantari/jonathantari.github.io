@@ -156,12 +156,15 @@
   };
 
   // ---------- C2: the standoff ----------
-  CL.battle = function () {
-    var L = GG.data.trail.lion, E = GG.game.E;
+  // cfg: { data, foe(roaring) -> sprite, ledge, ground, cower } (defaults: the lion on its ledge)
+  CL.battle = function (cfg) {
+    cfg = cfg || {};
+    var L = cfg.data || GG.data.trail.lion, E = GG.game.E;
+    var foe = cfg.foe || function (r) { return S.lion(r ? 1 : 0, true); }, ledge = cfg.ledge !== false, cower = cfg.cower !== false;
     return new Promise(function (res) {
       var t = 0, shake = 0, step = 0, roar = 0, calm = 0, last = null;
       var se = E.season, night = E.tod === "night";
-      var ground = se === "winter" ? "#e8eef2" : se === "spring" ? "#7aa858" : "#aab070", rockC = "#a89480";
+      var ground = cfg.ground || (se === "winter" ? "#e8eef2" : se === "spring" ? "#7aa858" : "#aab070"), rockC = "#a89480";
       start({
         update: function (dt) { t += dt; shake = Math.max(0, shake - dt); roar = Math.max(0, roar - dt); },
         draw: function (ctx, W, H) {
@@ -176,13 +179,16 @@
           var sx = shake > 0 ? Math.round(Math.sin(t * 60) * 2) : 0;
           var k = Math.max(2, Math.round(Math.min(W / 100, H / 72)));
           // the ledge, and the lion on it (facing you)
-          var lw = 34 * k, lx = Math.round(W * 0.92 - lw) + sx + step * k * 3, ly = Math.round(H * 0.06);
-          ctx.fillStyle = rockC; ctx.beginPath(); ctx.ellipse(lx + lw * 0.5, ly + 25 * k, lw * 0.62, 5 * k, 0, 0, 7); ctx.fill();
-          ctx.fillStyle = U.css(U.dk(U.hx(rockC), 0.8)); ctx.fillRect(Math.round(lx - lw * 0.1), ly + 25 * k, Math.round(lw * 1.2), 6 * k);
-          spr(ctx, S.lion(roar > 0 ? 1 : 0, true), lx, ly, k, false);
-          // the puppy, cowering below the ledge
-          var pp = S.puppy(0, "front");
-          spr(ctx, pp, Math.round(W * 0.5), ly + 31 * k - pp.h * k + (Math.sin(t * 20) > 0.6 ? 1 : 0), k);
+          var fs = foe(roar > 0), lw = fs.w * k, lx = Math.round(W * 0.92 - lw) + sx + step * k * 3, ly = Math.round(H * 0.06), foot = ly + fs.h * k;
+          if (ledge) {
+            ctx.fillStyle = rockC; ctx.beginPath(); ctx.ellipse(lx + lw * 0.5, foot - k, lw * 0.62, 5 * k, 0, 0, 7); ctx.fill();
+            ctx.fillStyle = U.css(U.dk(U.hx(rockC), 0.8)); ctx.fillRect(Math.round(lx - lw * 0.1), foot - k, Math.round(lw * 1.2), 6 * k);
+          } else { ctx.fillStyle = "rgba(0,0,0,0.18)"; ctx.beginPath(); ctx.ellipse(lx + lw * 0.5, foot, lw * 0.45, 2 * k, 0, 0, 7); ctx.fill(); }
+          spr(ctx, fs, lx, ly + (roar > 0 ? Math.round(Math.sin(t * 40) * k) : 0), k, false);
+          if (cower) { // the puppy, cowering below the ledge
+            var pp = S.puppy(0, "front");
+            spr(ctx, pp, Math.round(W * 0.5), foot + 5 * k - pp.h * k + (Math.sin(t * 20) > 0.6 ? 1 : 0), k);
+          }
           // you, from behind
           var ps = S.person(Object.assign({}, GG.game.player.look, { dir: "back", frame: 0 }));
           spr(ctx, ps, Math.round(W * 0.12), Math.round(H * 0.62 - ps.h * k * 1.3), Math.round(k * 1.3));

@@ -341,7 +341,7 @@
     [[-24, cross], [24, cross]].forEach(function (p) { var m = new Mesh(); m.box(p[0] - 5, p[0] + 5, 0, 4 + r() * 4, p[1] + 7, p[1] + 16, U.pick(r, WALLS)); m.done(); sc.meshes.push(m); });
     sc.ground = streetGround({ season: E.season, wet: E.wet, snowy: E.snowy, cross: cross, drives: drives, patches: patches });
     sc.cross = cross;
-    sc.lanes = 1; sc.laneW = 1.05; sc.dir = 1; sc.zMin = -8; sc.zMax = cross - 1;
+    sc.lanes = 1; sc.laneW = 1.05; sc.dir = opt.reverse ? -1 : 1; sc.zMin = -8; sc.zMax = cross - 1;
     for (var tz = 2; tz < len; tz += 9 + r() * 6) { var s4 = r() < 0.5 ? -1 : 1; if (!sc.lotsAt.some(function (l) { return l.side === s4 && tz > l.z0 && tz < l.z1 && l.lot.kind !== "park"; })) sc.props.push(treeProp(E, r, s4 * 5.5, tz, true)); }
     return sc;
   }
@@ -484,7 +484,7 @@
     }
     sc.height = trailH;
     sc.trackX = function (z) { return z < 22 ? 0 : trailX(z); };
-    sc.lanes = 1; sc.laneW = 0.85; sc.dir = 1; sc.zMin = 0; sc.zMax = len;
+    sc.lanes = 1; sc.laneW = 0.85; sc.dir = opt.reverse ? -1 : 1; sc.zMin = 0; sc.zMax = len;
     sc.marks.encounter = { z: 150 };
     sc.marks.end = { z: len };
     sc.marks.early = { z: 85 };
@@ -563,7 +563,7 @@
     sc.marks.crumb = { x: 1, z: 60 };
     sc.marks.hill = { x: -3, z: 3 };
     sc.marks.hose = { x: 2.2, z: 14 };
-    sc.trackX = function () { return 1; }; sc.lanes = 1; sc.laneW = 1.3; sc.dir = 1; sc.zMin = -3; sc.zMax = 60.5;
+    sc.noTurn = true; sc.trackX = function () { return 1; }; sc.lanes = 1; sc.laneW = 1.3; sc.dir = 1; sc.zMin = -3; sc.zMax = 60.5;
     sc.blocked = function (x, z) {
       for (var i = 0; i < cracks.length; i++) { var c = cracks[i]; if (Math.abs(z - c.z) < c.w + 0.4 && Math.abs(x - 1) > 0.65) return GG.data.street.ball.tiny.canyon; }
       return false;

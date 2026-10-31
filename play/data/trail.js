@@ -76,6 +76,6 @@ GG.data.trail = {
     view: { day: ["There's the whole town, laid out like a quilt.", "Somewhere down there is your garage."], dusk: ["The town is going gold, then pink, then blue.", "Porch lights are starting to come on."], night: ["The town is a bowl of tiny lights.", "One of them is your porch light. Probably."] },
     fog: ["Fog fills the whole valley like milk in a bowl.", "You can't see a thing. Come back another day."],
     snow: ["Snow hushes everything. The town is a soft grey blur down there."],
-    choices: ["▶ Head home", "▶ Stay a little longer"]
+    choices: ["▶ Head home", "▶ Walk back down the trail", "▶ Stay a little longer"]
   }
 };

@@ -67,8 +67,10 @@
       }
     }
 
+    // turning round: walking back toward home ends at the driveway, forward again reaches the corner
+    sc.onTurn = function (d) { if (d < 0) { sc.away = true; sc.zMin = 2.8; } else { sc.zMin = -20; sc.zMax = sc.cross - 1; } };
     // 1.2: the corner
-    G.trigger({ test: function (p) { return p.z > sc.cross - 7 && Math.abs(p.x) < 8; }, rearm: true, fn: function () { return corner(sc); } });
+    G.trigger({ test: function (p) { return (sc.dir || 1) > 0 && p.z > sc.cross - 7 && Math.abs(p.x) < 8; }, rearm: true, fn: function () { return corner(sc); } });
 
     if (opt.mode === "out") G.beat(function () { return intro(sc); });
     else if (opt.mode === "return") setTimeout(function () { caption("Home's just down the street, on the right."); }, 600);
@@ -87,7 +89,7 @@
         var part = U.pick(rnd, wd.todWord[E.tod]);
         if (E.tod === "day") part = E.date.getHours() < 12 ? "morning" : "afternoon";
         caption(day + " " + part + ". " + U.pick(rnd, wd.weatherWord[E.weather] || wd.weatherWord.clear), 4.5);
-        setTimeout(function () { caption(wd.ui.controls, 6); }, 5000);
+        setTimeout(function () { caption(wd.ui.controls, 11); }, 5000);
       });
   }
 
@@ -107,7 +109,7 @@
     var C = D().street.corner, cross = sc.cross, P = G.player;
     return UI.choose(C.prompt, C.choices.map(function (c) { return c.label; })).then(function (i) {
       var id = C.choices[i].id;
-      if (id === "B") return G.walkTo(0, cross + 2).then(function () { return G.swap("block", blockOpt(0)); });
+      if (id === "B") return G.walkTo(0, cross + 2).then(function () { return G.swap("block", blockOpt(0, { kind: "street" })); });
       if (id === "C") return G.walkTo(-1.5, cross).then(function () { return G.turnTo(-Math.PI / 2, 0.4); }).then(function () { G.walkTo(-12, cross); return U.wait(1.2); })
         .then(function () { return G.swap("trail", { spawn: { x: 0, z: 1, h: 0 }, seed: (Date.now() & 0xfff) }); });
       return G.swap("street", { mode: "return", spawn: { x: -1.2, z: 30, h: Math.PI } });
@@ -375,12 +377,12 @@
   }
 
   // ======================= Branch B: the wander =======================
-  function blockOpt(north) {
+  function blockOpt(north, back) {
     var E = GG.game.E, cards = D().wander.lots.filter(function (c) { return !c.nightOnly || E.tod === "night"; });
     if (E.tod === "night") cards = cards.filter(function (c) { return !(c.id === "cafe" && cards.some(function (q) { return q.id === "diner"; })); });
     var lots = [];
     for (var i = 0; i < 3; i++) { var c = GG.save.draw("wander", cards.filter(function (q) { return lots.indexOf(q) < 0; }), rnd, 4); lots.push(c); }
-    return { seed: (Date.now() & 0xffff) + 1, north: north, lots: lots, spawn: { x: 0, z: -5, h: 0 } };
+    return { seed: (Date.now() & 0xffff) + 1, north: north, lots: lots, spawn: { x: 0, z: -5, h: 0 }, back: back || { kind: "street" } };
   }
   function block(sc, opt) {
     var E = sc.E, night = E.tod === "night", W = D().wander;
@@ -394,7 +396,16 @@
       } });
     });
     G.trigger({ test: function (p) { return p.z > 50; }, fn: function () { if (rnd() < 0.6) caption(U.pick(rnd, W.extras), 4.5); } });
-    G.trigger({ test: function (p) { return p.z > sc.cross - 7 && Math.abs(p.x) < 8; }, rearm: true, fn: function () {
+    // walking back past the start of the block: the way you came (the street corner or the last block)
+    G.trigger({ test: function (p) { return (sc.dir || 1) < 0 && p.z < -6.5; }, fn: function () {
+      var b = opt.back || { kind: "street" };
+      if (b.kind === "block") return G.swap("block", Object.assign({}, b.opt, { reverse: true, spawn: { x: 0, z: 94 } }));
+      return G.swap("street", { mode: "return", spawn: { x: 0, z: 116, h: Math.PI } });
+    } });
+    // the second face-off: a goose in the park
+    var park = sc.lotsAt.filter(function (l) { return l.lot.kind === "park"; })[0];
+    if (!opt.reverse && park && !night && (rnd() < W.gooseChance || /[?&]goose/.test(location.search))) gooseSetup(sc, park.z0 + 14, W.goose);
+    G.trigger({ test: function (p) { return (sc.dir || 1) > 0 && p.z > sc.cross - 7 && Math.abs(p.x) < 8; }, rearm: true, fn: function () {
       var cross = sc.cross, north = opt.north || 0;
       return UI.choose(W.pick.prompt, W.pick.choices).then(function (i) {
         if (i === 3) return G.swap("street", { mode: "return", spawn: { x: -1.2, z: 30, h: Math.PI } });
@@ -402,14 +413,35 @@
         var go = G.walkTo(0, cross);
         if (turn) go = go.then(function () { return G.turnTo(turn * Math.PI / 2, 0.4); }).then(function () { G.walkTo(turn * 10, cross); return U.wait(1.1); });
         else go = go.then(function () { G.walkTo(0, cross + 8); return U.wait(1.0); });
-        return go.then(function () { return G.swap("block", blockOpt(north + turn * Math.PI / 2)); });
+        return go.then(function () { return G.swap("block", blockOpt(north + turn * Math.PI / 2, { kind: "block", opt: opt })); });
       });
     } });
   }
 
+  function gooseSetup(sc, z, Gd) {
+    var g = A.mover({ x: 0, z: z, h: 0.75, heading: Math.PI, speed: 1.2, stride: 0.2 });
+    g.spr = function (f, fr, t) { return { s: S.goose(g.moving ? fr : ((t * 2) | 0) % 2, false), flip: A.sideFlip(g) }; };
+    G.addActor(g);
+    G.trigger({ test: function (p) { return (sc.dir || 1) > 0 && p.z > z - 4; }, fn: function () {
+      g.x = G.player.x;
+      return UI.say(Gd.spot).then(function () {
+        return GG.close.battle({ data: Gd, foe: function (r) { return S.goose(r ? 1 : 0, true); }, ledge: false, cower: false, ground: E0(sc) });
+      }).then(function (res) {
+        if (res === "win") { g.go([{ x: 6, z: z + 6 }], 1.0); return UI.say(Gd.win.slice(0, 1)).then(function () { return G.give("feather", Gd.win[1]); }); }
+        GG.sfx && GG.sfx.roar(); UI.flash();
+        g.go([{ x: 3.5, z: z + 2 }], 2.5);
+        return UI.say(Gd.lose);
+      });
+    } });
+  }
+  function E0(sc) { return sc.E.season === "winter" ? "#e8eef2" : sc.E.season === "autumn" ? "#8a9a48" : "#6a974a"; }
+
   // ======================= Branch C: the trail =======================
   function trail(sc, opt) {
     var E = sc.E, T = D().trail;
+    // walking back down past the trailhead takes you back to the corner of your street
+    G.trigger({ test: function (p) { return (sc.dir || 1) < 0 && p.z < 2; }, fn: function () { return G.swap("street", { mode: "return", spawn: { x: 0, z: 116, h: Math.PI } }); } });
+    if (opt.reverse) { setTimeout(function () { caption("Downhill all the way home.", 4); }, 700); return; }
     setTimeout(function () { captions(T.trailhead, 4); }, 700);
     // one early encounter, usually a person
     if (rnd() < 0.6) encounter(sc, sc.marks.early.z, null);
@@ -417,7 +449,7 @@
     var forced = /[?&]lion/.test(location.search);
     if (!sv().puppy || forced) lionSetup(sc, sc.marks.encounter.z);
     else encounter(sc, sc.marks.encounter.z, null);
-    G.trigger({ test: function (p) { return p.z > sc.marks.end.z - 3; }, fn: function () { return G.swap("summit", { spawn: { x: 0, z: 18, h: 0 }, still: true }); } });
+    G.trigger({ test: function (p) { return (sc.dir || 1) > 0 && p.z > sc.marks.end.z - 3; }, fn: function () { return G.swap("summit", { spawn: { x: 0, z: 18, h: 0 }, still: true }); } });
   }
   function encounter(sc, z, card) {
     var E = sc.E, T = D().trail;
@@ -509,6 +541,7 @@
     function ask() {
       return UI.choose(null, T.choices).then(function (i) {
         if (i === 0) return G.swap("street", { mode: "return", spawn: { x: -1.2, z: 30, h: Math.PI } });
+        if (i === 1) return G.swap("trail", { reverse: true, spawn: { x: GG.scenes.trailX(222), z: 222 } });
         sc.onInteract = function () { return ask(); };
         caption("Tap or press Space when you're ready to head down.", 4);
       });
