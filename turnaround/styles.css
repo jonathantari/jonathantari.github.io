@@ -217,6 +217,8 @@ a { color: var(--ink); }
   color: var(--ink-soft);
 }
 .lead + .lead { margin-top: 20px; }
+/* Hard line break only where there is room; on phones let the text flow */
+@media (max-width: 640px) { .br-desktop { display: none; } }
 .band .lead { color: var(--on-ink-soft); }
 
 /* Footnote: hidden until the asterisk is tapped */
