@@ -15,9 +15,9 @@
     if (c.nightOnly && E.tod !== "night") return false;
     return true;
   }
-  function caption(s, secs) { UI.caption(s, secs); }
+  function caption(s, secs, low) { UI.caption(s, secs, false, low); }
   var pending = [];
-  function captions(lines, gap) { lines.forEach(function (l, i) { pending.push(setTimeout(function () { caption(l, gap || 3.2); }, i * (gap || 3.2) * 1000)); }); }
+  function captions(lines, gap, low) { lines.forEach(function (l, i) { pending.push(setTimeout(function () { caption(l, gap || 3.2, low); }, i * (gap || 3.2) * 1000)); }); }
 
   EV.setup = function (kind, sc, opt) {
     A = GG.actors; G = GG.game; UI = GG.ui;
@@ -27,6 +27,7 @@
     else if (kind === "trail") trail(sc, opt);
     else if (kind === "summit") summit(sc, opt);
     else if (kind === "tiny") tiny(sc, opt);
+    else if (kind === "ball") GG.ballworld.setup(sc, opt);
   };
 
   // ======================= Node 1: the street =======================
@@ -36,8 +37,8 @@
     var w = sc.marks.wire, bird = { x: w.x, y: w.y, z: w.z, vy: 0, vz: 0, fly: false, seen: false };
     bird.update = function (dt) {
       var p = G.player;
-      if (!bird.seen && p.z > w.z - 6) { bird.seen = true; captions(D().street.quiet.bird, 3.4); }
-      if (!bird.fly && Math.hypot(p.x - bird.x, p.z - bird.z) < 5.5) { bird.fly = true; bird.vy = 2.2; bird.vz = 5; setTimeout(function () { caption(D().street.quiet.birdFly); }, 600); }
+      if (!bird.seen && p.z > w.z - 6) { bird.seen = true; captions(D().street.quiet.bird, 3.4, true); }
+      if (!bird.fly && Math.hypot(p.x - bird.x, p.z - bird.z) < 5.5) { bird.fly = true; bird.vy = 2.2; bird.vz = 5; setTimeout(function () { caption(D().street.quiet.birdFly, null, true); }, 600); }
       if (bird.fly) { bird.y += bird.vy * dt; bird.z += bird.vz * dt; bird.x += 1.5 * dt; }
     };
     bird.draw = function (list, t) {
@@ -120,8 +121,8 @@
   function ballSetup(sc, ev) {
     var E = sc.E, B = D().street.ball;
     var kinds = B.kinds.filter(function (k) { return !k.seasons || k.seasons.indexOf(E.season) >= 0; });
-    var kind = U.weighted(rnd, kinds), waiter = U.weighted(rnd, B.waiters), talker = U.weighted(rnd, B.talkers);
-    if (E.tod === "night") { raccoonInstead(sc, ev); return; }
+    var kind = U.weighted(rnd, kinds), waiter = U.weighted(rnd, B.waiters), talker = pickTalker();
+    if (E.tod === "night" && !/[?&]ball/.test(location.search)) { raccoonInstead(sc, ev); return; } // ?ball forces the ball, day or night
     var wx = 4.3, wz = ev + 12, wa;
     if (waiter.id === "dog") wa = A.animal("dog", wx, wz, -Math.PI / 2);
     else wa = A.person(waiter.look, wx, wz, -Math.PI / 2);
@@ -133,18 +134,76 @@
     var ctx = { sc: sc, ev: ev, kind: kind, waiter: waiter, talker: talker, wa: wa, ball: ball, done: false };
     // A0: it rolls out and stops a few steps ahead; you keep control
     G.trigger({ test: function (p) { return p.z > ev - 3; }, fn: function () {
-      ball.hidden = false; ball.vx = -3.9; ball.vz = -0.2; GG.sfx && GG.sfx.boing();
+      // roll out and come to rest in the lane you're walking in (friction 0.9/s: distance = v / 0.9)
+      ball.hidden = false; ball.vx = -(ball.x - G.player.x) * 0.9; ball.vz = -0.2; GG.sfx && GG.sfx.boing();
       caption(U.fmt(B.rolls[0], { ball: kind.name }), 4);
       setTimeout(function () { if (!ctx.done) caption(waiter.call[0], 4); }, 3800);
+      // they step out from behind the parked car into the street, a few steps past the ball, so you can see them
+      setTimeout(function () { if (!ctx.done) wa.go([{ x: 1.9, z: ev + 13 }], waiter.id === "dog" ? 2.6 : 2.0); }, 1800);
+    } });
+    // tooltips from the ball: after you've dawdled, a little speech bubble hovers over it
+    var baseDraw = ball.draw;
+    ball.draw = function (list, t) {
+      baseDraw(list, t);
+      if (ctx.hintOn && !ball.hidden && !ball.rolling && !ctx.done) list.push({ k: "spr", spr: bubbleSpr("dots"), x: ball.x, z: ball.z, y: 0.85 + Math.sin(t * 3) * 0.05, h: 0.5, shadow: false });
+    };
+    G.trigger({ test: function (p) { return !ball.hidden && !ctx.done && p.z > ball.z - 7; }, fn: function () {
+      function idle() { return !ctx.done && G.mode() === "world" && !G.locked() && !UI.isOpen(); }
+      setTimeout(function () { if (!ctx.done) ctx.hintOn = true; }, 1500);
+      setTimeout(function () { if (idle()) caption(U.pick(rnd, D().flat.hints.street), 4.5); }, 3500);
     } });
     // walk into it: pick it up
     G.trigger({ test: function (p) { return !ball.hidden && !ctx.done && Math.abs(p.x - ball.x) < 0.7 && Math.abs(p.z - ball.z) < 0.9; }, fn: function () { G.player.walking = true; return ballBeat(ctx); } });
-    // walk past it: A4
+    // walk past it: A4. The waiter fetches the ball; whoever was riding on it is left on the curb, calling after you
     G.trigger({ test: function (p) { return !ball.hidden && !ctx.done && p.z > ball.z + 5; }, fn: function () {
       ctx.done = true; sv().ballDone = true; GG.save.write();
       caption(waiter.ignore[0], 4);
       wa.go([{ x: ball.x + 0.6, z: ball.z }], 2.4, function () { ball.hidden = true; wa.go([{ x: wx, z: wz }], 2); });
+      walkPastAnt(ctx, ball.z + 11);
     } });
+  }
+  // the one left on the curb (whoever was riding the ball): step on it or tap near it to look down, or keep walking
+  function walkPastAnt(ctx, z) {
+    var WP = D().flat.walkPast, t = ctx.talker, offered = false, v = { short: t.short, ball: ctx.kind.name, name: t.name };
+    var ant = A.mover({ x: 1.7, z: z, heading: Math.PI, h: 0.55, speed: 1.6 });
+    ant.spr = function (f, fr) { return { s: S.bug(t.sprite, ant.moving ? fr % 2 : 0), flip: A.sideFlip(ant) }; };
+    ant.extra = function (list, tt) { if (!offered) list.push({ k: "spr", spr: bubbleSpr("!"), x: ant.x, z: ant.z, y: 0.7 + Math.sin(tt * 3) * 0.05, h: 0.5, shadow: false }); };
+    ant.talk = function () { return lookDown(); };
+    G.addActor(ant);
+    var warned = false;
+    G.trigger({ test: function (p) { return !warned && p.z > z - 6; }, fn: function () { warned = true; setTimeout(function () { captions(WP.noticed.map(function (l) { return cap1(U.fmt(l, v)); }), 3.4); }, 200); } });
+    G.trigger({ test: function (p) { return !offered && Math.abs(p.x - ant.x) < 0.9 && Math.abs(p.z - ant.z) < 0.9; }, fn: function () { G.player.walking = false; return lookDown(); } });
+    function lookDown() {
+      if (offered) return;
+      offered = true;
+      return UI.choose(cap1(U.fmt(WP.prompt, v)), WP.choices).then(function (i) {
+        if (i !== 0) { ant.go([{ x: 4.6, z: ant.z + 1 }], 2); G.player.walking = true; return UI.say(U.fmt(U.pick(rnd, WP.keep), v)); }
+        return UI.say(t.curb.map(function (l) { return U.fmt(l, v); })).then(function () { return askShrink(ctx, t, function () { G.player.walking = true; }); });
+      });
+    }
+  }
+  function cap1(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+  // who's on the ball today: one of the cast in data/ballworld.js (or ?talker=)
+  function pickTalker() {
+    var T = D().ballworld.talkers, ids = Object.keys(T), m = /[?&]talker=(\w+)/.exec(location.search);
+    var id = m && T[m[1]] ? m[1] : ids[(rnd() * ids.length) | 0];
+    return Object.assign({ id: id }, T[id]);
+  }
+  // the big question, in the caller's own voice
+  function askShrink(ctx, t, onNo) {
+    var B = D().street.ball;
+    return UI.choose(null, B.shrinkChoices).then(function (j) {
+      if (j !== 0) { if (onNo) onNo(); return UI.say(t.no).then(function () { return "no"; }); }
+      return UI.say(t.yes).then(function () { return shrinkInto(ctx, t); });
+    });
+  }
+  var _bub = {};
+  function bubbleSpr(kind) {
+    return _bub[kind] || (_bub[kind] = S.make(13, 11, function (p) {
+      p.r(1, 0, 11, 7, "#f4f0e6"); p.r(0, 1, 13, 5, "#f4f0e6"); p.r(5, 7, 3, 1, "#f4f0e6"); p.px(6, 8, "#f4f0e6");
+      if (kind === "!") { p.r(6, 1, 1, 3, "#c8402a"); p.px(6, 5, "#c8402a"); }
+      else { p.px(3, 3, "#3a3a46"); p.px(6, 3, "#3a3a46"); p.px(9, 3, "#3a3a46"); }
+    }, { outline: "#241e30" }));
   }
   function raccoonInstead(sc, ev) {
     // night: a raccoon instead of the ball
@@ -169,7 +228,7 @@
       var b = ctx.ball, wa = ctx.wa;
       b.hidden = false; b.x = G.player.x; b.z = G.player.z; b.y = 1.2;
       // an arc over to the waiter (or into the hedge)
-      var tx = q === "good" ? wa.x : wa.x - 1.5, tz = q === "good" ? wa.z : wa.z + 2.5, sx = b.x, sz = b.z, t = 0;
+      var tx = q === "good" ? wa.x : 4.9, tz = q === "good" ? wa.z : wa.z + 3, sx = b.x, sz = b.z, t = 0;
       b.fly = function (dt) { t += dt / 0.9; var k = Math.min(1, t); b.x = sx + (tx - sx) * k; b.z = sz + (tz - sz) * k; b.y = 1.2 + Math.sin(k * Math.PI) * 3 - k * 0.6; if (k >= 1) { b.fly = null; if (q === "good") b.hidden = true; } };
       return U.wait(1).then(function () { return UI.say(q === "good" ? w.good : w.bad); })
         .then(function () { if (q === "good" && w.gift) return G.give(w.gift); })
@@ -177,32 +236,49 @@
           if (q !== "good") { wa.go([{ x: tx, z: tz }], 2.4, function () { b.hidden = true; wa.go([{ x: 4.3, z: ctx.ev + 12 }], 2); }); }
           if (w.invites) return invite(ctx);
         })
-        .then(function () { caption(B.after[0], 4); });
+        .then(function () {
+          if (q === "good") wa.go([{ x: 4.3, z: ctx.ev + 12 }], 1.6); // back to the curb
+          caption(B.after[0], 4);
+        });
     });
   }
   function punt(ctx) {
     var B = D().street.ball, E = ctx.sc.E;
     return GG.close.punt(ctx.kind).then(function () {
-      ctx.done = true; sv().ballDone = true; sv().ballOrbit = true; GG.save.write();
+      ctx.seenStar = sv().ballOrbit; ctx.done = true; sv().ballDone = true; sv().ballOrbit = true; GG.save.write();
       return UI.say(B.punt, { ball: ctx.kind.name });
     }).then(function () { return UI.say(ctx.waiter.punted || ["'Whoa.'"]); })
       .then(function () {
-        if (E.tod === "night") return UI.say(B.orbitStar);
+        if (E.tod === "night") return UI.say(ctx.seenStar ? B.orbitStar : B.puntNightNow);
         caption(B.puntNight, 5);
       })
       .then(function () { caption(B.after[0], 4); });
   }
   function antBeat(ctx) {
-    var B = D().street.ball, t = ctx.talker;
-    return UI.say(t.ask).then(function () { return UI.choose(null, B.shrinkChoices); }).then(function (i) {
-      if (i !== 0) return UI.say(["'Oh. Okay. That's okay.'"]).then(function () { return ballBeat(ctx); });
-      return UI.say(B.shrink).then(function () {
-        GG.sfx && GG.sfx.shrink();
-        ctx.done = true; sv().ballDone = true; GG.save.write();
-        return G.swap("tiny", { spawn: { x: 1, z: -3, h: 0 }, talker: t, back: { ev: ctx.ev, ball: ctx.kind.id } });
-      });
+    var t = ctx.talker, v = { ball: ctx.kind.name };
+    var ask = U.pick(rnd, t.ask).map(function (l) { return U.fmt(l, v); });
+    return UI.say(ask).then(function () { return askShrink(ctx, t); }).then(function (r) { if (r === "no") return ballBeat(ctx); });
+  }
+  // A2.1: you shrink onto the ball itself (js/ballworld.js), and the flatland hides in its print
+  function shrinkInto(ctx, t) {
+    return UI.say(D().ballworld.common.shrinkFall.map(function (l) { return U.fmt(l, { ball: ctx.kind.name }); })).then(function () { return playBall(ctx, t); });
+  }
+  function playBall(ctx, t) {
+    GG.sfx && GG.sfx.shrink();
+    ctx.done = true; sv().ballDone = true; GG.save.write();
+    if (ctx.ball) ctx.ball.hidden = true;
+    return G.swap("ball", { kind: ctx.kind.id, talker: t.id, back: { ev: ctx.ev || 54 } });
+  }
+  function playFlat(ctx, t) {
+    GG.sfx && GG.sfx.shrink();
+    ctx.done = true; sv().ballDone = true; GG.save.write();
+    return GG.flat.play({ talker: t }).then(function (res) {
+      return G.swap("street", { mode: "resume", spawn: { x: 0, z: (ctx.ev || 54) + 4, h: 0 } }).then(function () {
+        return UI.say(res === "grown" ? D().flat.sphere.hose : D().flat.leave.back);
+      }).then(function () { caption(res === "grown" ? D().flat.sphere.after : D().street.ball.after[0], 5); });
     });
   }
+  EV.playFlat = function (ctx, t) { A = GG.actors; G = GG.game; UI = GG.ui; return playFlat(ctx || { ev: 54 }, t || { id: "ant", name: "ant" }); };
   function invite(ctx) {
     var B = D().street.ball;
     var game = GG.save.draw("games", B.games, rnd, 2);
@@ -515,6 +591,8 @@
   EV.pickup = function (a) {
     var T = D().trail;
     if (a.line) return G.give(a.pickup, a.line);
+    var it = D().items[a.pickup];
+    if (it && GG.save.data.pack.indexOf(a.pickup) >= 0 && T.dupe) { caption(U.fmt(T.dupe, { item: it.name })); return; }
     if (rnd() < T.oopsChance) return UI.say(U.pick(rnd, T.oops));
     return G.give(a.pickup);
   };
@@ -550,7 +628,7 @@
       return UI.fadeTo(false, 0.4).then(function () { return U.wait(0.6); }).then(function () { return UI.say(T.arrive); })
         .then(function () { return UI.say(T.turn); })
         .then(function () { return G.turnTo(Math.PI, 0.9); })
-        .then(function () { G.camTo(function () { var q = G.followPose(Math.PI); q.pitch += 0.12; q.y += 0.6; return q; }, 2.6); return G.walkTo(0, -3.4, 1.6); })
+        .then(function () { G.camTo(function () { var q = G.followPose(Math.PI); q.pitch += 0.12; q.y += 0.6; return q; }, 2.6); return G.walkTo(0, -3.4, 2.6); })
         .then(function () { return U.wait(1.4); })
         .then(function () {
           var v = E.weather === "fog" ? T.fog : E.weather === "snow" ? T.snow : T.view[E.tod];

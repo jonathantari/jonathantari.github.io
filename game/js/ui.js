@@ -36,8 +36,20 @@
   }
   function finishTyping() { clearInterval(tick); txt.textContent = state.full; state.typing = false; if (state.afterType) { var f = state.afterType; state.afterType = null; f(); } }
 
-  function show() { box.hidden = false; state.open = true; box.classList.add("on"); }
-  function hide() { box.hidden = true; state.open = false; box.classList.remove("on"); list.innerHTML = ""; state.choices = null; }
+  function show() { box.hidden = false; state.open = true; box.classList.add("on"); if (goalEl) goalEl.hidden = true; }
+  function hide() { box.hidden = true; state.open = false; box.classList.remove("on"); list.innerHTML = ""; state.choices = null; if (goalEl) goalEl.hidden = !goalText; }
+
+  // the goal line: a small pill at the bottom saying what you're after (hidden while a text box is up)
+  var goalEl = null, goalText = null;
+  function goal(t) {
+    goalText = t || null;
+    if (!goalEl) {
+      goalEl = document.createElement("div"); goalEl.id = "goal"; goalEl.setAttribute("role", "status");
+      document.body.appendChild(goalEl);
+    }
+    if (goalText) { goalEl.textContent = "▸ " + goalText; goalEl.classList.remove("pop"); void goalEl.offsetWidth; goalEl.classList.add("pop"); }
+    goalEl.hidden = !goalText || state.open;
+  }
 
   // show lines one after another; resolves when the last is dismissed
   function say(lines, vars) {
@@ -108,7 +120,9 @@
 
   // a caption marked "hold" (the controls tip) can't be pushed off early; others wait their turn
   var capHold = 0, capQ = [];
-  function caption(s, secs, hold) {
+  // low: an ambient line that gives way to whatever is already showing
+  function caption(s, secs, hold, low) {
+    if (low && cap.classList.contains("on")) return;
     if (Date.now() < capHold && !hold) { capQ.push([s, secs]); return; }
     cap.textContent = s; cap.classList.add("on");
     var ms = (secs || 3.5) * 1000;
@@ -189,5 +203,5 @@
     }
   }
 
-  GG.ui = { init: init, say: say, choose: choose, advance: advance, cancel: cancel, key: key, caption: caption, fadeTo: fadeTo, flash: flash, setHud: setHud, openPack: openPack, closePack: closePack, isOpen: function () { return state.open || (pack && !pack.hidden); }, boxOpen: function () { return state.open; } };
+  GG.ui = { init: init, say: say, choose: choose, advance: advance, cancel: cancel, key: key, caption: caption, fadeTo: fadeTo, flash: flash, setHud: setHud, openPack: openPack, closePack: closePack, goal: goal, isOpen: function () { return state.open || (pack && !pack.hidden); }, boxOpen: function () { return state.open; } };
 })();

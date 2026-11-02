@@ -54,7 +54,7 @@
   CL.ball = function (kind, talker) {
     var B = GG.data.street.ball;
     return new Promise(function (res) {
-      var t = 0, ant = { a: -0.6, v: 0.25 }, done = false, R0 = 0, cx = 0, cy = 0;
+      var t = 0, ant = { a: -0.6, v: 0.25 }, done = false, R0 = 0, cx = 0, cy = 0, hinted = false;
       start({
         update: function (dt) { t += dt; ant.a += ant.v * dt * (Math.sin(t * 0.7) > -0.2 ? 1 : -0.6); },
         draw: function (ctx, W, H) {
@@ -66,17 +66,37 @@
           // the tiny talker, wandering over the top of the ball
           var ax = Math.round(cx + Math.cos(ant.a - 1.2) * R0 * 0.7), ay = Math.round(cy + Math.sin(ant.a - 1.2) * R0 * 0.55);
           ant.x = ax; ant.y = ay;
-          if (talker.id === "ladybug") { ctx.fillStyle = "#d83a32"; ctx.fillRect(ax - 1, ay - 1, 3, 2); ctx.fillStyle = "#2a2026"; ctx.fillRect(ax + 2, ay - 1, 1, 1); }
-          else if (talker.id === "snail") { ctx.fillStyle = "#c8864a"; ctx.fillRect(ax - 1, ay - 2, 3, 2); ctx.fillStyle = "#c8b8a0"; ctx.fillRect(ax - 2, ay, 5, 1); }
+          // a tooltip, if you've been holding the ball a while: a ring around the tiny one and a bubble above it
+          if (t > 5) {
+            if (!hinted) { hinted = true; var hl = U.fmt(U.pick(R, B.closeupHint || GG.data.flat.hints.closeup), { short: talker.short || "something tiny", ball: kind.name }); GG.ui.caption(hl.charAt(0).toUpperCase() + hl.slice(1), 5); }
+            var rr = 5 + ((t * 5) % 4) | 0; ctx.fillStyle = "rgba(255,255,255,.8)";
+            for (var q = 0; q < 16; q++) { var qa = q / 16 * 6.283; ctx.fillRect(Math.round(ax + Math.cos(qa) * rr), Math.round(ay + Math.sin(qa) * rr), 1, 1); }
+            ctx.fillStyle = "#f4f0e6"; ctx.fillRect(ax - 4, ay - 14, 9, 6); ctx.fillRect(ax, ay - 8, 1, 2);
+            ctx.fillStyle = "#c8402a"; ctx.fillRect(ax, ay - 13, 1, 3); ctx.fillRect(ax, ay - 9, 1, 1);
+          }
+          var sp = talker.sprite || talker.id, lg2 = (t * 8 | 0) % 2;
+          if (sp === "waterbear") { ctx.fillStyle = "#e0d0b8"; ctx.fillRect(ax - 2, ay - 1, 5, 2); ctx.fillStyle = "#2a2026"; ctx.fillRect(ax + 2, ay - 1, 1, 1); ctx.fillStyle = "#a89880"; ctx.fillRect(ax - 2 + lg2, ay + 1, 1, 1); ctx.fillRect(ax + 1 - lg2, ay + 1, 1, 1); }
+          else if (sp === "flea") { ctx.fillStyle = "#7a4a2a"; ctx.fillRect(ax - 1, ay - 1, 3, 2); ctx.fillStyle = "#2a2026"; ctx.fillRect(ax, ay - 3, 2, 2); ctx.fillStyle = "#c8402a"; ctx.fillRect(ax, ay - 2, 2, 1); ctx.fillStyle = "#5a3420"; ctx.fillRect(ax - 2 + lg2, ay + 1, 1, 1); ctx.fillRect(ax + 2 - lg2, ay + 1, 1, 1); }
+          else if (sp === "mite") { ctx.fillStyle = "#d8382a"; ctx.fillRect(ax - 1, ay - 1, 3, 3); ctx.fillStyle = "#f2d890"; ctx.fillRect(ax - 1, ay, 3, 1); }
+          else if (sp === "ladybug") { ctx.fillStyle = "#d83a32"; ctx.fillRect(ax - 1, ay - 1, 3, 2); ctx.fillStyle = "#2a2026"; ctx.fillRect(ax + 2, ay - 1, 1, 1); }
+          else if (sp === "snail") { ctx.fillStyle = "#c8864a"; ctx.fillRect(ax - 1, ay - 2, 3, 2); ctx.fillStyle = "#c8b8a0"; ctx.fillRect(ax - 2, ay, 5, 1); }
           else { ctx.fillStyle = "#2a1e1a"; ctx.fillRect(ax - 2, ay, 2, 2); ctx.fillRect(ax, ay, 1, 1); ctx.fillRect(ax + 1, ay - 1, 2, 2); var lg = (t * 8 | 0) % 2; ctx.fillRect(ax - 2 + lg, ay + 2, 1, 1); ctx.fillRect(ax + lg, ay + 2, 1, 1); ctx.fillRect(ax + 2 - lg, ay + 1, 1, 1); ctx.fillRect(ax + 3, ay - 2, 1, 1); }
+        },
+        ant: ant, // exposed for tests
+        // the ant gets first claim on a tap; any other tap on the ball is swallowed so it can't pick "throw" or "punt" by accident
+        // (those are chosen from the list, or with the keyboard)
+        tap: function (x, y) {
+          if (done) return true;
+          if (Math.hypot(x - ant.x, y - ant.y) < 10) { done = true; GG.ui.cancel(); finish("ant"); return true; }
+          return GG.ui.boxOpen();
         },
         down: function (x, y) {
           if (done) return;
-          if (Math.hypot(x - ant.x, y - ant.y) < 7) { done = true; GG.ui.cancel(); finish("ant"); }
+          if (Math.hypot(x - ant.x, y - ant.y) < 10) { done = true; GG.ui.cancel(); finish("ant"); }
         }
       });
       function finish(v) { end(); res(v); }
-      GG.ui.choose(U.fmt(B.closeup.prompt, { ball: kind.name }), B.closeup.choices).then(function (i) { if (done) return; done = true; finish(i === 1 ? "punt" : "throw"); });
+      GG.ui.choose(U.fmt(Array.isArray(B.closeup.prompt) ? U.pick(R, B.closeup.prompt) : B.closeup.prompt, { ball: kind.name }), B.closeup.choices).then(function (i) { if (done) return; done = true; finish(i === 1 ? "punt" : "throw"); });
     });
   };
 
@@ -278,7 +298,7 @@
         else dot(x, y);
         last = { x: x, y: y };
       }
-      function ui(W, H) { var s = Math.max(8, Math.round(H * 0.07)); return { s: s, y: H - s - 3, x0: 4, done: { x: W - s * 3 - 4, w: s * 3 } }; }
+      function ui(W, H) { var s = Math.max(8, Math.round(Math.min(H * 0.07, (W - 12) / 8.6))); return { s: s, y: H - s - 3, x0: 4, done: { x: W - s * 3 - 4, w: s * 3 } }; }
       start({
         update: function (dt) {
           if (!pad) return;

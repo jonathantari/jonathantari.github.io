@@ -33,6 +33,12 @@
     GG.landingCtl.init();
     var q = location.search, m = /[?&]scene=(\w+)/.exec(q);
     if (m) {
+      if (m[1] === "ball") {
+        var bk = /[?&]kind=(\w+)/.exec(q), bt = /[?&]talker=(\w+)/.exec(q);
+        G.enterWorld("ball", { kind: bk ? bk[1] : "beach", talker: bt ? bt[1] : null, back: { ev: 54 } });
+        return;
+      }
+      if (m[1] === "flat") { G.enterWorld("street", { mode: "resume", spawn: { x: 0, z: 58, h: 0 } }); setTimeout(function () { GG.events.playFlat({ ev: 54 }, { id: "ant", name: "ant" }); }, 700); return; }
       var k = m[1], sp = { street: { x: 0, z: 6, h: 0 }, trail: { x: 0, z: 1, h: 0 }, summit: { x: 0, z: 18, h: 0 }, tiny: { x: 1, z: -3, h: 0 } }[k];
       G.enterWorld(k, k === "block" ? function () { return GG.events.blockOpt(0); } : { mode: "street", spawn: sp });
       return;
@@ -65,6 +71,7 @@
       if (mode === "landing") { if (GG.landingCtl.key(k, e)) e.preventDefault(); return; }
       GG.sfx && GG.sfx.unlock();
       e.preventDefault();
+      if (k === "up" || k === "down" || k === "left" || k === "right") held[k] = true;
       if (e.repeat) return;
       if (UI.key(k)) { return; }
       if (mode === "close" && G.close && G.close.key) { G.close.key(k, true); return; }
@@ -75,14 +82,17 @@
     });
     window.addEventListener("keyup", function (e) {
       var k = KEYMAP[e.code]; if (!k) return;
+      held[k] = false;
       if (mode === "close" && G.close && G.close.key) G.close.key(k, false);
     });
+    window.addEventListener("blur", function () { held = {}; roamStick = null; hideStick(); });
     var sw = null;
     cv.addEventListener("pointerdown", function (e) {
       GG.sfx && GG.sfx.unlock();
       e.preventDefault();
-      if (UI.boxOpen()) { UI.advance(); return; }
       var p = toLow(e);
+      if (mode === "close" && G.close && G.close.tap && G.close.tap(p[0], p[1])) return; // a close-up can claim a tap first
+      if (UI.boxOpen()) { UI.advance(); return; }
       if (mode === "close") { if (G.close && G.close.down) G.close.down(p[0], p[1]); return; }
       sw = { x: e.clientX, y: e.clientY, t: performance.now(), id: e.pointerId };
     });
@@ -90,16 +100,59 @@
       if (mode === "close") { if (G.close && G.close.move) { var p = toLow(e); G.close.move(p[0], p[1], e.buttons); } return; }
       if (!sw || e.pointerId !== sw.id) return;
       var dx = e.clientX - sw.x, dy = e.clientY - sw.y;
+      if (scene && scene.roam) { // free roam: drag anywhere is a thumb stick
+        var m = Math.hypot(dx, dy);
+        if (m > 8) sw.drag = true;
+        if (sw.drag) { var k2 = Math.min(1, m / 46); roamStick = { x: dx / (m || 1) * k2, y: dy / (m || 1) * k2 }; showStick(sw.x, sw.y, roamStick.x, roamStick.y); }
+        return;
+      }
       if (Math.max(Math.abs(dx), Math.abs(dy)) > 36) { steer(Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? "left" : "right") : (dy < 0 ? "up" : "down")); sw = null; }
     });
     function up(e) {
       if (mode === "close") { if (G.close && G.close.up) G.close.up(); return; }
       if (!sw || e.pointerId !== sw.id) return;
-      var tap = performance.now() - sw.t < 350; sw = null;
+      var tap = performance.now() - sw.t < 350 && !sw.drag; sw = null;
+      if (roamStick) { roamStick = null; hideStick(); }
       if (tap) interact();
     }
     cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
   }
+  var held = {}, roamStick = null, stickEl = null, blockAt = 0;
+  function showStick(cx, cy, dx, dy) {
+    stickEl = stickEl || document.getElementById("stick"); if (!stickEl) return;
+    stickEl.hidden = false; stickEl.style.left = cx + "px"; stickEl.style.top = cy + "px";
+    var kn = stickEl.firstElementChild; if (kn) kn.style.transform = "translate(" + (dx * 32) + "px," + (dy * 32) + "px)";
+  }
+  function hideStick() { stickEl = stickEl || document.getElementById("stick"); if (stickEl) stickEl.hidden = true; }
+  // free roam (scene.roam): drag = walk that way relative to the camera; keys = turn and walk (tank style)
+  function roam(dt) {
+    var want = null, spd = 0, turn = 0;
+    if (held.left) turn -= 1; if (held.right) turn += 1;
+    if (held.up) spd = 1; else if (held.down) spd = -0.55;
+    player.heading += turn * 2.5 * dt;
+    if (roamStick) {
+      var mag = Math.hypot(roamStick.x, roamStick.y);
+      if (mag > 0.18) { want = cam.yaw + Math.atan2(roamStick.x, -roamStick.y); spd = Math.min(1, (mag - 0.1) / 0.75); player.heading = turnToward(player.heading, want, 8 * dt); }
+    }
+    if (!spd) return;
+    var s = player.speed * spd * dt * (scene.speedAt ? scene.speedAt(player.x, player.z) : 1);
+    var dx = Math.sin(player.heading) * s, dz = Math.cos(player.heading) * s, ok = true;
+    if (scene.walk && !scene.walk(dx, dz)) {
+      if (scene.walk(dx, 0)) dz = 0; else if (scene.walk(0, dz)) dx = 0; else ok = false;
+      if (!ok && scene.blockedSay && performance.now() > blockAt) { blockAt = performance.now() + 6000; var why = scene.blockedSay(Math.sin(player.heading), Math.cos(player.heading)); if (why) UI.caption(why, 3.5); }
+    }
+    if (!ok) return;
+    player.x += dx; player.z += dz; player.dist += Math.abs(s); player.moving = true;
+    recenter();
+  }
+  // a scene that lives on a sphere keeps the player at the origin: shift the world (and the camera) under them
+  function recenter() {
+    if (!scene || !scene.recenter || (!player.x && !player.z)) return;
+    var dx = player.x, dz = player.z;
+    scene.recenter(dx, dz);
+    player.x = 0; player.z = 0; cam.x -= dx; cam.z -= dz;
+  }
+  G.roamInput = function () { return { held: held, stick: roamStick }; };
   function toLow(e) { var rc = cv.getBoundingClientRect(); return [(e.clientX - rc.left) / rc.width * W, (e.clientY - rc.top) / rc.height * H]; }
   function steer(k) {
     if (mode !== "world" || lock || UI.isOpen() || !scene || scene.free) return;
@@ -206,8 +259,8 @@
     player.x = sp.x; player.z = sp.z; player.heading = sp.h != null ? sp.h : ((scene.dir || 1) < 0 ? Math.PI : 0);
     syncTrack();
     var pose = followPose(player.heading); cam.x = pose.x; cam.y = pose.y; cam.z = pose.z; cam.yaw = pose.yaw; cam.pitch = pose.pitch;
-    pup = GG.save.data.puppy && kind !== "tiny" ? GG.actors.puppy(player) : null;
-    G.scene = scene;
+    pup = GG.save.data.puppy && kind !== "tiny" && kind !== "ball" ? GG.actors.puppy(player) : null;
+    G.scene = scene; G.overlay = null; roamStick = null; hideStick();
     GG.events.setup(kind, scene, opt);
   };
   G.addActor = function (a) { a = GG.actors.wrap(a, scene); scene.actors.push(a); return a; };
@@ -248,7 +301,7 @@
   }
   G.help = function () {
     if (UI.boxOpen()) return;
-    G.beat(function () { return UI.say(GG.data.world.ui.help); });
+    G.beat(function () { return UI.say(mode === "world" && scene && scene.help || GG.data.world.ui.help); });
   };
   G.setPup = function () { pup = GG.actors.puppy(player); };
   G.togglePack = function () {
@@ -295,8 +348,10 @@
     for (var i = tasks.length - 1; i >= 0; i--) if (tasks[i].fn(dt)) { var t = tasks.splice(i, 1)[0]; t.res(); }
     player.moving = player.moving && tasks.length > 0;
     var free = !lock && !UI.isOpen();
-    if (free && wasLocked) syncTrack();
+    if (scene.recenter) recenter(); // after a scripted walk
+    if (free && wasLocked && !scene.roam) syncTrack();
     wasLocked = !free;
+    if (free && scene.roam) roam(dt);
     if (free && !scene.free) {
       var d = scene.dir || 1, yaw = trackYaw(player.z), w = scene.laneW || 1.2;
       player.l += (player.lane * w - player.l) * Math.min(1, dt * 7);
@@ -407,7 +462,7 @@
   function drawWeather(dt, t) {
     var we = E.weather, u = r3.u32;
     if (we !== "rain" && we !== "snow" && we !== "wind") return;
-    if (scene.kind === "tiny" && we !== "rain") return;
+    if ((scene.kind === "tiny" || scene.kind === "ball") && we !== "rain") return;
     var night = E.tod === "night";
     var rc = night ? U.pack(110, 120, 160) : U.pack(200, 210, 224), sc2 = U.pack(246, 248, 252), lc = [U.pack(208, 120, 42), U.pack(224, 168, 56), U.pack(120, 150, 70)];
     var turn = 0;

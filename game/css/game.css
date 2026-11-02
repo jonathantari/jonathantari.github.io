@@ -77,3 +77,11 @@ canvas.ico { image-rendering: pixelated; image-rendering: crisp-edges; }
 @media (prefers-reduced-motion: reduce) {
   #box.more:after, #boxChoices li.sel:before { animation: none; }
 }
+
+/* the goal line (flatland, the ball) */
+#goal { position: fixed; left: 50%; bottom: calc(22px + env(safe-area-inset-bottom)); transform: translateX(-50%); max-width: 64vw;
+  padding: 8px 12px; font: 9px/1.5 "Press Start 2P", monospace; color: #f2d890; background: rgba(20, 18, 42, .9);
+  border: 2px solid #6a62b0; text-align: center; pointer-events: none; z-index: 6; }
+#goal.pop { animation: goalpop .5s ease-out; }
+@keyframes goalpop { 0% { opacity: 0; transform: translateX(-50%) translateY(6px); } 100% { opacity: 1; transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { #goal.pop { animation: none; } }

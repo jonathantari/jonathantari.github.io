@@ -60,11 +60,14 @@ GG.data.street = {
         punted: ["'Well,' says the grandparent, squinting up. 'Our Harold had a leg like that.'"] }
     ],
     rolls: ["A {ball} rolls out from between two parked cars and stops a few steps ahead of you."],
-    closeup: { prompt: "The {ball} sits in your hands.", choices: ["▶ Throw it back", "▶ Punt it"] },
+    closeup: { prompt: ["The {ball} sits in your hands.", "The {ball} is warm from the sun.", "You hold the {ball}. It smells like a summer you can't quite place.", "The {ball} is lighter than it looks. Something on it is very small and very busy."], choices: ["▶ Throw it back", "▶ Punt it"] },
+    // after a few seconds in your hands: who's on it (talker.short from data/ballworld.js)
+    closeupHint: ["Psst. {short} is waving at you from the top of the {ball}.", "There's {short} on the {ball}, jumping up and down. Tap it.", "{short} is trying very hard to get your attention. Tap it."],
     throwHelp: "Press when the marker's in the green.",
     punt: ["You wind up and BOOT it.", "The {ball} goes up... and up... and keeps going.", "Huh. You don't see it come down."],
     puntNight: "Later that night, a new star twinkles just above the mountains.",
     orbitStar: "That new star again. Is it... spinning?",
+    puntNightNow: "Above the mountains, a new star blinks on.",
     // A1.1 the kid's games
     invite: { prompt: "'Wanna play {game}?'", choices: ["▶ Sure!", "▶ Maybe next time"], decline: ["'Okay! See ya!'"] },
     games: [
@@ -73,13 +76,8 @@ GG.data.street = {
       { id: "chalk", name: "chalk art", w: 2, intro: ["'Draw anything! I'm doing a dragon.'"], done: ["'Is that a horse? It's a great horse.'", "'Whoa. Can I keep it? I mean it's the sidewalk, so, yes.'"], gift: "chalk" },
       { id: "lemonade", name: "lemonade stand", w: 2, intro: ["'You pour, I'll do money. Fill it to the line!'"], done: ["'We made forty cents! Take a lemon.'"], gift: "lemon" }
     ],
-    // A2: the tiny talker on the ball
-    talkers: [
-      { id: "ant", name: "ant", w: 3, ask: ["'Psst. Down here. On the ball.'", "'Our colony's crumb is stuck past the big crack. It's a whole thing.'", "'Could you help? You'd have to be... smaller.'"] },
-      { id: "ladybug", name: "ladybug", w: 2, ask: ["'Excuse me! Hi! Down here!'", "'The ants need their crumb carried home, and I promised I'd find somebody strong.'", "'You look strong. Could you shrink a little?'"] },
-      { id: "snail", name: "snail", w: 1, ask: ["'Hello... up there...'", "'I've been trying to get a crumb home to the ants... since Tuesday...'", "'Could you... maybe... be small for a while...'"] }
-    ],
-    shrinkChoices: ["▶ Sure, I'll help", "▶ Sorry, little one"],
+    // A2: who is on the ball now lives in data/ballworld.js (talkers)
+    shrinkChoices: ["▶ Shrink down", "▶ Not today"],
     shrink: ["Everything gets very big, very fast."],
     tiny: {
       arrive: ["The sidewalk cracks are canyons. The lawn is a jungle.", "Somewhere ahead, a crumb the size of a boulder."],

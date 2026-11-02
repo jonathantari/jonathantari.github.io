@@ -278,6 +278,51 @@
         p.r(1, 8, 14, 2, "#c8b8a0"); p.r(12, 4, 2, 5, "#c8b8a0"); p.px(12, 3, "#2a2026"); p.px(14, 3, "#2a2026"); p.px(12, 2, "#c8b8a0"); p.px(14, 2, "#c8b8a0");
         p.blob(6, 5, 5, 4.5, function (x, y, d) { return d < 0.25 ? "#8a5a34" : d < 0.6 ? "#c8864a" : "#a86a3a"; });
       });
+      var s2 = f % 2;
+      if (kind === "waterbear") return make(16, 10, function (p) { // a tardigrade: a chubby pale sock with eight stubby legs
+        p.blob(8, 4.5, 7, 4, function (x, y, d) { return d < 0.3 && y < 4 ? "#f2e8d8" : y > 5 ? "#c8b8a0" : "#e0d0b8"; });
+        p.px(13, 3, "#2a2026"); p.px(14, 4, "#a89880");
+        for (var i = 0; i < 4; i++) { p.r(3 + i * 3, 8, 2, 2, "#c8b8a0"); if ((i + s2) % 2) p.px(3 + i * 3, 9, "#a89880"); }
+      });
+      if (kind === "flea") return make(14, 12, function (p) { // springy legs, a ringmaster's tiny hat
+        p.blob(6, 5, 5, 3.5, function (x, y) { return y < 4 ? "#7a4a2a" : "#5a3420"; });
+        p.px(10, 4, "#f2e8d8"); p.r(9, 0, 3, 2, "#2a2026"); p.r(8, 2, 5, 1, "#c8402a");
+        p.line(4, 8, s2 ? 1 : 2, 11, "#5a3420"); p.line(7, 8, 8, 11, "#5a3420"); p.line(9, 7, s2 ? 13 : 12, 11, "#5a3420");
+      });
+      if (kind === "mite") return make(12, 9, function (p) { // a red velvet mite, round as a cushion
+        p.blob(6, 4.5, 5, 3.6, function (x, y, d) { return d < 0.3 && y < 4 ? "#f06a5a" : "#d8382a"; });
+        p.px(9, 3, "#2a2026"); p.px(10, 3, "#2a2026");
+        for (var i = 0; i < 4; i++) p.px(2 + i * 2 + (s2 && i % 2 ? 1 : 0), 8, "#8a2a22");
+      });
+      if (kind === "spider") return make(18, 12, function (p) {
+        p.blob(7, 6, 4, 3.5, function () { return "#3a3036"; }); p.blob(11.5, 5.5, 2.2, 2, function () { return "#4a4046"; });
+        p.px(12, 5, "#f2e8d8"); p.px(13, 5, "#f2e8d8");
+        for (var i = 0; i < 4; i++) { var y = 3 + i * 2; p.line(5, y, 0, y - 2 + i + (s2 ? 1 : 0), "#3a3036"); p.line(9, y, 15 + (i % 2), y - 2 + i, "#3a3036"); }
+      });
+      if (kind === "woodlouse") return make(16, 9, function (p) {
+        p.blob(8, 5, 7, 3.5, function (x, y) { return (x % 3 === 0) ? "#6a6e78" : y < 4 ? "#9aa0aa" : "#80868f"; });
+        p.px(14, 4, "#2a2026"); p.line(15, 3, 16, 1, "#6a6e78");
+        for (var i = 0; i < 5; i++) p.px(3 + i * 2 + (s2 && i % 2 ? 1 : 0), 8, "#4a4e58");
+      });
+      if (kind === "aphid") return make(12, 10, function (p) {
+        p.blob(5.5, 5, 4.5, 3.5, function (x, y, d) { return d < 0.25 ? "#c8f08a" : "#8ac84a"; });
+        p.px(8, 4, "#2a2026"); p.line(9, 3, 11, 0, "#6a9a3a"); p.r(1, 2, 1, 2, "#6a9a3a");
+        p.px(3, 8, "#5a8a2a"); p.px(6 + s2, 8, "#5a8a2a");
+      });
+      if (kind === "springtail") return make(14, 10, function (p) {
+        p.blob(7, 5, 6, 2.6, function (x) { return x % 2 ? "#b8a0d8" : "#a088c8"; });
+        p.px(12, 4, "#2a2026"); p.line(12, 3, 14, 0, "#8a70b0"); p.line(1, 6, s2 ? 0 : 2, 9, "#8a70b0"); p.line(2, 7, s2 ? 4 : 1, 9, "#8a70b0");
+      });
+      if (kind === "beetle") return make(16, 11, function (p) {
+        p.blob(7, 5.5, 6, 4.2, function (x, y, d) { return x === 7 ? "#1a3a2a" : d < 0.25 && y < 5 ? "#5ab08a" : "#2a7a5a"; });
+        p.r(12, 4, 3, 3, "#1a2a22"); p.px(14, 4, "#f2e8d8");
+        for (var i = 0; i < 3; i++) p.line(4 + i * 3, 9, 3 + i * 3 + (s2 ? 1 : 0), 10, "#1a2a22");
+      });
+      if (kind === "gnat") return make(12, 9, function (p) {
+        p.blob(6, 5, 3, 2, function () { return "#4a4440"; }); p.px(8, 4, "#d84a3a");
+        p.blob(4, s2 ? 2 : 3, 3, 1.6, function () { return "#e0eef4"; }); p.blob(8, s2 ? 2 : 3, 2.5, 1.4, function () { return "#d0e2ea"; });
+        p.line(5, 7, 4, 8, "#4a4440"); p.line(7, 7, 8, 8, "#4a4440");
+      });
       return make(16, 9, function (p) { // ant
         var s = f % 2;
         p.blob(3, 4, 3, 2.5, function () { return "#3a2a26"; });
@@ -466,6 +511,67 @@
   }
   function sprinklerDrop() { return memo("drop", function () { return make(1, 2, function (p) { p.r(0, 0, 1, 2, "#cfe6f8"); }, { outline: false }); }); }
 
+  // ---------- the ball world: landmarks at ant scale ----------
+  function valve(kind) { // the thing at the top of the world
+    return memo("valve" + kind, function () {
+      if (kind === "balloon") return make(16, 30, function (p) { // the knot: a twisted pink tower
+        for (var y = 0; y < 30; y++) { var w = y < 10 ? 4 + Math.round(Math.sin(y * 0.8) * 2) : 3 + Math.round((y - 10) * 0.25); for (var x = 8 - w; x < 8 + w; x++) p.px(x, y, ((x + y) % 5 === 0) ? "#f8a0b0" : (x < 8 ? "#e84a6a" : "#c83a5a")); }
+      });
+      if (kind === "soccer") return make(28, 10, function (p) { // the navel: a rubber crater
+        p.blob(14, 6, 14, 4, function (x, y, d) { return d < 0.25 ? "#1a1a20" : d < 0.55 ? "#3a3a40" : y < 5 ? "#e8e6e0" : "#c8c6c0"; });
+      });
+      if (kind === "tennis") return make(20, 10, function (p) { // the stamp: an old price-sticker stub
+        p.r(2, 2, 16, 8, "#f2f0e8"); p.r(4, 4, 12, 1, "#8a8a92"); p.r(4, 6, 8, 1, "#8a8a92"); p.r(14, 0, 4, 3, "#f2f0e8");
+      });
+      return make(14, 28, function (p) { // the beach-ball plug: a soft white stopper on a tether
+        p.r(3, 8, 8, 20, "#f4f2ee"); p.r(4, 8, 2, 20, "#ffffff"); p.r(9, 8, 2, 20, "#d8d4cc");
+        p.r(1, 4, 12, 5, "#e8e4dc"); p.r(2, 2, 10, 2, "#f4f2ee"); p.r(5, 0, 4, 2, "#d8d4cc");
+        for (var y = 12; y < 28; y += 4) p.r(3, y, 8, 1, "#c8c4bc");
+      });
+    });
+  }
+  function grain(v) { // a grain of sand: a glassy boulder
+    return memo("grain" + v, function () {
+      var c = U.col(["#e8d8b0", "#d8c8a0", "#f0e4c8", "#c8b48a"][v % 4]);
+      return make(20, 15, function (p) {
+        for (var y = 0; y < 15; y++) { var hw = Math.round(9 * Math.sqrt(1 - Math.pow((y - 9) / 9.5, 2)) - (y < 4 ? (4 - y) * (v % 2 ? 1 : 1.6) : 0)); for (var x = 10 - hw; x < 10 + hw; x++) p.px(x, y, (x - y) % 7 === 0 ? U.mix(c, [255, 255, 255], 0.35) : x > 10 + hw * 0.4 ? U.dk(c, 0.82) : c); }
+        p.px(6, 5, "#ffffff"); p.px(7, 4, "#ffffff");
+      });
+    });
+  }
+  function fuzz(v) { // a strand of tennis felt, taller than a house
+    return memo("fuzz" + v, function () {
+      var c = U.col(v % 3 ? "#cce04a" : "#b8d03a");
+      return make(9, 34, function (p) {
+        for (var y = 0; y < 34; y++) { var x = Math.round(4 + Math.sin(y * 0.35 + v) * 2.2 + (y < 8 ? (v % 2 ? 1 : -1) * (8 - y) * 0.3 : 0)); p.px(x, y, y % 4 === 0 ? U.mix(c, [255, 255, 230], 0.3) : c); p.px(x + 1, y, U.dk(c, 0.85)); if (y < 6) p.px(x - 1, y, c); }
+      });
+    });
+  }
+  function curl() { // the corner of a sticker, curling up off the ground
+    return memo("curl", function () {
+      return make(22, 16, function (p) {
+        for (var y = 0; y < 16; y++) { var w = Math.round(22 - y * 1.1); p.r(0, y, Math.max(2, w - (y < 4 ? 8 - y * 2 : 0)), 1, y < 5 ? "#e8e4da" : "#f8f6f0"); }
+        p.r(3, 10, 9, 1, "#3a3a46"); p.r(3, 12, 6, 1, "#c8402a"); p.r(14, 3, 6, 1, "#c8c4ba");
+      });
+    });
+  }
+  function dew() { // a dewdrop, a glass hill with the sky in it
+    return memo("dew", function () {
+      return make(26, 14, function (p) {
+        p.blob(13, 14, 13, 13.5, function (x, y, d) { return d > 0.86 ? "#a8c8e0" : (x < 9 && y < 7 && d > 0.4) ? "#ffffff" : y > 10 ? "#c8e0f0" : "#dceef8"; });
+      }, { outline: "#7a9ab8" });
+    });
+  }
+  function item(kind) { // things you carry over your head
+    return memo("it" + kind, function () {
+      if (kind === "sticker") return make(14, 10, function (p) { p.r(0, 0, 14, 10, "#f8f6f0"); p.r(2, 2, 10, 1, "#3a3a46"); p.r(2, 4, 7, 2, "#c8402a"); p.r(2, 7, 9, 1, "#8a8a92"); p.px(13, 0, "#c8c4ba"); });
+      if (kind === "thread") return make(14, 10, function (p) { for (var a = 0; a < 60; a++) { var t = a / 60 * 12.5; p.px(Math.round(7 + Math.cos(t) * (2 + a / 15)), Math.round(5 + Math.sin(t) * (1.5 + a / 22)), a % 3 ? "#f2f0e8" : "#c8c4ba"); } });
+      if (kind === "felt") return make(12, 10, function (p) { p.blob(6, 5, 6, 5, function (x, y) { return (x + y) % 3 ? "#cce04a" : "#e0f07a"; }); });
+      if (kind === "tape") return make(16, 8, function (p) { p.r(0, 1, 16, 6, "#e8e0b8"); p.r(0, 1, 16, 1, "#f8f2d8"); p.px(0, 7, "#e8e0b8"); p.px(15, 0, "#e8e0b8"); });
+      return make(8, 8, function (p) { p.blob(4, 4, 4, 4, function () { return "#e8d8b0"; }); });
+    });
+  }
+
   // ---------- balls ----------
   function ball(kind) {
     return memo("ball" + kind, function () {
@@ -508,6 +614,7 @@
   }
 
   GG.spr = {
+    valve: valve, grain: grain, fuzz: fuzz, curl: curl, dew: dew, item: item,
     make: make, art: art, person: person, puppy: puppy, dog: dog, cat: cat, raccoon: raccoon, lion: lion, deer: deer, marmot: marmot, owl: owl, eagle: eagle, bird: bird, bug: bug,
     tree: tree, pine: pine, bush: bush, tuft: grassTuft, blade: blade, flower: flower, pinecone: pinecone, rock: rock, streetlight: streetlight, sign: sign,
     hydrant: hydrant, mailbox: mailbox, cone: cone, bench: bench, cafeTable: cafeTable, stand: stand, hose: hose, goose: goose, crumb: crumb, anthill: anthill, drop: sprinklerDrop, ball: ball, icon: icon

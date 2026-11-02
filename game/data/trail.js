@@ -10,6 +10,7 @@ GG.data.trail = {
     winter: ["pinecone", "pinecone", "rock", "pinecone"]
   },
   got: "Into the backpack: {item}.",
+  dupe: "You already have a {item}. You leave this one for somebody else to find.",
   // C1: every so often, not what you thought
   oops: [
     "That's not a pinecone. That's a very committed deer dropping. You put it back. Gently.",

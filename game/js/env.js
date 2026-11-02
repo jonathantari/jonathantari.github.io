@@ -85,6 +85,48 @@
     };
   }
 
+  // seen from the top of a ball: a giant blurry world on every side (a car, a hedge, a house, a shoe)
+  var GIANT = [
+    { a: 0.25, w: 0.5, e: 0.075, c: "#a8584a", kind: "car" },     // a parked car, mountain-sized
+    { a: 1.25, w: 0.42, e: 0.09, c: "#4a7a3a", kind: "hedge" },  // the hedge
+    { a: 2.2, w: 0.42, e: 0.15, c: "#d8d0c0", kind: "house" },  // a house
+    { a: 3.2, w: 0.3, e: 0.07, c: "#3a3a46", kind: "shoe" },    // somebody's shoe
+    { a: 4.3, w: 0.5, e: 0.16, c: "#5a8a4a", kind: "tree" },    // a tree
+    { a: 5.35, w: 0.22, e: 0.24, c: "#8a8a92", kind: "post" }    // a lamp post
+  ];
+  function giantAt(az) {
+    az = ((az % 6.283) + 6.283) % 6.283;
+    for (var i = 0; i < GIANT.length; i++) { var g = GIANT[i], d = U.wrapA(az - g.a) / g.w; if (Math.abs(d) <= 1) return { g: g, d: d }; }
+    return null;
+  }
+  function giantFn() {
+    return function (az) {
+      var q = giantAt(az); if (!q) return 0.03 + 0.012 * Math.sin(az * 9);
+      var g = q.g, d = Math.abs(q.d), e;
+      if (g.kind === "car") e = g.e * (d < 0.55 ? 1 : 0.55 + 0.45 * Math.sqrt(Math.max(0, 1 - (d - 0.55) / 0.45)));
+      else if (g.kind === "house") e = d < 0.92 ? g.e * (1 - 0.35 * d) : 0.05;
+      else if (g.kind === "post") e = d < 0.3 ? g.e : d < 0.7 ? 0.08 : 0.04;
+      else if (g.kind === "shoe") e = g.e * Math.sqrt(1 - d * d) * (q.d > 0 ? 1 : 0.7);
+      else e = g.e * Math.sqrt(1 - d * d) * (0.88 + 0.12 * Math.sin(az * 60));
+      return Math.max(0.03, e);
+    };
+  }
+  function giantCol(tod) {
+    var dim = tod === "night" ? 0.32 : tod === "dusk" ? 0.72 : 1;
+    function D(c) { return U.dk(U.hx(c), dim); }
+    var ground = D("#9aa080");
+    return function (az, dep, x, y) {
+      var q = giantAt(az); if (!q) return ground;
+      var g = q.g, d = q.d;
+      if (g.kind === "car") { if (dep > 0.12 && dep < 0.3 && Math.abs(d) < 0.5) return D(tod === "night" ? "#ffd890" : "#8ab0c8"); if (dep > 0.72 && (Math.abs(d - 0.6) < 0.16 || Math.abs(d + 0.6) < 0.16)) return D("#2a2a30"); }
+      if (g.kind === "house") { var wx = ((d + 1) * 5) % 1, wy = dep * 6 % 1; if (wx > 0.3 && wx < 0.7 && wy > 0.3 && wy < 0.75 && dep < 0.8) return D(tod === "night" ? "#ffd890" : "#7a90a8"); }
+      if (g.kind === "shoe" && dep < 0.4 && ((x + y) % 4 === 0)) return D("#f2f0e8");
+      if ((g.kind === "hedge" || g.kind === "tree") && U.bay(x, y) > 0.7) return D(g.kind === "tree" ? "#6a9a58" : "#5a8a48");
+      if (g.kind === "tree" && dep > 0.6 && Math.abs(d) < 0.12) return D("#6a4a32");
+      return D(g.c);
+    };
+  }
+
   // renderer settings. kind: street|trail|summit|tiny. north: bearing offset of the scene
   function render(E, kind, opt) {
     opt = opt || {};
@@ -94,11 +136,12 @@
     var near = fog[0], far = fog[1];
     if (kind === "summit") { near *= 2; far *= 3; }
     if (kind === "tiny") { near = 10; far = 60; }
+    if (kind === "ball") { near = Math.min(near, 14); far = Math.min(Math.max(far, 46), 52); }
     var o = {
       sky: P.sky, fog: P.fog, amb: P.amb.slice(), fogNear: near, fogFar: far,
       north: opt.north || 0, dark: E.tod === "night"
     };
-    if (kind !== "tiny" && E.weather !== "fog") {
+    if (kind !== "tiny" && kind !== "ball" && E.weather !== "fog") {
       o.ridge = ridgeFn(kind === "trail" ? 2.6 : kind === "summit" ? 1.3 : 1.7, 0);
       o.rock = rockFn(E.tod, E.season === "winter");
       o.ridgeHaze = grey ? 0.45 : 0.18;
@@ -109,6 +152,10 @@
       if (GG.save && GG.save.data.ballOrbit) st.push({ az: 0.55, el: 0.42, p: 0, sp: 2.2, big: true, c: [255, 226, 160] });
       o.stars = st;
       o.moon = { az: -0.9, el: 0.5 };
+    }
+    if (kind === "ball") { // the sky over a ball: the street, enormous and out of focus, all the way round
+      o.ridge = giantFn(); o.rock = giantCol(E.tod); o.ridgeDown = true; o.ridgeHaze = grey ? 0.62 : 0.5;
+      if (E.tod === "day") { o.sky = ["#7fb2e2", "#9cc4ea", "#b8d6f0", "#d2e4f4", "#e6eef6"]; o.fog = grey ? P.fog : "#dfe9f2"; }
     }
     if (kind === "tiny") { o.sky = ["#86b7e0", "#a8cce9", "#c6def0", "#dfeaf2", "#eef4f6"]; o.fog = "#e6eef0"; if (E.tod === "night") { o.sky = P.sky; o.fog = P.fog; } }
     return o;

@@ -202,7 +202,7 @@
       var ca = Math.cos(a), te = Math.tan(el);
       var yc = (te * this.cp + ca * this.sp) / (ca * this.cp - te * this.sp);
       var top = Math.round(this.cy0 - this.f * yc);
-      var bot = Math.min(H, Math.ceil(hy) + 1);
+      var bot = env.ridgeDown ? H : Math.min(H, Math.ceil(hy) + 1);
       for (var y = Math.max(0, top); y < bot; y++) {
         var dep = (y - top) / Math.max(1, bot - top);
         var c = env.rock(az, dep, x, y, y - top);
