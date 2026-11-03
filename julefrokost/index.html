@@ -238,10 +238,18 @@ var T = {
     store("jf.d", dev);
   }
 
+  /* count a visit at most once an hour per phone */
+  function visit() {
+    var last = +store("jf.v") || 0;
+    if (Date.now() - last < 36e5) return "";
+    store("jf.v", String(Date.now()));
+    return "&v=1&l=" + lang;
+  }
+
   function call(body) {
     var req = body
       ? fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(Object.assign({ d: dev }, body)) })
-      : fetch(API + "?d=" + encodeURIComponent(dev), { cache: "no-store" });
+      : fetch(API + "?d=" + encodeURIComponent(dev) + visit(), { cache: "no-store" });
     return req.then(function (r) { return r.json().then(function (j) { if (!r.ok || j.error) throw new Error(j.error || r.status); return j; }); });
   }
 

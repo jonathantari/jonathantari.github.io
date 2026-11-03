@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Julefrokost · Admin</title>
+<meta name="theme-color" content="#f3f1ec" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111110" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23111110'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%23c8342a'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f3f1ec; --surface:#fff; --ink:#111110; --mute:#6f6c66; --faint:#a9a59d;
+  --line:#e3e0d9; --field:#f2f0eb; --accent:#c8342a; --onink:#f3f1ec; --ok:#2f7d4f; --warn:#b26b00;
+  --sans:"Geist",ui-sans-serif,system-ui,-apple-system,sans-serif;
+  --mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#111110; --surface:#1a1a19; --ink:#efede8; --mute:#9a978f; --faint:#5f5d58;
+  --line:#2a2927; --field:#262624; --accent:#e5483d; --onink:#111110; --ok:#5cbf85; --warn:#e0a03a;
+}}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;background:var(--bg)}
+body{min-height:100svh;background:var(--bg);color:var(--ink);font:400 15px/1.45 var(--sans);-webkit-font-smoothing:antialiased}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;-webkit-tap-highlight-color:transparent}
+main{max-width:560px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 48px)}
+
+.bar{display:flex;justify-content:space-between;align-items:center;gap:8px;height:40px}
+.kicker{display:flex;align-items:center;gap:8px;font:500 12px/1 var(--mono);color:var(--mute);text-transform:uppercase;letter-spacing:.06em}
+.kicker i{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.pill{height:34px;padding:0 14px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:6px}
+.pill:active{background:var(--field)}
+h1{margin:28px 0 4px;font-weight:600;font-size:34px;line-height:1;letter-spacing:-.035em}
+.upd{color:var(--faint);font:400 12px/1 var(--mono)}
+
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:20px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}
+.tile b{display:block;font-size:30px;font-weight:600;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+.tile span{display:block;margin-top:6px;color:var(--mute);font-size:13px}
+.tile.big{grid-column:span 2;display:flex;align-items:end;justify-content:space-between}
+.tile.big b{font-size:44px}
+.tile.big small{font:400 12px/1.5 var(--mono);color:var(--mute);text-align:right;white-space:pre-line}
+
+section{margin-top:32px}
+.sh{display:flex;justify-content:space-between;align-items:baseline;padding:0 2px 8px;border-bottom:1px solid var(--ink)}
+.sh h2{font-size:15px;font-weight:600}
+.sh small{font:500 12px/1 var(--mono);color:var(--mute)}
+.note{color:var(--mute);font-size:13px;padding:10px 2px 0}
+.empty{color:var(--faint);padding:14px 2px;border-bottom:1px solid var(--line)}
+
+.row{display:flex;gap:12px;align-items:flex-start;padding:12px 2px;border-bottom:1px solid var(--line)}
+.row .main{flex:1;min-width:0}
+.row .t{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .m{color:var(--mute);font:400 12px/1.5 var(--mono);margin-top:2px;word-break:break-word}
+.row .side{flex:none;text-align:right;font:400 12px/1.5 var(--mono);color:var(--faint);white-space:nowrap}
+.n{font:400 12px/20px var(--mono);color:var(--faint);width:20px;flex:none}
+.tag{font:500 11px/1 var(--mono);border:1px solid var(--line);border-radius:6px;padding:3px 5px;color:var(--mute);margin-left:6px;vertical-align:1px}
+.dot{width:8px;height:8px;border-radius:50%;flex:none;margin-top:6px;background:var(--faint)}
+.dot.join{background:var(--ok)}.dot.edit{background:var(--warn)}.dot.drop{background:var(--accent)}
+.flag{display:inline-block;font:500 11px/1 var(--mono);text-transform:uppercase;letter-spacing:.05em;padding:4px 6px;border-radius:6px;margin-bottom:4px}
+.flag.dup{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}
+.flag.net{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+.flag.ren{background:var(--field);color:var(--mute)}
+
+textarea{width:100%;min-height:140px;margin-top:10px;border:0;border-radius:14px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);
+  padding:12px 14px;font-size:16px;line-height:1.5;resize:vertical;outline:none}
+textarea:focus{box-shadow:inset 0 0 0 1.5px var(--ink)}
+.go{height:48px;border-radius:12px;background:var(--ink);color:var(--onink);font-weight:500;padding:0 18px;margin-top:8px;width:100%}
+.go[disabled]{opacity:.5}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:12px 2px;border-bottom:1px solid var(--line)}
+.chip{padding:6px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:14px}
+.chip.miss{border-color:color-mix(in srgb,var(--accent) 45%,transparent);color:var(--accent)}
+.more{width:100%;height:44px;color:var(--mute);font-size:14px;border-bottom:1px solid var(--line)}
+
+.gate{margin-top:80px}
+.gate input{width:100%;height:56px;border:0;border-radius:14px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);padding:0 16px;font-size:16px;outline:none;margin-top:16px}
+.err{color:var(--accent);font-size:14px;margin-top:10px}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 20px);transform:translate(-50%,20px);opacity:0;transition:all .25s;
+  background:var(--ink);color:var(--onink);padding:10px 16px;border-radius:999px;font-size:14px;pointer-events:none}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<div class="toast" id="toast"></div>
+
+<script>
+var API = "https://julefrokost-api-jonathan-ts-projects.vercel.app/api/admin";
+
+(function () {
+  "use strict";
+  var app = document.getElementById("app");
+  function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { return null; } }
+
+  /* key: from #k=… once, then remembered on this device */
+  var m = location.hash.match(/k=([^&]+)/);
+  if (m) { store("jf.admin", decodeURIComponent(m[1])); history.replaceState(null, "", location.pathname); }
+  var KEY = store("jf.admin");
+
+  function h(tag, attrs, kids) {
+    var e = document.createElement(tag);
+    for (var a in attrs || {}) { if (a === "text") e.textContent = attrs[a]; else if (a === "on") e.onclick = attrs[a]; else e.setAttribute(a, attrs[a]); }
+    (kids || []).forEach(function (k) { if (k != null) e.appendChild(typeof k === "string" ? document.createTextNode(k) : k); });
+    return e;
+  }
+  function toast(msg) { var t = document.getElementById("toast"); t.textContent = msg; t.classList.add("on"); setTimeout(function () { t.classList.remove("on"); }, 1800); }
+  function ago(t, now) {
+    var s = Math.max(0, (now - t) / 1000);
+    if (s < 60) return "now"; if (s < 3600) return Math.floor(s / 60) + "m"; if (s < 86400) return Math.floor(s / 3600) + "h";
+    if (s < 7 * 86400) return Math.floor(s / 86400) + "d";
+    return new Date(t).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  }
+  function norm(s) { return String(s).toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9æøå ]/g, "").replace(/\s+/g, " ").trim(); }
+  function firstTok(s) { return norm(s).split(" ")[0]; }
+
+  function api(method, payload) {
+    return fetch(API, { method: method, cache: "no-store",
+      headers: Object.assign({ "x-admin-key": KEY }, payload ? { "Content-Type": "application/json" } : {}),
+      body: payload ? JSON.stringify(payload) : undefined })
+      .then(function (r) { if (r.status === 401) throw new Error("key"); if (!r.ok) throw new Error("http"); return r.json(); });
+  }
+
+  /* ---------- gate ---------- */
+  function gate(msg) {
+    app.innerHTML = "";
+    var input = h("input", { type: "password", placeholder: "Admin key", autocomplete: "current-password" });
+    var go = h("button", { "class": "go", text: "Open" });
+    function submit() { if (!input.value.trim()) return; KEY = input.value.trim(); store("jf.admin", KEY); load(); }
+    go.onclick = submit; input.onkeydown = function (e) { if (e.key === "Enter") submit(); };
+    app.appendChild(h("div", { "class": "gate" }, [
+      h("p", { "class": "kicker" }, [h("i"), "Julefrokost"]),
+      h("h1", { text: "Admin" }), input, go, msg ? h("p", { "class": "err", text: msg }) : null ]));
+  }
+
+  /* ---------- crunch ---------- */
+  function crunch(d) {
+    var dev = {}; // device hash → profile
+    function P(hh) { return dev[hh] || (dev[hh] = { h: hh, views: 0, ips: {}, cities: {}, devs: {}, first: Infinity, last: 0, names: [], dropped: false, lastIp: "" }); }
+    d.events.slice().reverse().forEach(function (e) { // oldest → newest
+      var p = P(e.h);
+      p.first = Math.min(p.first, e.t); p.last = Math.max(p.last, e.t);
+      if (e.ip) { p.ips[e.ip] = 1; p.lastIp = e.ip; }
+      if (e.c) p.cities[e.c] = 1; if (e.u) p.devs[e.u] = 1;
+      if (e.k === "view") p.views++;
+      if (e.k === "join" || e.k === "edit") { if (p.names[p.names.length - 1] !== e.n) p.names.push(e.n); p.dropped = false; }
+      if (e.k === "drop") { p.dropped = true; p.droppedName = e.n; p.droppedAt = e.t; }
+    });
+    var going = {}; d.guests.forEach(function (g) { going[g.h] = g; P(g.h).guest = g; });
+    var all = Object.keys(dev).map(function (k) { return dev[k]; });
+
+    var visitors = all.filter(function (p) { return p.views > 0 || p.guest; });
+    var lurkers = all.filter(function (p) { return !p.guest && !p.dropped && p.views > 0; }).sort(function (a, b) { return b.last - a.last; });
+    var dropped = all.filter(function (p) { return !p.guest && p.dropped; }).sort(function (a, b) { return b.droppedAt - a.droppedAt; });
+
+    // which guests share a network
+    var ipGuests = {};
+    d.guests.forEach(function (g) { Object.keys(dev[g.h].ips).forEach(function (ip) { (ipGuests[ip] = ipGuests[ip] || []).push(g.name); }); });
+
+    // flags
+    var flags = [];
+    var byName = {};
+    d.guests.forEach(function (g) { var k = norm(g.name); (byName[k] = byName[k] || []).push(g); });
+    Object.keys(byName).forEach(function (k) { if (byName[k].length > 1) flags.push({ type: "dup", label: "Same name, different phones", text: byName[k][0].name + " ×" + byName[k].length, meta: "Probably signed up twice — one may need removing" }); });
+    Object.keys(ipGuests).forEach(function (ip) { if (ipGuests[ip].length > 1) flags.push({ type: "net", label: "Same network", text: ipGuests[ip].join(", "), meta: ip + " · often housemates or a shared wifi" }); });
+    all.forEach(function (p) { if (p.names.length > 1) flags.push({ type: "ren", label: "Changed name", text: p.names.join(" → "), meta: p.guest ? "Still coming" : "Since dropped out" }); });
+
+    // invite list matching
+    var gNames = d.guests.map(function (g) { return g.name; });
+    function matches(inv, name) { var a = norm(inv), b = norm(name); if (!a || !b) return false; if (a === b) return true;
+      var as = a.split(" "), bs = b.split(" "); if (as.length === 1 || bs.length === 1) return as[0] === bs[0]; return false; }
+    var missing = d.invited.filter(function (inv) { return !gNames.some(function (n) { return matches(inv, n); }); });
+    var uninvited = d.invited.length ? gNames.filter(function (n) { return !d.invited.some(function (inv) { return matches(inv, n); }); }) : [];
+
+    var people = d.guests.reduce(function (s, g) { return s + 1 + g.plus; }, 0);
+    var views = all.reduce(function (s, p) { return s + p.views; }, 0);
+    return { dev: dev, people: people, views: views, visitors: visitors, lurkers: lurkers, dropped: dropped, flags: flags, missing: missing, uninvited: uninvited, ipGuests: ipGuests };
+  }
+
+  function where(p) { return [Object.keys(p.cities).join(" / "), Object.keys(p.devs).join(" / ")].filter(Boolean).join(" · "); }
+
+  /* ---------- render ---------- */
+  var showAll = false;
+  function render(d) {
+    var c = crunch(d), now = d.now;
+    app.innerHTML = "";
+    app.appendChild(h("div", { "class": "bar" }, [
+      h("p", { "class": "kicker" }, [h("i"), "Julefrokost"]),
+      h("div", {}, [
+        h("button", { "class": "pill", text: "Copy list", on: function () {
+          var txt = d.guests.map(function (g, i) { return (i + 1) + ". " + g.name + (g.plus ? " +1" : ""); }).join("\n") + "\n\n" + c.people + " people";
+          (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(function () { toast("Guest list copied"); }, function () { toast("Couldn't copy"); });
+        } }), " ",
+        h("button", { "class": "pill", text: "Refresh", on: load }) ]) ]));
+    app.appendChild(h("h1", { text: "Admin" }));
+    app.appendChild(h("p", { "class": "upd", text: "Updated " + new Date(now).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) }));
+
+    // tiles
+    app.appendChild(h("div", { "class": "tiles" }, [
+      h("div", { "class": "tile big" }, [ h("div", {}, [h("b", { text: String(c.people) }), h("span", { text: "People coming" })]),
+        h("small", { text: d.guests.length + " RSVPs\n" + d.guests.filter(function (g) { return g.plus; }).length + " bringing +1" }) ]),
+      h("div", { "class": "tile" }, [h("b", { text: String(c.visitors.length) }), h("span", { text: "Phones that opened it" })]),
+      h("div", { "class": "tile" }, [h("b", { text: String(c.views) }), h("span", { text: "Visits" })]),
+      h("div", { "class": "tile" }, [h("b", { text: String(c.lurkers.length) }), h("span", { text: "Looked, didn't sign up" })]),
+      h("div", { "class": "tile" }, [h("b", { text: String(d.invited.length ? c.missing.length : c.dropped.length) }), h("span", { text: d.invited.length ? "Invited, not signed up" : "Dropped out" })]) ]));
+
+    // follow up: invite list
+    var sec = h("section", {}, [h("div", { "class": "sh" }, [h("h2", { text: "Follow up" }), h("small", { text: d.invited.length ? c.missing.length + " missing" : "" })])]);
+    if (d.invited.length) {
+      sec.appendChild(c.missing.length
+        ? h("div", { "class": "chips" }, c.missing.map(function (n) { return h("span", { "class": "chip miss", text: n }); }))
+        : h("p", { "class": "empty", text: "Everyone on your list has signed up." }));
+      if (c.uninvited.length) sec.appendChild(h("p", { "class": "note", text: "Signed up but not on your list: " + c.uninvited.join(", ") }));
+    } else {
+      sec.appendChild(h("p", { "class": "note", text: "Paste your invite list below to see who hasn't signed up yet." }));
+    }
+    app.appendChild(sec);
+
+    // lurkers
+    var lk = h("section", {}, [h("div", { "class": "sh" }, [h("h2", { text: "Looked, didn't sign up" }), h("small", { text: String(c.lurkers.length) })])]);
+    if (!c.lurkers.length) lk.appendChild(h("p", { "class": "empty", text: "Nobody yet." }));
+    c.lurkers.forEach(function (p) {
+      var shared = Object.keys(p.ips).map(function (ip) { return c.ipGuests[ip]; }).filter(Boolean)[0];
+      lk.appendChild(h("div", { "class": "row" }, [ h("div", { "class": "main" }, [
+        h("div", { "class": "t", text: shared ? "Same wifi as " + shared.join(", ") : (where(p) || "Unknown") }),
+        h("div", { "class": "m", text: (shared ? where(p) + " · " : "") + p.views + (p.views === 1 ? " visit" : " visits") + " · " + (p.lastIp || "no IP") }) ]),
+        h("div", { "class": "side", text: ago(p.last, now) }) ]));
+    });
+    app.appendChild(lk);
+
+    // flags
+    var fl = h("section", {}, [h("div", { "class": "sh" }, [h("h2", { text: "Worth a look" }), h("small", { text: String(c.flags.length) })])]);
+    if (!c.flags.length) fl.appendChild(h("p", { "class": "empty", text: "No duplicates or oddities." }));
+    c.flags.forEach(function (f) {
+      fl.appendChild(h("div", { "class": "row" }, [h("div", { "class": "main" }, [
+        h("span", { "class": "flag " + f.type, text: f.label }), h("div", { "class": "t", text: f.text }), h("div", { "class": "m", text: f.meta }) ])]));
+    });
+    app.appendChild(fl);
+
+    // guests
+    var gs = h("section", {}, [h("div", { "class": "sh" }, [h("h2", { text: "Coming" }), h("small", { text: c.people + " people" })])]);
+    if (!d.guests.length) gs.appendChild(h("p", { "class": "empty", text: "No sign-ups yet." }));
+    d.guests.forEach(function (g, i) {
+      var p = c.dev[g.h];
+      gs.appendChild(h("div", { "class": "row" }, [
+        h("span", { "class": "n", text: String(i + 1).padStart(2, "0") }),
+        h("div", { "class": "main" }, [
+          h("div", { "class": "t" }, [g.name, g.plus ? h("span", { "class": "tag", text: "+1" }) : null]),
+          h("div", { "class": "m", text: [where(p), Object.keys(p.ips).join(", ")].filter(Boolean).join(" · ") || "—" }) ]),
+        h("div", { "class": "side", text: ago(g.t, now) }) ]));
+    });
+    app.appendChild(gs);
+
+    // dropped
+    if (c.dropped.length) {
+      var dr = h("section", {}, [h("div", { "class": "sh" }, [h("h2", { text: "Dropped out" }), h("small", { text: String(c.dropped.length) })])]);
+      c.dropped.forEach(function (p) {
+        dr.appendChild(h("div", { "class": "row" }, [h("div", { "class": "main" }, [
+          h("div", { "class": "t", text: p.droppedName || "—" }), h("div", { "class": "m", text: where(p) }) ]), h("div", { "class": "side", text: ago(p.droppedAt, now) }) ]));
+      });
+      app.appendChild(dr);
+    }
+
+    // activity
+    var labels = { view: "Opened the page", join: "Signed up", edit: "Edited", drop: "Dropped out" };
+    var feed = d.events.filter(function (e) { return showAll || e.k !== "view"; });
+    var ac = h("section", {}, [h("div", { "class": "sh" }, [h("h2", { text: "Activity" }),
+      h("button", { "class": "pill", style: "height:26px;font-size:12px", text: showAll ? "Hide visits" : "Show visits", on: function () { showAll = !showAll; render(d); } })])]);
+    if (!feed.length) ac.appendChild(h("p", { "class": "empty", text: "Nothing yet." }));
+    var lim = ac.limit || 40;
+    feed.slice(0, lim).forEach(function (e) {
+      var g = c.dev[e.h] && c.dev[e.h].guest;
+      var who = e.n || (g && g.name) || "Someone";
+      var what = labels[e.k] + (e.k === "edit" && e.was && e.was !== e.n ? " (was " + e.was + ")" : "") + ((e.k === "join" || e.k === "edit") && e.p ? " · +1" : "");
+      ac.appendChild(h("div", { "class": "row" }, [ h("span", { "class": "dot " + e.k }),
+        h("div", { "class": "main" }, [ h("div", { "class": "t", text: who }), h("div", { "class": "m", text: what + " · " + [e.c, e.u, e.ip].filter(Boolean).join(" · ") }) ]),
+        h("div", { "class": "side", text: ago(e.t, now) }) ]));
+    });
+    if (feed.length > lim) ac.appendChild(h("button", { "class": "more", text: "Show all " + feed.length, on: function (ev) { ev.target.remove(); feed.slice(lim).forEach(function () {}); showAllRows(ac, feed.slice(lim), c, now, labels); } }));
+    app.appendChild(ac);
+
+    // invite list editor
+    var ta = h("textarea", { placeholder: "One name per line", spellcheck: "false" }); ta.value = d.invited.join("\n");
+    var save = h("button", { "class": "go", text: "Save invite list" });
+    save.onclick = function () {
+      save.disabled = true; save.textContent = "Saving…";
+      api("POST", { invited: ta.value.split(/\n|,/).map(function (s) { return s.trim(); }).filter(Boolean) })
+        .then(function (j) { data = j; render(j); toast("Invite list saved"); })
+        .catch(function () { save.disabled = false; save.textContent = "Save invite list"; toast("Couldn't save"); });
+    };
+    app.appendChild(h("section", {}, [h("div", { "class": "sh" }, [h("h2", { text: "Invite list" }), h("small", { text: d.invited.length + " names" })]),
+      h("p", { "class": "note", text: "Matches on full name, or first name when only one is given." }), ta, save ]));
+
+    app.appendChild(h("section", {}, [h("button", { "class": "pill", text: "Forget key on this device", on: function () { store("jf.admin", null); KEY = null; gate(); } })]));
+  }
+  function showAllRows(ac, rest, c, now, labels) {
+    rest.forEach(function (e) {
+      var g = c.dev[e.h] && c.dev[e.h].guest;
+      ac.appendChild(h("div", { "class": "row" }, [ h("span", { "class": "dot " + e.k }),
+        h("div", { "class": "main" }, [ h("div", { "class": "t", text: e.n || (g && g.name) || "Someone" }), h("div", { "class": "m", text: labels[e.k] + " · " + [e.c, e.u, e.ip].filter(Boolean).join(" · ") }) ]),
+        h("div", { "class": "side", text: ago(e.t, now) }) ]));
+    });
+  }
+
+  var data = null;
+  function load() {
+    if (!KEY) return gate();
+    if (!data) app.innerHTML = '<p class="note" style="margin-top:80px">Loading…</p>';
+    api("GET").then(function (j) { data = j; render(j); })
+      .catch(function (e) { if (e.message === "key") { store("jf.admin", null); KEY = null; gate("That key didn't work."); } else if (data) toast("Couldn't refresh"); else gate("Couldn't reach the server."); });
+  }
+  load();
+  document.addEventListener("visibilitychange", function () { if (!document.hidden && KEY && data) load(); });
+})();
+</script>
+</body>
+</html>
