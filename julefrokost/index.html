@@ -3,10 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Julefrokost · December 12</title>
-<meta name="description" content="You're invited to julefrokost on December 12. RSVP here.">
-<meta property="og:title" content="🎄 Julefrokost · December 12">
-<meta property="og:description" content="You're invited. RSVP here.">
+<title>RSVP · Ohana Julefrokost</title>
+<meta name="description" content="Saturday 12 December, 12:00 · Kellervenner Amager">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://garage.jonathantari.com/julefrokost/">
+<meta property="og:site_name" content="Ohana Julefrokost">
+<meta property="og:title" content="RSVP · Ohana Julefrokost">
+<meta property="og:description" content="Saturday 12 December, 12:00 · Kellervenner Amager">
+<meta property="og:image" content="https://garage.jonathantari.com/julefrokost/preview.png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/png" href="https://garage.jonathantari.com/julefrokost/favicon.png">
+<link rel="apple-touch-icon" href="https://garage.jonathantari.com/julefrokost/apple-touch-icon.png">
 <meta name="theme-color" content="#f3f1ec" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#111110" media="(prefers-color-scheme: dark)">
 <style>html,body{margin:0;background:#f3f1ec}@media (prefers-color-scheme:dark){html,body{background:#111110}}</style>
@@ -14,13 +23,17 @@
 <body>
 <script>
 /* The page itself lives on Vercel (julefrokost-api). This shell keeps the
-   garage.jonathantari.com/julefrokost link and loads the latest version. */
+   garage.jonathantari.com/julefrokost link, the preview text and the icons,
+   and loads the latest version of the page. */
 (function () {
   var SRC = "https://julefrokost-api.vercel.app/";
+  var keep = Array.prototype.map.call(document.querySelectorAll('title, link[rel~="icon"], link[rel="apple-touch-icon"]'),
+    function (n) { return n.outerHTML; }).join("");
   fetch(SRC + "?t=" + Date.now(), { cache: "no-store" })
     .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
     .then(function (html) {
-      html = html.replace(/<head>/i, '<head><base href="' + SRC + '">');
+      html = html.replace(/<title>[\s\S]*?<\/title>/i, "").replace(/<link rel="icon"[^>]*>/gi, "")
+                 .replace(/<head>/i, '<head><base href="' + SRC + '">' + keep);
       document.open(); document.write(html); document.close();
     })
     .catch(function () { location.replace(SRC); });
