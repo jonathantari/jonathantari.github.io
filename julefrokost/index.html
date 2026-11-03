@@ -1,15 +1,15 @@
 <!doctype html>
-<html lang="da">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Julefrokost</title>
-<meta name="description" content="Skriv dig på listen · Add your name">
+<title>Julefrokost · December 12</title>
+<meta name="description" content="You're invited to julefrokost on December 12. RSVP here.">
 <meta name="theme-color" content="#f3f1ec" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#111110" media="(prefers-color-scheme: dark)">
-<meta property="og:title" content="Julefrokost">
-<meta property="og:description" content="Skriv dig på listen · Add your name">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23111110'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%23c8342a'/%3E%3C/svg%3E">
+<meta property="og:title" content="🎄 Julefrokost · December 12">
+<meta property="og:description" content="You're invited. RSVP here.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext x='50%25' y='54%25' font-size='26' text-anchor='middle' dominant-baseline='middle'%3E🎄%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -17,7 +17,7 @@
 :root{
   --bg:#f3f1ec; --surface:#fff; --ink:#111110; --mute:#6f6c66; --faint:#a9a59d;
   --line:#e3e0d9; --field:#f7f6f2; --accent:#c8342a; --onink:#f3f1ec;
-  --ease:cubic-bezier(.2,.8,.2,1);
+  --ease:cubic-bezier(.2,.8,.2,1); --pop:cubic-bezier(.34,1.56,.64,1);
   --sans:"Geist",ui-sans-serif,system-ui,-apple-system,sans-serif;
   --mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
 }
@@ -28,11 +28,12 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%;background:var(--bg)}
 body{min-height:100svh;background:var(--bg);color:var(--ink);font:400 16px/1.45 var(--sans);
-  -webkit-font-smoothing:antialiased;letter-spacing:-.005em}
+  -webkit-font-smoothing:antialiased;letter-spacing:-.005em;overflow-x:hidden}
 button,input{font:inherit;color:inherit;letter-spacing:inherit}
 button{cursor:pointer;background:none;border:0;-webkit-tap-highlight-color:transparent}
+a{color:inherit}
 
-main{max-width:440px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 16px) 20px calc(env(safe-area-inset-bottom) + 48px)}
+main{max-width:440px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 16px) 20px calc(env(safe-area-inset-bottom) + 40px)}
 
 /* top bar */
 .bar{display:flex;justify-content:space-between;align-items:center;height:40px}
@@ -42,17 +43,26 @@ main{max-width:440px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 16px)
 .info{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line);color:var(--ink)}
 .info svg{width:16px;height:16px}
 
-/* header */
-header{margin:56px 0 28px}
-.kicker{display:flex;align-items:center;gap:8px;font:500 12px/1 var(--mono);color:var(--mute);text-transform:uppercase;letter-spacing:.06em}
-.kicker i{width:7px;height:7px;border-radius:50%;background:var(--accent)}
-h1{margin-top:14px;font-weight:600;font-size:clamp(44px,13vw,56px);line-height:.95;letter-spacing:-.045em}
-.sub{margin-top:12px;color:var(--mute);font-size:16px}
+/* invitation header */
+header{margin:44px 0 28px}
+.tree{display:inline-block;font-size:44px;line-height:1;transform-origin:50% 90%;animation:sway 5s ease-in-out infinite;cursor:pointer;user-select:none;-webkit-user-select:none}
+.tree.shake{animation:shake .6s var(--ease)}
+@keyframes sway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+@keyframes shake{0%,100%{transform:rotate(0)}20%{transform:rotate(-14deg)}40%{transform:rotate(12deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(5deg)}}
+h1{margin-top:18px}
+h1 .inv{display:block;font-size:22px;font-weight:500;letter-spacing:-.02em;color:var(--mute)}
+h1 .ttl{display:block;margin-top:6px;font-weight:600;font-size:clamp(46px,14vw,60px);line-height:.95;letter-spacing:-.045em}
+.when{margin-top:16px;font-size:18px;font-weight:500;letter-spacing:-.01em}
+.where{margin-top:2px;color:var(--mute);font-size:15px}
+.where button{text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px;color:inherit}
 
 /* card */
 .card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:8px}
 .view{animation:in .35s var(--ease) both}
 @keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.fh{display:flex;justify-content:space-between;align-items:baseline;padding:10px 8px 12px}
+.fh h2{font-size:20px;font-weight:600;letter-spacing:-.02em}
+.fh small{font-size:13px;color:var(--mute)}
 
 .field input{width:100%;height:56px;border:0;border-radius:14px;background:var(--field);padding:0 16px;font-size:18px;outline:none;
   box-shadow:inset 0 0 0 1px transparent;transition:box-shadow .15s}
@@ -67,7 +77,7 @@ h1{margin-top:14px;font-weight:600;font-size:clamp(44px,13vw,56px);line-height:.
 .seg[data-v="1"] .thumb{transform:translateX(100%)}
 
 .go{margin-top:8px;width:100%;height:56px;border-radius:14px;background:var(--ink);color:var(--onink);font-size:16px;font-weight:500;
-  display:flex;align-items:center;justify-content:center;transition:transform .12s var(--ease),opacity .2s}
+  display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .12s var(--ease),opacity .2s}
 .go:active{transform:scale(.985)}
 .go[disabled]{opacity:.5}
 .go .spin{display:none;width:18px;height:18px;border-radius:50%;border:2px solid color-mix(in srgb,var(--onink) 30%,transparent);border-top-color:var(--onink);animation:sp .7s linear infinite}
@@ -77,17 +87,25 @@ h1{margin-top:14px;font-weight:600;font-size:clamp(44px,13vw,56px);line-height:.
 .err:empty{display:none}
 
 /* confirmed */
-.done{padding:20px 16px 16px}
-.done .row{display:flex;align-items:center;gap:12px}
-.tick{width:36px;height:36px;flex:none;border-radius:50%;background:var(--ink);color:var(--onink);display:grid;place-items:center}
-.tick svg{width:16px;height:16px}
-.tick path{stroke-dasharray:24;stroke-dashoffset:24;animation:draw .45s .1s var(--ease) forwards}
-@keyframes draw{to{stroke-dashoffset:0}}
+.done{padding:18px 16px 16px}
+.done .row{display:flex;align-items:center;gap:14px}
+.gift{width:48px;height:48px;flex:none;border-radius:14px;background:var(--field);display:grid;place-items:center;font-size:28px;line-height:1;animation:giftIn .6s var(--pop) both}
+@keyframes giftIn{from{transform:scale(.3) rotate(-20deg);opacity:0}to{transform:none;opacity:1}}
 .done h2{font-size:20px;font-weight:600;letter-spacing:-.02em}
 .done p{color:var(--mute);font-size:15px;margin-top:1px}
-.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:18px}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
 .ghost{height:44px;border-radius:12px;background:var(--field);font-size:15px;font-weight:500;transition:background .2s,color .2s}
 .ghost.warn{background:var(--accent);color:#fff}
+
+/* celebration */
+.burst{position:fixed;inset:0;pointer-events:none;z-index:9;overflow:hidden}
+.burst .big{position:absolute;left:50%;top:42%;font-size:96px;line-height:1;transform:translate(-50%,-50%);animation:bigPop 1.5s var(--pop) forwards}
+@keyframes bigPop{0%{transform:translate(-50%,-50%) scale(0) rotate(-25deg);opacity:0}25%{transform:translate(-50%,-50%) scale(1.15) rotate(8deg);opacity:1}
+  40%{transform:translate(-50%,-50%) scale(1) rotate(-4deg)}70%{transform:translate(-50%,-50%) scale(1) rotate(0);opacity:1}
+  100%{transform:translate(-50%,-160%) scale(.4);opacity:0}}
+.burst i{position:absolute;left:50%;top:42%;font-style:normal;font-size:24px;line-height:1;opacity:0;animation:fly 1.3s .25s var(--ease) forwards}
+@keyframes fly{0%{transform:translate(-50%,-50%) scale(.4);opacity:0}15%{opacity:1}
+  100%{transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y))) rotate(var(--r)) scale(1);opacity:0}}
 
 /* list */
 .list{margin-top:36px}
@@ -99,16 +117,20 @@ li{display:flex;align-items:center;gap:12px;min-height:52px;padding:0 2px;border
 .n{font:400 12px/1 var(--mono);color:var(--faint);width:20px;font-variant-numeric:tabular-nums}
 .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 li.me .nm{font-weight:600}
+li.me{animation:in .3s var(--ease) both, glow 1.6s .2s ease-out}
+@keyframes glow{0%{background:color-mix(in srgb,var(--accent) 12%,transparent)}100%{background:transparent}}
 .you{font:500 11px/1 var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--accent)}
 .tag{font:500 12px/1 var(--mono);color:var(--mute);border:1px solid var(--line);border-radius:6px;padding:4px 6px}
 .empty{color:var(--faint);justify-content:center}
 .skel li span{display:block;height:10px;border-radius:5px;background:var(--line)}
 
+.foot{margin-top:36px;text-align:center;color:var(--faint);font-size:13px}
+
 /* sheet */
 #sheet{position:fixed;inset:0;z-index:5;display:grid;align-items:end;visibility:hidden;transition:visibility 0s .35s}
 #sheet .scrim{position:absolute;inset:0;background:rgba(0,0,0,.35);opacity:0;transition:opacity .3s}
 #sheet .panel{position:relative;width:100%;max-width:480px;margin:0 auto;background:var(--surface);border-radius:24px 24px 0 0;
-  padding:10px 20px calc(env(safe-area-inset-bottom) + 20px);transform:translateY(100%);transition:transform .35s var(--ease)}
+  padding:10px 20px calc(env(safe-area-inset-bottom) + 20px);transform:translateY(100%);transition:transform .35s var(--ease);max-height:92svh;overflow:auto}
 #sheet.open{visibility:visible;transition:none}
 #sheet.open .scrim{opacity:1}
 #sheet.open .panel{transform:none}
@@ -118,19 +140,20 @@ dl{display:grid;grid-template-columns:auto 1fr}
 dt,dd{padding:14px 0;border-bottom:1px solid var(--line)}
 dt{font:500 12px/20px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--mute)}
 dd{text-align:right;padding-left:20px}
-dd.tbd{color:var(--faint)}
+dd small{display:block;color:var(--mute);font-size:14px;margin-top:2px}
+dd a{text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
 .panel .go{margin-top:20px}
 
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.burst{display:none}}
 </style>
 </head>
 <body>
 <main>
   <div class="bar">
     <div class="lang" role="group" aria-label="Language">
-      <button data-l="da" aria-pressed="true">DA</button>
-      <button data-l="en" aria-pressed="false">EN</button>
+      <button data-l="en" aria-pressed="true">EN</button>
+      <button data-l="da" aria-pressed="false">DA</button>
     </div>
     <button class="info" id="infoBtn" aria-haspopup="dialog" data-t-aria="info">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M8 7.2v4.3"/><circle cx="8" cy="4.6" r=".4" fill="currentColor"/></svg>
@@ -138,9 +161,10 @@ dd.tbd{color:var(--faint)}
   </div>
 
   <header>
-    <p class="kicker"><i></i><span data-t="kicker"></span></p>
-    <h1>Julefrokost</h1>
-    <p class="sub" id="sub"></p>
+    <span class="tree" id="tree" role="img" aria-label="Christmas tree">🎄</span>
+    <h1><span class="inv" data-t="kicker"></span><span class="ttl">Julefrokost</span></h1>
+    <p class="when" id="when"></p>
+    <p class="where"><button id="whereBtn" aria-haspopup="dialog"></button></p>
   </header>
 
   <section id="stage" aria-live="polite"></section>
@@ -149,6 +173,8 @@ dd.tbd{color:var(--faint)}
     <div class="lh"><h3 id="lt" data-t="who"></h3><small id="count"></small></div>
     <ul id="guests" class="skel"><li><span style="width:42%"></span></li><li><span style="width:58%"></span></li><li><span style="width:34%"></span></li></ul>
   </section>
+
+  <p class="foot" data-t="foot"></p>
 </main>
 
 <div id="sheet" role="dialog" aria-modal="true" aria-labelledby="st">
@@ -163,6 +189,7 @@ dd.tbd{color:var(--faint)}
 
 <template id="tForm">
   <form class="card view" novalidate>
+    <div class="fh"><h2></h2><small></small></div>
     <label class="field"><span class="sr" data-t="name"></span>
       <input name="name" autocomplete="given-name" autocapitalize="words" enterkeyhint="done" maxlength="40" required>
     </label>
@@ -179,7 +206,7 @@ dd.tbd{color:var(--faint)}
 <template id="tDone">
   <div class="card done view">
     <div class="row">
-      <div class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+      <div class="gift" aria-hidden="true">🎁</div>
       <div><h2></h2><p></p></div>
     </div>
     <div class="acts">
@@ -191,33 +218,37 @@ dd.tbd{color:var(--faint)}
 </template>
 
 <script>
-/* ---------- Fill these in (Danish, English) ---------- */
+/* ---------- Party details ---------- */
+var MAPS = "https://www.google.com/maps/place//data=!4m2!3m1!1s0x46525300680162af:0x6334da37e2dbc459?sa=X&ved=1t:8290&ictx=111";
 var EVENT = {
-  date:  ["", ""],   // fx ["Lørdag 12. december", "Saturday 12 December"]
-  time:  ["", ""],   // fx ["Kl. 18", "6 pm"]
-  place: ["", ""],   // fx ["Møntergade, København", "Møntergade, Copenhagen"]
-  price: ["", ""]    // fx ["200 kr. via MobilePay", "DKK 200 via MobilePay"]
+  date:  { en: "Saturday, December 12, 2026", da: "Lørdag 12. december 2026" },
+  time:  { en: "13:00 CET", da: "Kl. 13:00" },
+  place: { en: "Kellervenner Amager", da: "Kellervenner Amager", sub: "Hollænderdybet 1, kld., 2300 København", href: MAPS },
+  price: { en: "DKK 399 per person", da: "399 kr. pr. person", sub: { en: "Drinks not included", da: "Ekskl. drikkevarer" } },
+  menu:  { en: "Classic julefrokost menu", da: "Klassisk julefrokostmenu" }
 };
 var API = "https://julefrokost-api-jonathan-ts-projects.vercel.app/api/rsvp";
-/* ----------------------------------------------------- */
+/* ----------------------------------- */
 
 var T = {
-  da: { kicker:"Du er inviteret", lead:"Skriv dig på listen", leadEdit:"Ret din tilmelding", leadDone:"Vi ses",
+  en: { kicker:"You're invited to", when:"Saturday, December 12, 2026", where:"13:00 · Kellervenner Amager",
+        rsvp:"RSVP", rsvpEdit:"Update your RSVP", rsvpNote:"Takes 5 seconds",
+        name:"Your name", solo:"Just me", plus:"Me + 1", go:"Count me in", save:"Save changes",
+        hi:function(n){return "You're in, "+n+"!"}, hiPlus:"Plus one. See you on the 12th", hiSolo:"See you on the 12th",
+        edit:"Edit", drop:"Can't make it", sure:"Really? 🥺", who:"Who's coming",
+        count:function(n){return n+(n===1?" person":" people")}, empty:"Nobody yet. Be the first 🎄",
+        you:"you", needName:"We need a name for the place card", oops:"Hmm, that didn't work. Try again?", loadFail:"Couldn't load the list",
+        details:"The details", close:"Got it", info:"Party details", foot:"Hosted by Tari 🎅",
+        f:{date:"Date",time:"Time",place:"Where",price:"Price",menu:"Menu"} },
+  da: { kicker:"Du er inviteret til", when:"Lørdag 12. december 2026", where:"Kl. 13:00 · Kellervenner Amager",
+        rsvp:"RSVP", rsvpEdit:"Ret din tilmelding", rsvpNote:"Tager 5 sekunder",
         name:"Dit navn", solo:"Kun mig", plus:"Mig + 1", go:"Jeg kommer", save:"Gem",
-        hi:function(n){return "Du er med, "+n}, hiPlus:"Dig og én ekstra", hiSolo:"Glæder mig",
-        edit:"Ret", drop:"Meld fra", sure:"Sikker?", who:"Hvem kommer",
-        count:function(n){return n+(n===1?" person":" personer")}, empty:"Bliv den første",
-        you:"dig", needName:"Skriv dit navn", oops:"Noget gik galt. Prøv igen.", loadFail:"Kunne ikke hente listen",
-        details:"Praktisk", close:"Luk", tbd:"Følger", info:"Info om festen",
-        f:{date:"Dato",time:"Tid",place:"Sted",price:"Pris"} },
-  en: { kicker:"You're invited", lead:"Add your name to the list", leadEdit:"Update your RSVP", leadDone:"See you there",
-        name:"Your name", solo:"Just me", plus:"Me + 1", go:"I'm coming", save:"Save",
-        hi:function(n){return "You're in, "+n}, hiPlus:"You plus one", hiSolo:"Can't wait",
-        edit:"Edit", drop:"Can't make it", sure:"Sure?", who:"Who's coming",
-        count:function(n){return n+(n===1?" person":" people")}, empty:"Be the first",
-        you:"you", needName:"Add your name", oops:"Something went wrong. Try again.", loadFail:"Couldn't load the list",
-        details:"Details", close:"Close", tbd:"To follow", info:"Party details",
-        f:{date:"Date",time:"Time",place:"Place",price:"Price"} }
+        hi:function(n){return "Du er med, "+n+"!"}, hiPlus:"Med +1. Vi ses d. 12.", hiSolo:"Vi ses d. 12.",
+        edit:"Ret", drop:"Meld fra", sure:"Virkelig? 🥺", who:"Hvem kommer",
+        count:function(n){return n+(n===1?" person":" personer")}, empty:"Ingen endnu. Bliv den første 🎄",
+        you:"dig", needName:"Vi skal bruge et navn til bordkortet", oops:"Hov, det gik ikke. Prøv igen?", loadFail:"Kunne ikke hente listen",
+        details:"Praktisk", close:"Forstået", info:"Info om festen", foot:"Vært: Tari 🎅",
+        f:{date:"Dato",time:"Tid",place:"Sted",price:"Pris",menu:"Menu"} }
 };
 
 (function () {
@@ -226,8 +257,8 @@ var T = {
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
   function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { return null; } }
 
-  var lang = store("jf.l") === "en" ? "en" : "da", t = T[lang];
-  var stage = $("#stage"), list = $("#guests"), count = $("#count"), sub = $("#sub");
+  var lang = store("jf.l") === "da" ? "da" : "en", t = T[lang];
+  var stage = $("#stage"), list = $("#guests"), count = $("#count");
   var state = { mine: null, guests: [], total: 0 }, editing = false, loaded = false, failed = false;
 
   /* this phone's id — housemates on the same wifi each get their own */
@@ -253,20 +284,48 @@ var T = {
     return req.then(function (r) { return r.json().then(function (j) { if (!r.ok || j.error) throw new Error(j.error || r.status); return j; }); });
   }
 
+  /* ---- fun bits ---- */
+  function celebrate() {
+    var b = document.createElement("div"); b.className = "burst"; b.setAttribute("aria-hidden", "true");
+    var big = document.createElement("span"); big.className = "big"; big.textContent = "🎁"; b.appendChild(big);
+    var bits = ["🎄", "✨", "⭐", "❄️", "🍪", "✨", "🎅", "❄️", "⭐", "✨", "🥂", "❄️"];
+    bits.forEach(function (s, i) {
+      var a = (i / bits.length) * Math.PI * 2 + Math.random() * .4, d = 110 + Math.random() * 90;
+      var e = document.createElement("i"); e.textContent = s;
+      e.style.setProperty("--x", Math.cos(a) * d + "px"); e.style.setProperty("--y", Math.sin(a) * d + "px");
+      e.style.setProperty("--r", (Math.random() * 120 - 60) + "deg"); e.style.animationDelay = (.25 + Math.random() * .15) + "s";
+      b.appendChild(e);
+    });
+    document.body.appendChild(b);
+    if (navigator.vibrate) { try { navigator.vibrate([12, 40, 12]); } catch (e) {} }
+    setTimeout(function () { b.remove(); }, 1900);
+  }
+  var tree = $("#tree");
+  tree.onclick = function () { tree.classList.remove("shake"); void tree.offsetWidth; tree.classList.add("shake"); };
+  tree.addEventListener("animationend", function (e) { if (e.animationName === "shake") tree.classList.remove("shake"); });
+
   /* ---- render ---- */
   function first(n) { return String(n).trim().split(/\s+/)[0]; }
+  function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
 
   function renderStatic() {
     document.documentElement.lang = lang;
-    $$("[data-t]").forEach(function (el) { el.textContent = t[el.dataset.t]; });
-    $$("[data-t-aria]").forEach(function (el) { el.setAttribute("aria-label", t[el.dataset.tAria]); });
+    $$("[data-t]").forEach(function (e) { e.textContent = t[e.dataset.t]; });
+    $$("[data-t-aria]").forEach(function (e) { e.setAttribute("aria-label", t[e.dataset.tAria]); });
     $$(".lang button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.l === lang)); });
+    $("#when").textContent = t.when;
+    $("#whereBtn").textContent = t.where;
     var facts = $("#facts"); facts.innerHTML = "";
     Object.keys(EVENT).forEach(function (k) {
-      var v = EVENT[k][lang === "da" ? 0 : 1] || EVENT[k][0] || EVENT[k][1];
-      var dt = document.createElement("dt"), dd = document.createElement("dd");
-      dt.textContent = t.f[k]; dd.textContent = v || t.tbd; if (!v) dd.className = "tbd";
-      facts.appendChild(dt); facts.appendChild(dd);
+      var f = EVENT[k], dd = el("dd");
+      if (f.href) { var a = el("a", null, f[lang]); a.href = f.href; a.target = "_blank"; a.rel = "noopener"; dd.appendChild(a); }
+      else dd.appendChild(document.createTextNode(f[lang]));
+      var s = f.sub && (typeof f.sub === "string" ? f.sub : f.sub[lang]);
+      if (s) {
+        if (f.href) { var sa = el("a", null, s); sa.href = f.href; sa.target = "_blank"; sa.rel = "noopener"; var sm = el("small"); sm.appendChild(sa); dd.appendChild(sm); }
+        else dd.appendChild(el("small", null, s));
+      }
+      facts.appendChild(el("dt", null, t.f[k])); facts.appendChild(dd);
     });
   }
 
@@ -274,10 +333,10 @@ var T = {
     if (!loaded && !failed) return;
     list.className = ""; list.innerHTML = "";
     count.textContent = state.total ? t.count(state.total) : "";
-    if (failed && !loaded) { add(null, t.loadFail); return; }
-    if (!state.guests.length) { add(null, t.empty); return; }
+    if (failed && !loaded) { list.appendChild(el("li", "empty", t.loadFail)); return; }
+    if (!state.guests.length) { list.appendChild(el("li", "empty", t.empty)); return; }
     state.guests.forEach(function (g, i) {
-      var li = document.createElement("li"); if (g.me) li.className = "me";
+      var li = el("li", g.me ? "me" : "");
       li.style.animationDelay = Math.min(i, 12) * 25 + "ms";
       li.appendChild(el("span", "n", String(i + 1).padStart(2, "0")));
       li.appendChild(el("span", "nm", g.name));
@@ -285,9 +344,7 @@ var T = {
       if (g.plus) li.appendChild(el("span", "tag", "+1"));
       list.appendChild(li);
     });
-    function add(_, txt) { var li = el("li", "empty", txt); list.appendChild(li); }
   }
-  function el(tag, cls, txt) { var e = document.createElement(tag); e.className = cls; e.textContent = txt; return e; }
 
   function renderStage() {
     stage.innerHTML = "";
@@ -296,7 +353,6 @@ var T = {
       $("h2", d).textContent = t.hi(first(state.mine.name));
       $("p", d).textContent = state.mine.plus ? t.hiPlus : t.hiSolo;
       $$("[data-t]", d).forEach(function (e) { e.textContent = t[e.dataset.t]; });
-      sub.textContent = t.leadDone;
       var drop = $('[data-a="drop"]', d), armed = false, timer;
       $('[data-a="edit"]', d).onclick = function () { editing = true; renderStage(); };
       drop.onclick = function () {
@@ -307,24 +363,25 @@ var T = {
       };
       stage.appendChild(d); return;
     }
-    sub.textContent = state.mine ? t.leadEdit : t.lead;
     var f = $("#tForm").content.firstElementChild.cloneNode(true);
     $$("[data-t]", f).forEach(function (e) { e.textContent = t[e.dataset.t]; });
+    $(".fh h2", f).textContent = state.mine ? t.rsvpEdit : t.rsvp;
+    $(".fh small", f).textContent = state.mine ? "" : t.rsvpNote;
     var input = $("input", f), seg = $(".seg", f), go = $(".go", f), err = $(".err", f), plus = 0;
     input.placeholder = t.name; seg.setAttribute("aria-label", t.plus);
     $("span", go).textContent = state.mine ? t.save : t.go;
-    function setPlus(v) { plus = v; seg.dataset.v = v; $$("button", seg).forEach(function (b) { b.setAttribute("aria-pressed", String(+b.dataset.p === v)); }); }
+    function setPlus(v) { plus = v; seg.dataset.v = v; stage.dataset.plus = v; $$("button", seg).forEach(function (b) { b.setAttribute("aria-pressed", String(+b.dataset.p === v)); }); }
     $$("button", seg).forEach(function (b) { b.onclick = function () { setPlus(+b.dataset.p); }; });
     if (state.mine) { input.value = state.mine.name; setPlus(state.mine.plus ? 1 : 0); }
     else if (stage.dataset.draft) { input.value = stage.dataset.draft; setPlus(+stage.dataset.plus || 0); }
     input.oninput = function () { stage.dataset.draft = input.value; };
-    $$("button", seg).forEach(function (b) { b.addEventListener("click", function () { stage.dataset.plus = plus; }); });
     f.onsubmit = function (e) {
       e.preventDefault();
       var name = input.value.replace(/\s+/g, " ").trim();
       if (!name) { err.textContent = t.needName; input.focus(); return; }
       err.textContent = ""; go.disabled = true; go.classList.add("busy"); input.blur();
-      call({ name: name, plus: plus }).then(function (j) { editing = false; stage.dataset.draft = ""; apply(j); })
+      var isNew = !state.mine;
+      call({ name: name, plus: plus }).then(function (j) { editing = false; stage.dataset.draft = ""; apply(j); if (isNew) celebrate(); })
         .catch(function () { err.textContent = t.oops; go.disabled = false; go.classList.remove("busy"); });
     };
     stage.appendChild(f);
@@ -351,16 +408,17 @@ var T = {
   refresh();
   document.addEventListener("visibilitychange", function () { if (!document.hidden && !editing) refresh(); });
 
-  /* info sheet */
+  /* details sheet */
   var sheet = $("#sheet"), panel = $(".panel", sheet);
   function openSheet() { sheet.classList.add("open"); }
   function closeSheet() { sheet.classList.remove("open"); }
   $("#infoBtn").onclick = openSheet;
+  $("#whereBtn").onclick = openSheet;
   $$("[data-close]", sheet).forEach(function (e) { e.onclick = closeSheet; });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeSheet(); });
   var y0 = null;
   panel.addEventListener("touchstart", function (e) { y0 = e.touches[0].clientY; }, { passive: true });
-  panel.addEventListener("touchend", function (e) { if (y0 !== null && e.changedTouches[0].clientY - y0 > 60) closeSheet(); y0 = null; });
+  panel.addEventListener("touchend", function (e) { if (y0 !== null && panel.scrollTop <= 0 && e.changedTouches[0].clientY - y0 > 60) closeSheet(); y0 = null; });
 })();
 </script>
 </body>
