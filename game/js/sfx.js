@@ -30,6 +30,9 @@
     var FLAT = { bpm: 54, prog: [[60, 64, 68], [62, 66, 70], [58, 62, 66], [63, 67, 71]], scale: [60, 62, 64, 66, 68, 70, 72, 74], pad: "sine", padV: 0.045, arp: true, echo: true };
     // on the ball: bright, bouncy, pentatonic, with a twinkle on top
     var BALL = { bpm: 92, prog: [[62, 66, 69, 73], [59, 62, 66, 69], [55, 59, 62, 66], [57, 61, 64, 69]], scale: [62, 64, 66, 69, 71, 74, 76], pad: "triangle", padV: 0.04, arp: true };
+    // the other secret: brisk and bright, a little breathless
+    var E2 = { bpm: 108, prog: [[65, 69, 72, 76], [62, 65, 69, 72], [58, 62, 65, 69], [60, 64, 67, 70]], scale: [65, 67, 69, 72, 74, 77, 79], pad: "triangle", padV: 0.036, arp: true };
+    var E2N = { bpm: 92, prog: [[62, 65, 69, 72], [58, 62, 65, 69], [55, 58, 62, 65], [57, 60, 64, 67]], scale: [62, 65, 67, 69, 72, 74, 77], pad: "sine", padV: 0.05, arp: true, echo: true };
     var bus = null, wet = null, curEcho = false;
     function hz(n) { return 440 * Math.pow(2, (n - 69) / 12); }
     function noiseHit(t) {
@@ -48,6 +51,8 @@
       if (G.musicMood === "battle") return BATTLE;
       if (G.musicMood === "flat") return FLAT;
       if (G.musicMood === "ball") return BALL;
+      if (G.musicMood === "egg2") return E2;
+      if (G.musicMood === "egg2n") return E2N;
       var E = G.mode() !== "landing" && G.E, night = E ? E.tod === "night" : (window.GGLanding && window.GGLanding.get().night);
       if (E && (E.weather === "fog" || (night && E.weather === "rain"))) return SPOOKY;
       if (E && E.weather === "rain") return RAIN;
@@ -120,6 +125,10 @@
     chime: function () { [660, 880, 1100, 1320, 1760].forEach(function (f, i) { tone(f, 0.5, "sine", 0.5, null, i * 0.12); }); },
     lift: function () { tone(220, 2.4, "sine", 0.7, 1760); tone(330, 2.4, "triangle", 0.4, 2640, 0.2); },
     shrink: function () { tone(880, 0.6, "square", 0.6, 110); },
+note: function (f, d, type, v, slide, delay) { tone(f, d, type, v, slide, delay); },
+    burst: function (d, v) { noise(d, v); },
+    ctx: function () { return muted ? null : ac; },
+    level: function () { return vol; },
     hiss: function (v) { noise(0.55, 0.22 * (v == null ? 1 : v)); },
     peel: function (n) { tone(300 + (n || 0) * 120, 0.25, "sawtooth", 0.35, 900 + (n || 0) * 200); noise(0.12, 0.5); },
         grow: function () { tone(110, 0.6, "square", 0.6, 880); }
