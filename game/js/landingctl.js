@@ -94,7 +94,8 @@
       .then(function () { return ready(false); });
   };
 
-  C.egg = function () { if (LP.on || GG.game.mode() !== "landing") return; GG.sfx && GG.sfx.unlock(); enter(); };
+  C.on = function () { return LP.on; };
+  C.egg = function () { if (LP.on || GG.game.mode() !== "landing" || (GG.egg2 && GG.egg2.busy())) return; GG.sfx && GG.sfx.unlock(); enter(); };
   C.pause = function (p) { window.GGLanding.paused = p; };
   C.key = function (k) {
     if (GG.ui.key(k)) return true;

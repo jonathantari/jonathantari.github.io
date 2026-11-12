@@ -57,6 +57,7 @@
 <script src="game/data/trail.js"></script>
 <script src="game/data/flat.js"></script>
 <script src="game/data/ballworld.js"></script>
+<script src="game/data/egg2.js"></script>
 <script src="game/js/sprites.js"></script>
 <script src="game/js/render3d.js"></script>
 <script src="game/js/env.js"></script>
@@ -71,6 +72,7 @@
 <script src="game/js/events.js"></script>
 <script src="game/js/game.js"></script>
 <script src="game/js/landingctl.js"></script>
+<script src="game/js/egg2.js"></script>
 <script>
   document.getElementById("btnSnd").addEventListener("click", function (e) {
     e.stopPropagation();
@@ -79,6 +81,7 @@
   });
   if (GG.sfx.muted()) document.getElementById("sndWaves").style.display = "none";
   GG.game.init();
+  GG.egg2.init();
 </script>
 </body>
 </html>

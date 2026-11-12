@@ -546,10 +546,13 @@
     // boxes stacked on the floor at the back-left
     rect(L + 3, Bt - 9, 12, 9, K.card); rect(L + 3, Bt - 9, 12, 1, K.tape); rect(L + 8, Bt - 9, 2, 9, K.tape);
     rect(L + 5, Bt - 15, 9, 6, K.cardDk); rect(L + 5, Bt - 15, 9, 1, K.card);
-    // skis leaning in the front-left corner
-    line(g.gx + 4, g.gy - 2, g.gx + 9, g.gTop + Math.round(g.gh * 0.25), K.skiA);
-    line(g.gx + 6, g.gy - 2, g.gx + 11, g.gTop + Math.round(g.gh * 0.27), K.skiB);
-    line(g.gx + 5, g.gy - 2, g.gx + 10, g.gTop + Math.round(g.gh * 0.26), dk(K.skiA, 0.8));
+    // skis leaning in the front-left corner (unless somebody has taken them out)
+    G.ski = { x0: g.gx + 4, y0: g.gy - 2, x1: g.gx + 11, y1: g.gTop + Math.round(g.gh * 0.25) };
+    if (!HOOK.noSkis) {
+      line(g.gx + 4, g.gy - 2, g.gx + 9, g.gTop + Math.round(g.gh * 0.25), K.skiA);
+      line(g.gx + 6, g.gy - 2, g.gx + 11, g.gTop + Math.round(g.gh * 0.27), K.skiB);
+      line(g.gx + 5, g.gy - 2, g.gx + 10, g.gTop + Math.round(g.gh * 0.26), dk(K.skiA, 0.8));
+    }
     // hose coiled on the right wall, and a broom
     var hx3 = g.gx + g.gw - 9, hy3 = g.gTop + Math.round(g.gh * 0.45);
     ring(hx3, hy3, 4, K.hose); ring(hx3, hy3, 3, dk(K.hose, 0.8)); put(hx3, hy3 - 5, K.metal);
@@ -1175,6 +1178,7 @@
   window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(layout, 100); });
   setInterval(function () { if (isNight() !== night) layout(); }, 60000);
   window.garageDebug = { bike: function () { if (!bike) spawnBike(); }, cat: function (m) { if (m) startCat(m); else { endCat(); cat.wait = 0; } } };
+  HOOK.rerender = function () { render(); };
   layout();
   requestAnimationFrame(frame);
 })();
