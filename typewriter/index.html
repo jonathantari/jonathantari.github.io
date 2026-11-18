@@ -590,8 +590,16 @@ const snd=(()=>{
     swap(){play(B&&B.swap)},
     tick(){const n=performance.now();if(n-lastTick<28)return;lastTick=n;play(B&&B.tick,r(.95,1.05))}};
 })();
-// build the sound buffers on the first interaction so the first keystroke isn't late
-['pointerdown','keydown'].forEach(ev=>window.addEventListener(ev,()=>{if(S.sound)snd.init()},{once:true,capture:true}));
+/* iOS/Android only let audio start inside a real tap (touchend/click), and keyboard input doesn't count.
+   So every tap unlocks the audio context (once it's running this is a no-op) by playing a silent buffer. */
+let audioReady=false;
+function unlockAudio(){
+  if(!S.sound||audioReady)return;
+  const c=snd.init();if(!c)return;
+  try{const b=c.createBuffer(1,1,22050),src=c.createBufferSource();src.buffer=b;src.connect(c.destination);src.start(0)}catch(e){}
+  const p=c.resume();if(p&&p.then)p.then(()=>{audioReady=c.state==='running'}).catch(()=>{});else audioReady=c.state==='running';
+}
+['touchend','click','keydown','pointerup'].forEach(ev=>window.addEventListener(ev,unlockAudio,{capture:true,passive:true}));
 
 /* ---------- type element (bold / italic / heading) indicator ---------- */
 const LABEL={0:'regular',1:'bold',2:'italic',3:'bold italic',8:'heading',9:'heading',10:'heading italic',11:'heading italic'};
@@ -988,7 +996,7 @@ function setOpt(k,v){
   if(k==='theme'){S.theme=v;store.set('tw2.theme',v);S.lamp=v==='night';store.set('tw2.lamp',S.lamp)}
   if(k==='lamp'){S.lamp=v==='on';store.set('tw2.lamp',S.lamp)}
   if(k==='center'){S.center=v==='on';store.set('tw2.center',S.center)}
-  if(k==='sound'){S.sound=v==='on';store.set('tw2.sound',S.sound);if(S.sound){snd.init();setTimeout(()=>snd.key(),30)}}
+  if(k==='sound'){S.sound=v==='on';store.set('tw2.sound',S.sound);if(S.sound){audioReady=false;unlockAudio();setTimeout(()=>snd.key(),30)}}
   applySettings();
 }
 function applySettings(){
