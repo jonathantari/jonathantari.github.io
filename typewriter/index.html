@@ -699,9 +699,16 @@ const haptic=(()=>{
   }
   return(ms)=>{
     if(!touch||!S.haptics)return;const n=performance.now();if(n-last<18)return;last=n;
-    try{if(canVib)navigator.vibrate(ms);else if(iOS)iosTick()}catch(e){}
+    try{
+      if(canVib)navigator.vibrate(ms);
+      // iOS: the switch trick only ticks on a real tap, and clicking it while typing steals focus from the
+      // textarea for a frame (keyboard flickers, page bounces). So never use it while the keyboard is up.
+      else if(iOS&&document.activeElement!==ta&&(!navigator.userActivation||navigator.userActivation.isActive))iosTick();
+    }catch(e){}
   };
 })();
+// iOS can't buzz on keystrokes from a web page; hide the toggle there (the system keyboard's own haptics still work)
+if(!(typeof navigator.vibrate==='function'))document.querySelector('.seg[data-k="haptics"]')?.parentElement.style.setProperty('display','none');
 
 /* ---------- type element (bold / italic / heading) indicator ---------- */
 const LABEL={0:'regular',1:'bold',2:'italic',3:'bold italic',8:'heading',9:'heading',10:'heading italic',11:'heading italic'};
@@ -1142,6 +1149,7 @@ function updateTitle(){
 function relayout(){measure();lastCols=-1;resetCaches();render();curS=targetS;cx=caretCol*L.cw;drawLines()}
 window.addEventListener('resize',relayout);
 if(window.visualViewport)visualViewport.addEventListener('resize',relayout);
+if(window.visualViewport)visualViewport.addEventListener('scroll',()=>{stage.style.top=visualViewport.offsetTop+'px'});
 applySettings();
 const draft=store.get('tw.draft',null);
 measure();
