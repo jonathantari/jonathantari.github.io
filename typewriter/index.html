@@ -138,35 +138,42 @@ body.dirty #dot{opacity:.7}
 #hud .menu .car{padding:5px 4px 5px 0;font-size:10px;opacity:.7}
 #saveDrop{position:absolute;left:0;top:100%;padding-top:6px;display:none;z-index:12;min-width:150px}
 .menu:hover #saveDrop,.menu.on #saveDrop{display:block;animation:fade .15s ease}
+.pc{background:var(--card);color:var(--card-ink);border-radius:10px;padding:10px 12px;box-shadow:0 18px 50px rgba(0,0,0,.28),0 0 0 .5px rgba(0,0,0,.08);font-size:12.5px;cursor:default}
 #saveDrop .pc{padding:5px}
 #hud #saveDrop button{display:block;width:100%;box-sizing:border-box;color:var(--card-ink);opacity:.75;padding:7px 9px;letter-spacing:.02em}
 #hud #saveDrop button:hover,#hud #saveDrop button:focus-visible{background:rgba(127,127,140,.16);opacity:1;color:var(--card-ink)}
-/* ---------- timer: an egg-timer dial in the corner. Faint until you reach for it; steps by 15 s ---------- */
-#tw{position:absolute;right:20px;bottom:max(18px,env(safe-area-inset-bottom));z-index:9}
-#tmr{all:unset;display:block;position:relative;width:40px;height:44px;color:var(--ink);opacity:.13;cursor:pointer;transition:opacity .6s ease}
+/* ---------- timer: a little egg timer on the table ----------
+   Idle: a faint outline in the corner. Running: a soft wedge of ink that creeps back to 12 o'clock.
+   Hover (or tap on touch): the dial grows, the time left appears in grey in its centre, and two quiet
+   text links sit beside it. No panels, no backgrounds. */
+#tw{position:absolute;right:20px;bottom:max(18px,env(safe-area-inset-bottom));z-index:9;display:flex;align-items:center;pointer-events:none}
+#tmr{all:unset;display:block;position:relative;flex:none;width:40px;height:44px;color:var(--ink);opacity:.12;cursor:pointer;pointer-events:auto;
+  transition:width .5s cubic-bezier(.2,.75,.25,1),height .5s cubic-bezier(.2,.75,.25,1),opacity .6s ease}
 #tmr svg{display:block;width:100%;height:100%;overflow:visible}
-#tmr .rim{fill:none;stroke:currentColor;stroke-width:1.6}
-#tmr .tk{stroke:currentColor;stroke-width:1.2;opacity:.55}
-#tmr .kn{fill:currentColor}
-#tmr .sec{fill:currentColor;opacity:.5}
-#tw.run #tmr{opacity:.55}
-#tw.done #tmr{opacity:.4}
-#tw:hover #tmr,#tw.open #tmr,#tmr:focus-visible{opacity:.9;transition-duration:.25s}
-#tmr.swap{opacity:.2!important;transition-duration:.2s!important}
-@media (hover:none){#tmr{opacity:.2}}
-#tmrPop{position:absolute;right:-8px;bottom:100%;padding-bottom:10px;width:262px;display:none}
-#tw:hover #tmrPop,#tw.open #tmrPop{display:block;animation:fade .15s ease}
-.pc{background:var(--card);color:var(--card-ink);border-radius:10px;padding:10px 12px;box-shadow:0 18px 50px rgba(0,0,0,.28),0 0 0 .5px rgba(0,0,0,.08);font-size:12.5px;cursor:default}
-.pc .seg{flex:1;margin:0 8px;justify-content:space-between}.pc .seg button{flex:1;text-align:center;padding:5px 0}
-.pc .u{opacity:.6}
-.pc .tb{all:unset;cursor:pointer;padding:4px 9px;border-radius:5px;border:1px solid rgba(127,127,140,.35);margin-left:6px}
-.pc .tb:hover,.pc .tb:focus-visible,.pc .tb.on{background:rgba(127,127,140,.16)}
-.pc .tb.on{border-color:var(--card-ink)}
-.pc .note{font-size:12px;opacity:.6;line-height:1.5;padding-top:6px}
-.pc .tsep{height:1px;background:rgba(127,127,140,.25);margin:6px 0}
-#tLeft{font-variant-numeric:tabular-nums;font-size:15px}
-#tw .runonly{display:none}#tw.run .runonly{display:flex}#tw.run .idleonly{display:none}
-@media (prefers-reduced-motion:reduce){#tmr{transition:none}}
+#tmr .rim{fill:none;stroke:currentColor;stroke-width:1.5;vector-effect:non-scaling-stroke}
+#tmr .tk{stroke:currentColor;stroke-width:1.1;opacity:.5;vector-effect:non-scaling-stroke;transition:opacity .3s}
+#tmr .kn{fill:currentColor;opacity:.85}
+#tmr .sec{fill:none;stroke:currentColor;stroke-width:15.5;stroke-dasharray:0 100;opacity:.4;transition:stroke-dasharray 1s linear,opacity .5s ease}
+#tLeft{position:absolute;left:0;right:0;top:54.5%;transform:translateY(-50%);text-align:center;font-size:13px;letter-spacing:.03em;
+  font-variant-numeric:tabular-nums;color:var(--ink);opacity:0;transition:opacity .3s ease;pointer-events:none}
+#tw.run #tmr{opacity:.3}
+#tw.open #tmr{width:72px;height:79px;opacity:.55;transition-duration:.45s,.45s,.25s}
+#tw.open .sec{opacity:.1}
+#tw.open.run .tk,#tw.open.done .tk{opacity:.18}
+#tw.open.run #tLeft,#tw.open.done #tLeft{opacity:.8;transition-delay:.15s}
+#tw.done #tmr{animation:tDone 3.2s ease-in-out 2}
+@keyframes tDone{50%{opacity:.5}}
+#tCtl{display:flex;flex-direction:column;align-items:flex-end;padding-right:8px;opacity:0;transform:translateX(6px);
+  transition:opacity .25s ease,transform .35s ease}
+#tw.open #tCtl{opacity:1;transform:none;pointer-events:auto;transition-delay:.1s}
+#tCtl button{all:unset;cursor:pointer;font-size:12px;letter-spacing:.04em;line-height:1;padding:5px 4px;color:var(--hud);transition:color .2s}
+#tCtl button:hover,#tCtl button:focus-visible{color:var(--ink)}
+#tCtl>span{display:contents}#tw .runonly{display:none}#tw.run .runonly{display:contents}#tw.run .idleonly{display:none}
+.segx{display:flex;background:rgba(127,127,140,.14);border-radius:6px;padding:2px}
+.segx button{all:unset;cursor:pointer;padding:4px 9px;border-radius:5px;color:var(--card-ink);opacity:.6}
+.segx button.on{background:var(--card);opacity:1;box-shadow:0 1px 2px rgba(0,0,0,.15)}
+@media (hover:none){#tmr{opacity:.18}}
+@media (prefers-reduced-motion:reduce){#tmr,#tCtl,#tmr .sec{transition:none}#tw.done #tmr{animation:none}}
 #drop{position:absolute;inset:12px;border:2px dashed var(--hud);border-radius:14px;z-index:12;display:none;align-items:center;justify-content:center;font-size:14px;color:var(--hud);pointer-events:none}
 body.dragging #drop{display:flex}
 #ta{position:absolute;left:0;top:0;width:2px;height:20px;opacity:0;padding:0;border:0;margin:0;resize:none;outline:none;overflow:hidden;
@@ -217,15 +224,15 @@ body.dragging #drop{display:flex}
     <div class="orow"><span>Typing point</span><div class="seg" data-k="center"><button data-v="off">moves</button><button data-v="on">centred</button></div></div>
     <div class="orow"><span>Sound</span><div class="seg" data-k="sound"><button data-v="on">on</button><button data-v="off">off</button></div></div>
     <div class="orow"><span>Haptics</span><div class="seg" data-k="haptics"><button data-v="on">on</button><button data-v="off">off</button></div></div>
+    <div class="orow" id="fRow"><span>Focus</span><div class="segx"><button id="fBtn">full screen</button></div></div>
     <div class="orow"><button data-a="new" style="all:unset;cursor:pointer;opacity:.7">new page</button><button data-a="help" style="all:unset;cursor:pointer;opacity:.7">shortcuts</button></div>
   </div>
   <div id="tw">
-    <div id="tmrPop"><div class="pc">
-      <div class="orow idleonly"><span>Timer</span><div class="seg" id="tLen"><button data-m="2">2</button><button data-m="5">5</button><button data-m="10">10</button><button data-m="25">25</button></div><span class="u">min</span></div>
-      <div class="orow runonly"><span id="tLeft">0:00 left</span><span style="flex:1"></span><button class="tb" data-add="5">+5 min</button><button class="tb" id="tEnd">end</button></div>
-      <div id="fRow"><div class="tsep"></div><div class="orow"><span>Focus</span><button class="tb" id="fBtn">full screen</button></div><div class="note">Write full screen, distraction-free. Esc to exit</div></div>
-    </div></div>
-    <button id="tmr" aria-label="Timer"><svg viewBox="0 0 40 44" aria-hidden="true"><rect class="kn" x="16.5" y="0" width="7" height="4" rx="1.6"/><circle class="rim" cx="20" cy="24" r="17.5"/><g class="tk"><path d="M20 8.2v2.6M20 37.2v2.6M4.2 24h2.6M33.2 24h2.6"/></g><path class="sec" id="tmrSec" d=""/></svg></button>
+    <div id="tCtl">
+      <span class="idleonly"><button data-m="5">5 min</button><button data-m="10">10 min</button><button data-m="25">25 min</button></span>
+      <span class="runonly"><button data-add="5">+5 min</button><button id="tEnd">end</button></span>
+    </div>
+    <button id="tmr" aria-label="Timer"><svg viewBox="0 0 40 44" aria-hidden="true"><rect class="kn" x="16.5" y="0" width="7" height="4" rx="1.6"/><circle class="sec" id="tmrSec" cx="20" cy="24" r="7.75" pathLength="100" transform="rotate(-90 20 24)"/><circle class="rim" cx="20" cy="24" r="17.5"/><g class="tk"><path d="M20 8.2v2.6M20 37.2v2.6M4.2 24h2.6M33.2 24h2.6"/></g></svg><span id="tLeft"></span></button>
   </div>
   <div id="drop">Drop a .md file to open it</div>
   <div id="modal"><div class="card"><div id="mBody"></div><div class="row" id="mRow"></div></div></div>
@@ -1223,47 +1230,34 @@ function updateCount(){
 
 
 /* ---------- timer + focus ----------
-   The dial in the corner is a plain timer: start 2/5/10/25 minutes, then +5 as often as you like.
-   Its wedge of ink shrinks in 15 s steps; hover for the exact time left. At the end a soft bell sounds
-   and the dial empties — nothing stops, you keep typing. "Focus" is separate: browser full screen
-   (desktop), with or without the timer; Esc leaves full screen and nothing else. No stats, no history. */
+   An egg timer in the corner. Start 5/10/25 min, then +5 as often as you like. The wedge of ink
+   creeps back toward 12 o'clock every second (no flashing, no numbers unless you hover). At the end a
+   soft bell sounds and the dial breathes twice — nothing stops, you keep typing. "Focus" (options
+   panel or Ctrl/Cmd+Shift+F) is browser full screen on desktop; Esc leaves full screen only. */
 const timer=(()=>{
-  let endAt=0,total=0,tid=0,shown=-1,swapT=0,doneT=0;
-  const secEl=$('#tmrSec'),leftEl=$('#tLeft'),fBtn=$('#fBtn'),STEP=15000;
+  let endAt=0,total=0,tid=0,doneT=0;
+  const secEl=$('#tmrSec'),leftEl=$('#tLeft'),fBtn=$('#fBtn');
   const canFs=()=>!!(document.fullscreenEnabled&&document.documentElement.requestFullscreen)&&matchMedia('(pointer:fine)').matches;
-  function wedge(frac){ // sector of ink from 12 o'clock, clockwise
-    if(frac<=0)return'';
-    if(frac>=1)return'M20 24m-15.5 0a15.5 15.5 0 1 0 31 0a15.5 15.5 0 1 0 -31 0';
-    const a=frac*Math.PI*2,x=20+15.5*Math.sin(a),y=24-15.5*Math.cos(a);
-    return`M20 24L20 8.5A15.5 15.5 0 ${frac>.5?1:0} 1 ${x.toFixed(2)} ${y.toFixed(2)}Z`;
-  }
+  const hover=matchMedia('(hover:hover)');
   const fmt=ms=>{const t=Math.max(0,Math.ceil(ms/1000)),m=Math.floor(t/60),r=t%60;return m+':'+(r<10?'0':'')+r};
   function draw(left){
-    const step=left>0?Math.ceil(left/STEP):0;
-    leftEl.textContent=fmt(left)+' left';
-    if(step===shown)return;const first=shown<0;shown=step;clearTimeout(swapT);
-    const set=()=>{secEl.setAttribute('d',wedge(Math.min(1,step*STEP/total)));tmrEl.classList.remove('swap')};
-    if(first||!step)set();else{tmrEl.classList.add('swap');swapT=setTimeout(set,200)}
+    leftEl.textContent=fmt(left);
+    secEl.style.strokeDasharray=(total?Math.max(0,Math.min(1,left/total))*100:0).toFixed(3)+' 100';
   }
-  function tick(){
-    if(!endAt)return;const l=endAt-Date.now();
-    if(l>0){draw(l);return}
-    finish();
-  }
+  function tick(){if(!endAt)return;const l=endAt-Date.now();if(l>0)draw(l);else finish()}
   function finish(){
-    clearInterval(tid);tid=0;endAt=0;twEl.classList.remove('run');twEl.classList.add('done');
-    snd.bell();draw(0);doneT=setTimeout(reset,14000);
+    clearInterval(tid);tid=0;endAt=0;draw(0);leftEl.textContent='done';
+    twEl.classList.remove('run');twEl.classList.add('done');snd.bell();doneT=setTimeout(reset,14000);
   }
   function reset(){
-    clearInterval(tid);tid=0;endAt=0;total=0;clearTimeout(doneT);clearTimeout(swapT);
-    twEl.classList.remove('run','done');tmrEl.classList.remove('swap');shown=-1;secEl.setAttribute('d','');
+    clearInterval(tid);tid=0;endAt=0;total=0;clearTimeout(doneT);
+    twEl.classList.remove('run','done');secEl.style.strokeDasharray='0 100';leftEl.textContent='';
   }
   function add(m){  // starts a timer when idle, otherwise adds to the one running
-    if(endAt){endAt+=m*60000;total+=m*60000}
+    if(endAt){endAt+=m*60000;total=Math.max(total,endAt-Date.now())}
     else{reset();endAt=Date.now()+m*60000;total=m*60000;twEl.classList.add('run');tid=setInterval(tick,1000)}
     draw(endAt-Date.now());
   }
-  function end(){reset()}
   function fsToggle(){
     if(!canFs())return toast('Full screen isn’t available here');
     if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});
@@ -1272,13 +1266,17 @@ const timer=(()=>{
   }
   document.addEventListener('fullscreenchange',()=>{fBtn.classList.toggle('on',!!document.fullscreenElement);setTimeout(relayout,60)});
   if(!canFs())$('#fRow').style.display='none';
-  $('#tLen').addEventListener('click',e=>{const b=e.target.closest('button');if(b){add(+b.dataset.m);ta.focus({preventScroll:true})}});
-  twEl.addEventListener('click',e=>{
-    const b=e.target.closest('[data-add]');if(b){add(+b.dataset.add);ta.focus({preventScroll:true})}});
-  $('#tEnd').addEventListener('click',()=>{end();ta.focus({preventScroll:true})});
+  // mouse: the dial opens on hover and closes when you move away. Touch: tap the dial to open/close.
+  let closeT=0;
+  tmrEl.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse'){clearTimeout(closeT);twEl.classList.add('open')}});
+  twEl.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse'){clearTimeout(closeT);closeT=setTimeout(()=>twEl.classList.remove('open'),350)}});
+  $('#tCtl').addEventListener('pointerenter',()=>clearTimeout(closeT));
+  tmrEl.addEventListener('click',()=>{if(!hover.matches)twEl.classList.toggle('open')});
+  $('#tCtl').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+    if(b.dataset.m)add(+b.dataset.m);else if(b.dataset.add)add(+b.dataset.add);else if(b.id==='tEnd')reset();
+    if(!hover.matches)twEl.classList.remove('open');ta.focus({preventScroll:true})});
   fBtn.addEventListener('click',()=>{fsToggle();ta.focus({preventScroll:true})});
-  tmrEl.addEventListener('click',()=>twEl.classList.toggle('open'));   // touch: tap the dial to open the panel
-  return{add,end,toggleFs:fsToggle};
+  return{add,end:reset,toggleFs:fsToggle};
 })();
 
 /* ---------- tab title: "(2) My chapter" ---------- */

@@ -1,8 +1,21 @@
 # Typewriter backlog
 
-## Writing timer / focus session — DONE
-Built: an egg-timer dial in the bottom-right corner, faint until you hover it. Hover shows a panel: start 2/5/10/25 min, then +5 min as often as you like, with the exact time left (m:ss) and an end button. The wedge of ink shrinks in 15 s steps; a soft bell and an empty dial at the end, typing is never interrupted. Focus is separate (same panel, or Ctrl/Cmd+Shift+F): browser full screen on desktop, with or without the timer. Esc leaves full screen only; the timer keeps running.
+## Writing timer / focus session — DONE (redesigned Nov 2026)
+Built: a little egg timer in the bottom-right corner, like one sitting on the table.
 
+- Idle: a faint outline (opacity ~.12). Nothing else on screen.
+- Running, not hovered: the dial at ~.3 with a soft wedge of ink that creeps back toward 12 o'clock every second (SVG circle with stroke-dasharray, 1 s linear transition). No numbers, no flashing.
+- Hover (mouse) or tap (touch): the dial grows to ~72 px; the wedge fades almost out and the time left (m:ss) shows in calm grey in the centre of the dial. Quiet grey text links sit to its left: "5 min / 10 min / 25 min" when idle, "+5 min / end" while running. Move away and it all shrinks back; the numbers disappear.
+- End: soft bell, the dial empties and "breathes" twice, centre reads "done" on hover, back to idle after ~14 s. Typing is never interrupted.
+- Focus (browser full screen, desktop only) lives in the options panel and on Ctrl/Cmd+Shift+F. Esc leaves full screen only.
+
+Design rules for anything timer-related (keep these when changing it):
+- No white panels, cards, popovers or backgrounds around the timer. It is text and a line drawing on the paper, nothing more.
+- Colours come from var(--ink) at low opacity and var(--hud) for text, so it works on day and night paper.
+- Motion is slow and continuous (grow/shrink ~.45 s, ink creeps per second). No step "swap" blinks, no badges, no counters outside the dial.
+- No stats, streaks or history.
+
+Original brief:
 A calm way to set a timer for a few minutes and write without distractions. It should feel like a writer's tool, not a productivity app.
 
 - Feel: something like an e-ink display. Quiet, low contrast, no ticking seconds or flashing. Changes in steps (e.g. minutes left) rather than a running countdown.
