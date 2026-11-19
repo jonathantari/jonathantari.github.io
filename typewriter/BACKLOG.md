@@ -1,7 +1,7 @@
 # Typewriter backlog
 
 ## Writing timer / focus session — DONE
-Built: `focus` button in the top bar (or Ctrl/Cmd+Shift+F) → pick 5/10/15/25. Timer sits faint in the bottom-right corner, steps by the minute, hover shows "end". Goes full screen on desktop; bell + "time" at the end, typing is never interrupted.
+Built: `focus` button in the top bar (or Ctrl/Cmd+Shift+F) → pick 5/10/15/25. A small egg-timer dial sits in the bottom-right corner; its wedge of ink shrinks in steps, once a minute. Click it to end. During a session the button reads "ESC to exit". Goes full screen on desktop; bell and an empty dial at the end, typing is never interrupted.
 
 A calm way to set a timer for a few minutes and write without distractions. It should feel like a writer's tool, not a productivity app.
 
