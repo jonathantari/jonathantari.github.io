@@ -655,7 +655,7 @@ const snd=(()=>{
     if(!ctx){try{ctx=new(window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'});
       out=ctx.createGain();out.gain.value=.55;
       const comp=ctx.createDynamicsCompressor();comp.threshold.value=-10;comp.ratio.value=4;comp.attack.value=.001;comp.release.value=.08;
-      out.connect(comp).connect(ctx.destination);build()}catch(e){ctx=null;return null}}
+      out.connect(comp).connect(ctx.destination);build();loadSprite()}catch(e){ctx=null;return null}}
     if(ctx.state==='suspended')ctx.resume().catch(()=>{});
     return ctx;
   }
@@ -666,14 +666,66 @@ const snd=(()=>{
     const g=ctx.createGain();g.gain.value=gain;s.connect(g).connect(out);s.start();
   }
   const pick=a=>a[Math.floor(Math.random()*a.length)];
+  /* ---- recorded machine: one mp3 sprite of real strikes, escapement clicks, carriage run and bell ----
+     Sliced on load; if it can't load (offline, file://) the synthesized set above is used instead. */
+  const SPR={"sr":32000,"t0":0.12191,"slam":2.4306,"seg":[["key",0.12,0.2349],["key",0.4749,0.1899],["key",0.7848,0.246],["key",1.1509,0.246],["key",1.5169,0.246],["key",1.8829,0.246],["key",2.249,0.1928],["key",2.5618,0.246],["key",2.9278,0.1696],["key",3.2174,0.187],["key",3.5244,0.246],["key",3.8905,0.246],["key",4.2565,0.246],["key",4.6225,0.246],["key",4.9885,0.2117],["key",5.3202,0.1609],["key",5.6011,0.246],["key",5.9671,0.1783],["key",6.2654,0.246],["key",6.6314,0.2248],["space",6.9762,0.266],["space",7.3622,0.456],["tick",7.9383,0.024],["tick",8.0823,0.024],["tick",8.2262,0.024],["tick",8.3703,0.024],["tick",8.5142,0.024],["tick",8.6583,0.024],["tick",8.8022,0.024],["tick",8.9463,0.0203],["lever",9.0866,0.212],["run",9.4187,2.65],["bell",12.1887,0.365]]};
+  let SB=null,loading=false;
+  function loadSprite(){
+    if(SB||loading||!ctx)return;loading=true;
+    fetch('sounds.mp3').then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()})
+      .then(a=>new Promise((res,rej)=>ctx.decodeAudioData(a,res,rej)))
+      .then(buf=>{
+        const sr=buf.sampleRate,d=buf.getChannelData(0);
+        let i=Math.floor(.05*sr);while(i<d.length&&Math.abs(d[i])<=.05)i++;
+        const dt=i/sr-SPR.t0,o={key:[],space:[],tick:[]};  // dt absorbs any mp3 decoder padding
+        for(const [n,p,len] of SPR.seg){
+          const st=Math.max(0,Math.round((p+dt)*sr)),L=Math.min(Math.round(len*sr),d.length-st);
+          const b=ctx.createBuffer(1,L,sr);b.copyToChannel(d.slice(st,st+L),0);
+          if(o[n])o[n].push(b);else o[n]=b}
+        SB=o}).catch(()=>{loading=false});
+  }
+  function voice(b,{rate=1,gain=1,lp=0,at=0,off=0,dur=0}={}){
+    if(!S.sound||!init()||!b)return;
+    const s=ctx.createBufferSource();s.buffer=b;s.playbackRate.value=rate;let n=s;
+    if(lp){const f=ctx.createBiquadFilter();f.type='lowpass';f.frequency.value=lp;f.Q.value=.6;n.connect(f);n=f}
+    const g=ctx.createGain();g.gain.value=gain;n.connect(g).connect(out);
+    const t=ctx.currentTime+at;if(dur)s.start(t,off,dur);else s.start(t,off);
+  }
+  // shuffle-bag: never the same strike twice in a row, rarely within four
+  const recent={};
+  function bag(name){const a=SB[name],h=recent[name]||(recent[name]=[]);let i,k=0;
+    do{i=Math.floor(Math.random()*a.length)}while(h.includes(i)&&++k<12);
+    h.push(i);if(h.length>Math.min(4,a.length-1))h.shift();return a[i]}
+  // the "hand": touch drifts slowly (a little harder, a little softer) rather than jumping randomly
+  let hand=1,lastKey=0;
+  function touch(){
+    const now=performance.now(),gap=(now-lastKey)/1000;lastKey=now;
+    hand+=(1-hand)*.15+r(-.06,.06);hand=clamp(hand,.82,1.12);
+    const pace=gap<.09?.8:gap<.16?.92:gap>.8?1.08:1;    // fast runs are lighter, a deliberate key lands harder
+    return hand*pace*r(.9,1.05);
+  }
+  function escapement(at,g){if(Math.random()<.75)voice(bag('tick'),{rate:r(.85,1.05),gain:g*r(1.2,2),at,lp:r(5000,9000)})}
   return{init,
-    key(){play(pick(B?B.key:[null]),r(.97,1.04),r(.85,1))},
-    space(){play(pick(B?B.space:[null]),r(.97,1.03))},
-    back(){play(pick(B?B.back:[null]),r(.97,1.03))},
-    ret(){play(B&&B.ret)},
-    bell(){play(B&&B.bell)},
+    key(){if(!SB)return play(pick(B?B.key:[null]),r(.97,1.04),r(.85,1));
+      const v=touch();
+      voice(bag('key'),{rate:r(.965,1.035),gain:.72*v,lp:r(6500,12000)});
+      escapement(r(.018,.03),.16*v)},
+    space(){if(!SB)return play(pick(B?B.space:[null]),r(.97,1.03));
+      const v=touch();
+      if(Math.random()<.5)voice(bag('space'),{rate:r(.94,1.06),gain:3*v,dur:.24,lp:r(4000,7000)});
+      else voice(bag('key'),{rate:r(.86,.92),gain:.62*v,lp:r(1500,2300)}); // no type bar: just the escapement thunk
+      escapement(r(.012,.022),.3*v)},
+    back(){if(!SB)return play(pick(B?B.back:[null]),r(.97,1.03));
+      voice(bag('tick'),{rate:r(.78,.9),gain:2,lp:4500});voice(bag('tick'),{rate:r(.7,.8),gain:.8,at:r(.03,.045),lp:3500})},
+    ret(chars=40){if(!SB)return play(B&&B.ret);
+      // line-feed lever ratchet, then the carriage runs back (longer for a longer line) and slams home
+      voice(SB.lever,{rate:r(.95,1.05),gain:r(.5,.65),dur:r(.05,.09)});
+      const run=clamp(.14+chars/66*.85+r(-.05,.05),.16,1.1);
+      voice(SB.run,{rate:r(.97,1.03),gain:r(1.5,1.8),at:r(.06,.09),off:Math.max(0,SPR.slam-run)})},
+    bell(){if(!SB)return play(B&&B.bell);voice(SB.bell,{rate:r(.985,1.015),gain:r(1.2,1.5)})},
     swap(){play(B&&B.swap)},
-    tick(){const n=performance.now();if(n-lastTick<28)return;lastTick=n;play(B&&B.tick,r(.95,1.05))}};
+    tick(){const n=performance.now();if(n-lastTick<28)return;lastTick=n;
+      if(!SB)return play(B&&B.tick,r(.95,1.05));voice(bag('tick'),{rate:r(.92,1.08),gain:1.1,lp:r(5000,9000)})}};
 })();
 /* iOS/Android only let audio start inside a real tap (touchend/click), and keyboard input doesn't count.
    So every tap unlocks the audio context (once it's running this is a no-op) by playing a silent buffer. */
@@ -741,7 +793,7 @@ ta.addEventListener('input',e=>{
   prev=t;userOff=0;wheelAcc=0;setDirty(true);
   const oldLine=caretLine;
   const insStr=t.slice(p,p+ins).replace(/[*_]/g,'');
-  if(ins>0&&typed){const ch=insStr[insStr.length-1]||'';if(ch==='\n'){snd.ret();haptic(22)}else if(ch===' '){snd.space();haptic(9)}else{snd.key();haptic(7)}}
+  if(ins>0&&typed){const ch=insStr[insStr.length-1]||'';if(ch==='\n'){snd.ret(p-(t.lastIndexOf('\n',p-1)+1));haptic(22)}else if(ch===' '){snd.space();haptic(9)}else{snd.key();haptic(7)}}
   else if(del>0&&ins===0){snd.back();haptic(5)}
   typingPulse();render();
   // the margin bell rings when a word wraps onto a new line
