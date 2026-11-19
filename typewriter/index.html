@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Typewriter</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='b' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23545660'/%3E%3Cstop offset='1' stop-color='%231c1d22'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='18' y='4' width='28' height='26' rx='1.5' fill='%23f6f1e4' stroke='%23b9b2a2'/%3E%3Cpath d='M23 12h18M23 17h14M23 22h16' stroke='%2333333a' stroke-width='2' stroke-linecap='round'/%3E%3Crect x='6' y='26' width='52' height='9' rx='4.5' fill='%23202126'/%3E%3Ccircle cx='6' cy='30.5' r='5' fill='%23101114'/%3E%3Ccircle cx='58' cy='30.5' r='5' fill='%23101114'/%3E%3Cpath d='M8 36h48l4 22H4z' fill='url(%23b)'/%3E%3Cg fill='%23e9e4d8'%3E%3Ccircle cx='15' cy='44' r='2.4'/%3E%3Ccircle cx='23' cy='44' r='2.4'/%3E%3Ccircle cx='31' cy='44' r='2.4'/%3E%3Ccircle cx='39' cy='44' r='2.4'/%3E%3Ccircle cx='47' cy='44' r='2.4'/%3E%3Ccircle cx='19' cy='51' r='2.4'/%3E%3Ccircle cx='27' cy='51' r='2.4'/%3E%3Ccircle cx='35' cy='51' r='2.4'/%3E%3Ccircle cx='43' cy='51' r='2.4'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
@@ -78,35 +79,25 @@ body.day #lines .ln{text-shadow:0 0 .45px rgba(0,0,0,.5),0 .6px 0 rgba(255,255,2
 
 /* ---------- carriage: bail bar, head, caret, knob ---------- */
 #bar{position:absolute;left:0;right:0;top:0;height:4px;margin-top:-2px;pointer-events:none;
-  background:linear-gradient(#34353c 0%,#8f919c 26%,#eef0f3 46%,#a2a4ae 62%,#45464e 100%);
+  background:linear-gradient(#26272c 0%,#5d5f68 14%,#d9dbe0 30%,#ffffff 38%,#b9bbc3 46%,#4f5159 58%,#2e2f35 70%,#7d808a 86%,#3a3b41 100%);
   box-shadow:0 2px 2px rgba(0,0,0,.22),0 7px 14px rgba(0,0,0,.09)}
-body.day #bar{background:linear-gradient(#46474e 0%,#a3a5ae 26%,#fbfbfc 46%,#b4b6be 62%,#55565d 100%)}
+body.day #bar{background:linear-gradient(#3a3b41 0%,#7a7c85 14%,#e6e7eb 30%,#ffffff 38%,#c6c8cf 46%,#62646c 58%,#45464d 70%,#9a9ca5 86%,#4a4b52 100%)}
 #barGlint{position:absolute;left:0;top:0;width:420px;height:4px;margin:-2px 0 0 -210px;pointer-events:none;will-change:transform;
   background:radial-gradient(ellipse 50% 100% at 50% 50%,rgba(255,236,196,.95),rgba(255,236,196,0));mix-blend-mode:screen;transition:opacity .7s}
 #head{position:absolute;left:0;top:0;width:56px;height:18px;margin:-9px 0 0 -28px;pointer-events:none;will-change:transform}
-#hb{position:absolute;inset:0;border-radius:5px;
-  background:repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 1px,rgba(0,0,0,.035) 1px 2px),
-    linear-gradient(#f6f7f9 0%,#d3d5db 40%,#aeb1ba 56%,#c7c9d0 78%,#e6e8ec 100%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.85),inset 0 -1px 0 rgba(0,0,0,.2),0 1px 1px rgba(0,0,0,.35),0 3px 6px rgba(0,0,0,.22),0 8px 16px rgba(0,0,0,.10)}
-.screw{position:absolute;top:6px;width:6px;height:6px;border-radius:50%;
-  background:radial-gradient(circle at 35% 30%,#fff 0%,#b9bbc3 45%,#62646d 100%);box-shadow:0 .5px 0 rgba(255,255,255,.7),inset 0 0 0 .5px rgba(0,0,0,.2)}
-.screw::after{content:'';position:absolute;left:1px;right:1px;top:2.5px;height:1px;background:rgba(40,40,48,.65);transform:rotate(38deg)}
-.screw.l{left:7px}.screw.r{right:7px}
-#win{position:absolute;left:50%;top:3px;width:20px;height:12px;margin-left:-10px;border-radius:3px;overflow:hidden;perspective:30px;padding:1px;
-  background:linear-gradient(#1a0a06,#3a1a10);box-shadow:inset 0 1px 1.5px rgba(0,0,0,.8),0 1px 0 rgba(255,255,255,.75)}
-#glyph{display:block;width:100%;height:100%;border-radius:2px;transform-origin:50% 50%;
-  background:repeating-linear-gradient(100deg,rgba(0,0,0,.10) 0 1px,rgba(255,170,120,.05) 1px 2.5px,rgba(0,0,0,.06) 2.5px 3.5px),
-    linear-gradient(165deg,#7a2c1b 0%,#5a1e12 38%,#3e130b 70%,#2b0c06 100%);
-  box-shadow:inset 0 1px 0 rgba(255,196,160,.45),inset 1px 0 0 rgba(255,180,140,.2),inset 0 -1.5px 1px rgba(0,0,0,.55),inset -1px 0 1px rgba(0,0,0,.35)}
-#led{position:absolute;left:50%;top:-1.5px;width:24px;height:2.5px;margin-left:-12px;border-radius:2px;transition:all .6s ease;
-  background:linear-gradient(#fffdf6,#ffe2ad);box-shadow:0 0 4px 1px rgba(255,232,180,.95),0 -3px 12px 3px rgba(255,228,175,.5)}
-body.lamp-off #led{background:linear-gradient(#cfc8bb,#9a958c);box-shadow:inset 0 .5px 0 rgba(0,0,0,.3)}
+#hb{position:absolute;inset:0;filter:drop-shadow(0 1px .6px rgba(0,0,0,.45)) drop-shadow(0 3px 3px rgba(0,0,0,.22)) drop-shadow(0 8px 10px rgba(0,0,0,.12))}
+#headC{position:absolute;left:0;top:0;width:56px;height:18px}
+#win{position:absolute;left:18.5px;top:3.5px;width:19px;height:11px;perspective:28px}
+#winC{position:absolute;inset:0;width:19px;height:11px;transform-origin:50% 50%;backface-visibility:hidden}
+#led{position:absolute;left:50%;top:-1px;width:18px;height:2px;margin-left:-11px;border-radius:2px;transition:opacity .6s ease;
+  box-shadow:0 0 4px .5px rgba(255,234,186,.75),0 -3px 12px 3px rgba(255,228,175,.4)}
+body.lamp-off #led{opacity:0}
 #swapLbl{position:absolute;left:0;top:0;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--hud);white-space:nowrap;pointer-events:none;opacity:0;will-change:transform}
 #caret{position:absolute;left:0;top:0;width:1.5px;margin-left:-.75px;border-radius:1px;background:var(--ink);opacity:.55;pointer-events:none;will-change:transform;animation:blink 1.15s steps(1) infinite}
 body.typing #caret{animation:none}
 body.blurred #caret{opacity:0;animation:none}
 @keyframes blink{55%{opacity:0}}
-#knob{position:absolute;left:0;top:0;cursor:ns-resize;touch-action:none;filter:drop-shadow(-2px 3px 3px rgba(0,0,0,.28)) drop-shadow(-6px 8px 10px rgba(0,0,0,.12))}
+#knob{position:absolute;left:0;top:0;cursor:ns-resize;touch-action:none;filter:drop-shadow(-1px 2px 1.5px rgba(0,0,0,.35)) drop-shadow(-5px 9px 10px rgba(0,0,0,.16))}
 #hint{position:absolute;left:0;top:0;font-size:var(--fs);line-height:var(--lh);color:var(--ink);opacity:.32;white-space:pre;pointer-events:none;transition:opacity .4s}
 
 /* ---------- UI ---------- */
@@ -174,7 +165,7 @@ body.dragging #drop{display:flex}
   <div id="bar"></div>
   <div id="barGlint"></div>
   <div id="caret"></div>
-  <div id="head"><div id="hb"><i class="screw l"></i><div id="win"><span id="glyph"></span></div><i class="screw r"></i></div><div id="led"></div></div>
+  <div id="head"><div id="hb"><canvas id="headC"></canvas><div id="win"><canvas id="winC"></canvas></div></div><div id="led"></div></div>
   <div id="swapLbl"></div>
   <canvas id="knob"></canvas>
   <div id="hud">
@@ -193,6 +184,7 @@ body.dragging #drop{display:flex}
     <div class="orow"><span>Lamp</span><div class="seg" data-k="lamp"><button data-v="on">on</button><button data-v="off">off</button></div></div>
     <div class="orow"><span>Typing point</span><div class="seg" data-k="center"><button data-v="off">moves</button><button data-v="on">centred</button></div></div>
     <div class="orow"><span>Sound</span><div class="seg" data-k="sound"><button data-v="on">on</button><button data-v="off">off</button></div></div>
+    <div class="orow"><span>Haptics</span><div class="seg" data-k="haptics"><button data-v="on">on</button><button data-v="off">off</button></div></div>
     <div class="orow"><button data-a="new" style="all:unset;cursor:pointer;opacity:.7">new page</button><button data-a="help" style="all:unset;cursor:pointer;opacity:.7">shortcuts</button></div>
   </div>
   <div id="drop">Drop a .md file to open it</div>
@@ -208,7 +200,7 @@ body.dragging #drop{display:flex}
 'use strict';
 const $=s=>document.querySelector(s);
 const ta=$('#ta'),stage=$('#stage'),linesEl=$('#lines'),litWrap=$('#lit'),litE=$('#litE'),litG=$('#litG'),
-      lampEl=$('#lamp'),hotEl=$('#hot'),bar=$('#bar'),barGlint=$('#barGlint'),head=$('#head'),hb=$('#hb'),glyphEl=$('#glyph'),
+      lampEl=$('#lamp'),hotEl=$('#hot'),bar=$('#bar'),barGlint=$('#barGlint'),head=$('#head'),hb=$('#hb'),glyphEl=$('#winC'),
       swapLbl=$('#swapLbl'),caretEl=$('#caret'),hint=$('#hint'),wcEl=$('#wc'),nameEl=$('#name'),knob=$('#knob'),view=$('#view'),
       fileInput=$('#file'),toastEl=$('#toast'),modalEl=$('#modal'),optsEl=$('#opts'),body=document.body,root=document.documentElement;
 const IN_FRAME=(()=>{try{return window.self!==window.top}catch(e){return true}})();
@@ -218,7 +210,7 @@ const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 const ANIM=130;
 
 /* ---------- settings ---------- */
-const S={theme:store.get('tw2.theme','night'),lamp:store.get('tw2.lamp',null),center:store.get('tw2.center',false),sound:store.get('tw2.sound',true)};
+const S={theme:store.get('tw2.theme','night'),lamp:store.get('tw2.lamp',null),center:store.get('tw2.center',false),sound:store.get('tw2.sound',true),haptics:store.get('tw2.haptics',true)};
 if(S.lamp===null)S.lamp=S.theme==='night';
 
 /* ---------- layout ---------- */
@@ -255,10 +247,10 @@ function measure(){
   view.style.webkitMaskImage=vm;view.style.maskImage=vm;
   // knob canvas
   dpr=Math.min(3,window.devicePixelRatio||1);
-  knob.width=KW*dpr;knob.height=KH*dpr;knob.style.width=KW+'px';knob.style.height=KH+'px';
+  knob.width=Math.round(KW*Math.max(1,dpr));knob.height=Math.round(KH*Math.max(1,dpr));knob.style.width=KW+'px';knob.style.height=KH+'px';
   knob.style.display=mobile?'none':'block';
   knob.style.transform=`translate(${W-KW-16}px,${typeY-KH/2}px)`;
-  kctx=knob.getContext('2d');lastKnob=null;
+  kctx=knob.getContext('2d');lastKnob=null;renderHead();
 }
 
 /* ---------- markdown model: raw text in the textarea, markers hidden on paper ---------- */
@@ -472,40 +464,132 @@ function frame(t){
 }
 
 /* ---------- platen knob ---------- */
+/* ---------- per-pixel shading for the metal parts (studio-lit, not CSS gradients) ---------- */
+const sat=x=>x<0?0:x>1?1:x;
+const sstep=(a,b,x)=>{const t=sat((x-a)/(b-a));return t*t*(3-2*t)};
+const nrm=(x,y,z)=>{const l=Math.hypot(x,y,z)||1;return[x/l,y/l,z/l]};
+let lampK=0;const KEY=nrm(-.42,-.72,.56),FILL=nrm(.7,-.25,.66),LAMP=nrm(-.75,.35,.56);
+function hash(x,y){let h=(x*374761393+y*668265263)|0;h=(h^(h>>>13))*1274126177|0;return((h^(h>>>16))>>>0)/4294967295}
+function vnoise(x,y){const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi,u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf);
+  const a=hash(xi,yi),b=hash(xi+1,yi),c=hash(xi,yi+1),d=hash(xi+1,yi+1);return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v}
+/* studio environment seen in reflections: overhead softbox, horizon strip, left panel, dark floor */
+function env(rx,ry){
+  const up=-ry;
+  let v=.05+.16*sstep(-.7,.35,up);
+  v+=1.05*sstep(.42,.56,up)*sstep(.98,.8,up)*sstep(.7,.42,Math.abs(rx));
+  v+=.6*sstep(.07,0,Math.abs(up-.1));
+  v+=.45*sstep(-.5,-.78,rx)*sstep(-.25,.25,up);
+  return v;
+}
+function shade(mat,N,x,y,lampOn){
+  const [nx,ny,nz]=N;
+  const rx=2*nz*nx,ry=2*nz*ny,rz=2*nz*nz-1; // reflect view (0,0,1)
+  const e=env(rx,ry);
+  const dK=Math.max(0,nx*KEY[0]+ny*KEY[1]+nz*KEY[2]),dF=Math.max(0,nx*FILL[0]+ny*FILL[1]+nz*FILL[2]);
+  const dL=lampOn?Math.max(0,nx*LAMP[0]+ny*LAMP[1]+nz*LAMP[2]):0;
+  const hK=nrm(KEY[0],KEY[1],KEY[2]+1),sK=Math.max(0,nx*hK[0]+ny*hK[1]+nz*hK[2]);
+  const fres=Math.pow(1-Math.max(0,nz),3);
+  let r,g,b;
+  if(mat===1){ // brushed aluminium: anisotropic along x
+    const streak=.86+.14*vnoise(x*.05,y*7)+.05*(hash(Math.floor(x*3),Math.floor(y*9))-.5);
+    const TL=KEY[0],TH=hK[0];const aniso=Math.pow(Math.max(0,Math.sqrt(1-TH*TH)),90)*(.6+.4*streak);
+    const base=.62*streak;
+    const v=base*(.16+.42*dK+.12*dF)+base*.62*e+.55*aniso;
+    r=v*.98;g=v*.99;b=v*1.02;
+  }else if(mat===2){ // polished chrome
+    const v=.06*dK+.92*e+1.4*Math.pow(sK,180);
+    r=v*.96;g=v*.97;b=v*1.0;
+  }else if(mat===3){ // dark anodised cavity
+    const v=.03+.05*dK+.12*e;r=g=b=v;
+  }else if(mat===4){ // lamp slit
+    if(lampOn){r=1.25;g=1.08;b=.82}else{const v=.32+.25*dK+.2*e;r=v;g=v*.97;b=v*.92}
+  }else if(mat===5){ // mahogany under clear lacquer
+    const w=sstep(.2,1,.5+.5*Math.sin(y*2.1+vnoise(x*.18,y*.4)*5.5+x*.05));
+    const fig=.75+.25*vnoise(x*.6,y*2.2);
+    const br=(.55+.45*w)*fig;
+    const al=[.1*br,.018*br,.009*br];
+    const coat=.06+.94*fres;
+    const sp=1.2*Math.pow(sK,140)+.08*e*coat+.008*e;
+    const lit=.22+.78*dK+.2*dF;
+    r=al[0]*lit+sp;g=al[1]*lit+sp*.96;b=al[2]*lit+sp*.9;
+  }else{ // black bakelite / rubber
+    const v=.008*(.3+dK)+.012*e+.16*fres*e+.24*Math.pow(sK,40);
+    r=g=b=v;
+  }
+  if(dL&&lampK){r+=dL*.3*lampK;g+=dL*.22*lampK;b+=dL*.12*lampK}
+  return[r,g,b];
+}
+const toS=v=>Math.round(255*Math.pow(sat(v/(1+v*.15)),1/2.2));
+function sdRR(x,y,cx,cy,hw,hh,r){const qx=Math.abs(x-cx)-hw+r,qy=Math.abs(y-cy)-hh+r;return Math.min(Math.max(qx,qy),0)+Math.hypot(Math.max(qx,0),Math.max(qy,0))-r}
+/* render a height field: fn(x,y) -> [height, material, coverageDistance] in CSS px */
+function renderField(canvas,W,H,fn,lampOn,hs){
+  const k=Math.min(4,Math.max(2,dpr*2));
+  const w=Math.round(W*k),h=Math.round(H*k);
+  const off=document.createElement('canvas');off.width=w;off.height=h;
+  const ctx=off.getContext('2d'),img=ctx.createImageData(w,h),d=img.data,e=.5/k;
+  for(let py=0;py<h;py++)for(let px=0;px<w;px++){
+    const x=(px+.5)/k,y=(py+.5)/k;
+    const c=fn(x,y);if(c[2]>=.5/k*2)continue;
+    const hx=(fn(x+e,y)[0]-fn(x-e,y)[0])/(2*e),hy=(fn(x,y+e)[0]-fn(x,y-e)[0])/(2*e);
+    const N=nrm(-hx*hs,-hy*hs,1);
+    let [r,g,b]=shade(c[1],N,x,y,lampOn);
+    const ao=c[3]??1;r*=ao;g*=ao;b*=ao;
+    const i=(py*w+px)*4;d[i]=toS(r);d[i+1]=toS(g);d[i+2]=toS(b);d[i+3]=Math.round(255*sat(.5-c[2]*k*.5));
+  }
+  ctx.putImageData(img,0,0);
+  canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);
+  const c2=canvas.getContext('2d');c2.imageSmoothingQuality='high';c2.clearRect(0,0,canvas.width,canvas.height);c2.drawImage(off,0,0,canvas.width,canvas.height);
+}
+function headField(x,y){
+  const d=sdRR(x,y,28,9,28,9,5.2);
+  if(d>0)return[0,1,d];
+  const t=sat(-d/2.4);let h=Math.sqrt(1-(1-t)*(1-t)),mat=1,ao=1;
+  // window cavity with a crisp chamfer
+  const dw=sdRR(x,y,28,9,10.6,6.6,3);
+  if(dw<.9){const q=sstep(.9,-.5,dw);h-=.62*q;if(dw<0){mat=3;ao=.55+.45*sstep(-2.2,0,dw)}}
+  // domed slotted screws, countersunk
+  for(const sx of [8.2,47.8]){
+    const r=Math.hypot(x-sx,y-9);
+    if(r<3.6&&r>=2.75){h-=.18*sstep(3.6,3.0,r);ao*=.8+.2*sstep(2.75,3.4,r)}
+    if(r<2.75){h=1+.55*Math.sqrt(1-(r/2.75)**2);mat=2;
+      const a=.66,u=(x-sx)*Math.cos(a)+(y-9)*Math.sin(a),v=-(x-sx)*Math.sin(a)+(y-9)*Math.cos(a);
+      if(Math.abs(v)<.38&&Math.abs(u)<2.3){h-=.42;ao=.55}}
+  }
+  // lamp slit along the top edge
+  if(y<2.1&&Math.abs(x-28)<9.5){mat=4;h-=.15*sstep(2.1,1.2,y)}
+  return[h,mat,d,ao];
+}
+function winField(x,y){
+  const d=sdRR(x,y,9.5,5.5,9.5,5.5,2.4);
+  if(d>0)return[0,5,d];
+  const t=sat(-d/1.5);return[.25+.75*t,5,d,.82+.18*t];
+}
+function renderHead(){
+  lampK=0;renderField($('#headC'),56,18,headField,S.lamp,2.4);
+  renderField($('#winC'),19,11,winField,S.lamp,1.6);
+}
 function drawKnob(angle){
   if(!kctx||L.mobile)return;
-  const c=kctx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,KW,KH);
-  const R=KH/2-2,cy=KH/2,x0=7,x1=KW-1;
-  // axle stub
-  const ax=c.createLinearGradient(0,cy-4,0,cy+4);ax.addColorStop(0,'#55575f');ax.addColorStop(.45,'#f1f2f5');ax.addColorStop(1,'#4a4c53');
-  c.fillStyle=ax;c.fillRect(0,cy-4,x0+2,8);
-  // chrome collar
-  const col=c.createLinearGradient(0,cy-R,0,cy+R);
-  col.addColorStop(0,'#2b2c31');col.addColorStop(.22,'#9fa1aa');col.addColorStop(.38,'#f7f8fa');col.addColorStop(.55,'#a8aab3');col.addColorStop(.85,'#3d3e45');col.addColorStop(1,'#1c1d21');
-  c.fillStyle=col;c.beginPath();c.roundRect(x0,cy-R+5,4,2*R-10,1.5);c.fill();
-  // rubber barrel: cylinder shading
-  const g=c.createLinearGradient(0,cy-R,0,cy+R);
-  g.addColorStop(0,'#030304');g.addColorStop(.12,'#17171a');g.addColorStop(.27,'#3d3d43');g.addColorStop(.36,'#2a2a2f');g.addColorStop(.6,'#151518');g.addColorStop(.88,'#08080a');g.addColorStop(1,'#020203');
-  c.fillStyle=g;c.beginPath();c.roundRect(x0+4,cy-R,x1-x0-4,2*R,[2,5,5,2]);c.fill();
-  // knurled ridges, foreshortened around the barrel
-  c.save();c.beginPath();c.roundRect(x0+4,cy-R,x1-x0-4,2*R,[2,5,5,2]);c.clip();
-  const N=36;
-  for(let k=0;k<N;k++){
-    const th=k*2*Math.PI/N+angle;const z=Math.cos(th);if(z<=.02)continue;
-    const y=cy-R*Math.sin(th);
-    const lit=Math.max(0,.5*Math.sin(th)+.85*z);
-    c.fillStyle=`rgba(0,0,0,${.55*z})`;c.fillRect(x0+4,y+.4,x1-x0-4,Math.max(.5,1.3*z));
-    c.fillStyle=`rgba(255,255,255,${.16*lit*lit})`;c.fillRect(x0+4,y-.6,x1-x0-4,Math.max(.4,.8*z));
+  const k=Math.max(1,dpr),w=Math.round(KW*k),h=Math.round(KH*k);
+  if(knob.width!==w){knob.width=w;knob.height=h}
+  lampK=.1;const img=kctx.createImageData(w,h),d=img.data,cy=KH/2,R=KH/2-2,lampOn=S.lamp;
+  for(let py=0;py<h;py++){
+    const y=(py+.5)/k;
+    for(let px=0;px<w;px++){
+      const x=(px+.5)/k;let rad,mat,nxTilt=0;
+      if(x<7){rad=3.4;mat=2}else if(x<11){rad=R-5;mat=2;nxTilt=x<8?-(8-x)*.7:x>10?(x-10)*.7:0}
+      else if(x<KW-.5){rad=R;mat=6;if(x<12.5)nxTilt=-(12.5-x)/1.5*.9;else if(x>KW-2.5)nxTilt=(x-(KW-2.5))/2*1.1}
+      else continue;
+      const s=(y-cy)/rad;if(Math.abs(s)>=1)continue;
+      let phi=Math.asin(s),ao=1;
+      if(mat===6){const th=phi+angle;const g=Math.sin(40*th);phi+=.42*g*Math.cos(phi);ao=.7+.3*(.5+.5*Math.cos(40*th))}
+      const N=nrm(nxTilt,Math.sin(phi),Math.cos(phi));
+      let [r,g2,b]=shade(mat,N,x,y,lampOn);r*=ao;g2*=ao;b*=ao;
+      const edge=sat((1-Math.abs(s))*rad*k*.9);
+      const i=(py*w+px)*4;d[i]=toS(r);d[i+1]=toS(g2);d[i+2]=toS(b);d[i+3]=Math.round(255*edge);
+    }
   }
-  // specular streak along the barrel + warm lamp bounce from below-left
-  const sp=c.createLinearGradient(0,cy-R,0,cy+R);
-  sp.addColorStop(.18,'rgba(255,255,255,0)');sp.addColorStop(.27,'rgba(255,255,255,.22)');sp.addColorStop(.34,'rgba(255,255,255,0)');
-  if(S.lamp){sp.addColorStop(.78,'rgba(255,220,160,0)');sp.addColorStop(.88,'rgba(255,220,160,.10)');sp.addColorStop(.96,'rgba(255,220,160,0)')}
-  c.fillStyle=sp;c.fillRect(x0+4,cy-R,x1-x0-4,2*R);
-  // end face rim
-  const rim=c.createLinearGradient(x1-4,0,x1,0);rim.addColorStop(0,'rgba(255,255,255,0)');rim.addColorStop(1,'rgba(255,255,255,.08)');
-  c.fillStyle=rim;c.fillRect(x1-4,cy-R,4,2*R);
-  c.restore();
+  kctx.putImageData(img,0,0);
 }
 let kdrag=null;
 knob.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();kdrag={y:e.clientY,acc:wheelAcc};try{knob.setPointerCapture(e.pointerId)}catch(_){}});
@@ -555,8 +639,9 @@ const snd=(()=>{
       tone(buf,t,1780,.09,.07);tone(buf,t,2690,.06,.05);
       B.ret=norm(buf,.8)}
     // margin bell
-    {const buf=new Float32Array(Math.floor(1.6*SR));burst(buf,0,.001,[bq('hp',3000,.7)],.25);
-      [[1,.38,1.3],[2.32,.17,.8],[4.25,.09,.45],[6.63,.05,.25]].forEach(([m,g,d])=>tone(buf,.0005,2380*m,d,g));B.bell=norm(buf,.55)}
+    {const n=Math.floor(.42*SR),buf=new Float32Array(n);burst(buf,0,.0006,[bq('hp',5000,.7)],.12);
+      [[1,.42,.085],[2.76,.12,.04],[5.4,.05,.018]].forEach(([m,g,d])=>tone(buf,.0003,3150*m,d,g));
+      for(let i=0;i<n;i++)buf[i]*=Math.min(1,(n-i)/(.08*SR));B.bell=norm(buf,.3)}
     // type element swap: short whirr then a seated "chunk"
     {const buf=new Float32Array(Math.floor(.24*SR));
       const n=Math.floor(.1*SR);let x=noise(n);x=bq('bp',2600,1.2)(x);for(let i=0;i<n;i++){const t=i/n;buf[i]+=x[i]*Math.sin(Math.PI*t)*.25}
@@ -601,6 +686,23 @@ function unlockAudio(){
 }
 ['touchend','click','keydown','pointerup'].forEach(ev=>window.addEventListener(ev,unlockAudio,{capture:true,passive:true}));
 
+/* ---------- haptics: Android vibrates; iOS 18+ Safari gives a tick when a switch control toggles ---------- */
+const haptic=(()=>{
+  const touch=matchMedia('(pointer:coarse)').matches,canVib=typeof navigator.vibrate==='function';
+  const iOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  let lbl=null,last=0;
+  function iosTick(){
+    if(!lbl){const inp=document.createElement('input');inp.type='checkbox';inp.setAttribute('switch','');inp.id='hsw';inp.tabIndex=-1;
+      inp.style.cssText='position:fixed;left:-200px;top:0;opacity:0;pointer-events:none';
+      lbl=document.createElement('label');lbl.htmlFor='hsw';lbl.style.cssText=inp.style.cssText;document.body.append(inp,lbl)}
+    const had=document.activeElement;lbl.click();if(had&&document.activeElement!==had)had.focus({preventScroll:true});
+  }
+  return(ms)=>{
+    if(!touch||!S.haptics)return;const n=performance.now();if(n-last<18)return;last=n;
+    try{if(canVib)navigator.vibrate(ms);else if(iOS)iosTick()}catch(e){}
+  };
+})();
+
 /* ---------- type element (bold / italic / heading) indicator ---------- */
 const LABEL={0:'regular',1:'bold',2:'italic',3:'bold italic',8:'heading',9:'heading',10:'heading italic',11:'heading italic'};
 function glyphStyle(b){}
@@ -632,8 +734,8 @@ ta.addEventListener('input',e=>{
   prev=t;userOff=0;wheelAcc=0;setDirty(true);
   const oldLine=caretLine;
   const insStr=t.slice(p,p+ins).replace(/[*_]/g,'');
-  if(ins>0&&typed){const ch=insStr[insStr.length-1]||'';if(ch==='\n')snd.ret();else if(ch===' ')snd.space();else snd.key()}
-  else if(del>0&&ins===0)snd.back();
+  if(ins>0&&typed){const ch=insStr[insStr.length-1]||'';if(ch==='\n'){snd.ret();haptic(22)}else if(ch===' '){snd.space();haptic(9)}else{snd.key();haptic(7)}}
+  else if(del>0&&ins===0){snd.back();haptic(5)}
   typingPulse();render();
   // the margin bell rings when a word wraps onto a new line
   if(typed&&ins>0&&!insStr.includes('\n')&&caretLine===oldLine+1&&caretCol>0)snd.bell();
@@ -828,7 +930,7 @@ function scrollTo(acc){
   const min=-caretLine*L.lh,max=(lines.length-1-caretLine)*L.lh;
   wheelAcc=clamp(acc,min-L.lh*.5,max+L.lh*.5);
   const snapped=clamp(Math.round(wheelAcc/L.lh)*L.lh,min,max);
-  if(snapped!==userOff){userOff=snapped;snd.tick();render()}
+  if(snapped!==userOff){userOff=snapped;snd.tick();haptic(4);render()}
 }
 let ptr=null,lastMove={x:0,y:0};
 stage.addEventListener('pointerdown',e=>{
@@ -884,12 +986,12 @@ stage.addEventListener('wheel',e=>{
 window.addEventListener('scroll',()=>window.scrollTo(0,0));
 
 /* ---------- files ---------- */
-function setDirty(v){dirty=v;body.classList.toggle('dirty',v)}
+function setDirty(v){dirty=v;body.classList.toggle('dirty',v);if(typeof updateTitle==='function')try{updateTitle()}catch(e){}}
 function fileName(){return(nameEl.value.trim()||'Untitled').replace(/[\\/:*?"<>|]/g,'-')}
 function loadText(text,name){
   text=text.replace(/\r\n?/g,'\n').replace(/\t/g,'    ');
   ta.value=text;prev=text;times=new Array(text.length).fill(0);pending=null;
-  nameEl.value=(name||'Untitled').replace(/\.(md|markdown|txt)$/i,'');
+  nameEl.value=(name||'Untitled').replace(/\.(md|markdown|txt)$/i,'');try{updateTitle()}catch(e){}
   ta.focus({preventScroll:true});ta.setSelectionRange(text.length,text.length);
   userOff=0;wheelAcc=0;setDirty(false);render();curS=targetS;vS=0;cx=caretCol*L.cw;vx=0;drawLines();scheduleDraft();
 }
@@ -951,7 +1053,7 @@ function lineToHtml(line){
 function exportPdf(){
   if(IN_FRAME){modal('<h3>Export to PDF</h3><p>The preview can’t open the print dialog. In the installed app this opens print → <b>Save as PDF</b> with clean, formatted pages.</p>',[{l:'OK',pri:1}]);return}
   const blocks=ta.value.split(/\n{2,}/).map(b=>{const ls=b.split('\n');if(ls.length===1&&/^#{1,6}\s/.test(ls[0]))return`<h2>${lineToHtml(ls[0])}</h2>`;return`<p>${ls.map(lineToHtml).join('<br>')}</p>`});
-  $('#print').innerHTML=blocks.join('');document.title=fileName();window.print();document.title='Typewriter';
+  $('#print').innerHTML=blocks.join('');document.title=fileName();window.print();updateTitle();
 }
 let dragDepth=0;
 window.addEventListener('dragenter',e=>{e.preventDefault();dragDepth++;body.classList.add('dragging')});
@@ -961,7 +1063,7 @@ window.addEventListener('drop',async e=>{e.preventDefault();dragDepth=0;body.cla
   const f=e.dataTransfer.files[0];if(f&&(await guard())){fileHandle=null;loadText(await f.text(),f.name);toast('Opened '+f.name)}});
 let draftTimer=0;
 function scheduleDraft(){clearTimeout(draftTimer);draftTimer=setTimeout(()=>store.set('tw.draft',{text:ta.value,name:nameEl.value,dirty}),400)}
-nameEl.addEventListener('input',()=>{setDirty(true);scheduleDraft()});
+nameEl.addEventListener('input',()=>{setDirty(true);scheduleDraft();updateTitle()});
 nameEl.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key==='Escape'){e.preventDefault();ta.focus({preventScroll:true})}});
 
 /* ---------- UI ---------- */
@@ -996,6 +1098,7 @@ function setOpt(k,v){
   if(k==='theme'){S.theme=v;store.set('tw2.theme',v);S.lamp=v==='night';store.set('tw2.lamp',S.lamp)}
   if(k==='lamp'){S.lamp=v==='on';store.set('tw2.lamp',S.lamp)}
   if(k==='center'){S.center=v==='on';store.set('tw2.center',S.center)}
+  if(k==='haptics'){S.haptics=v==='on';store.set('tw2.haptics',S.haptics);haptic(10)}
   if(k==='sound'){S.sound=v==='on';store.set('tw2.sound',S.sound);if(S.sound){audioReady=false;unlockAudio();setTimeout(()=>snd.key(),30)}}
   applySettings();
 }
@@ -1003,7 +1106,7 @@ function applySettings(){
   body.classList.toggle('day',S.theme==='day');body.classList.toggle('lamp-off',!S.lamp);
   optsEl.querySelectorAll('.seg').forEach(seg=>{const k=seg.dataset.k;
     const cur=k==='theme'?S.theme:(S[k]?'on':'off');seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===cur))});
-  resetCaches();lastKnob=null;if(lastText!=null)render();
+  resetCaches();lastKnob=null;if(kctx)renderHead();if(lastText!=null)render();
 }
 optsEl.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const seg=b.closest('.seg');
   if(seg)setOpt(seg.dataset.k,b.dataset.v);});
@@ -1015,6 +1118,24 @@ function updateCount(){
   let n=0;const re=/\S+/g;
   for(const line of lastText.split('\n')){const P=parse(line);let s='';for(let j=0;j<line.length;j++)if(!(P.st[j]&4))s+=line[j];n+=(s.match(re)||[]).length}
   wcEl.textContent=n.toLocaleString()+(n===1?' word':' words');
+}
+
+/* ---------- tab title: "(2) My chapter" ---------- */
+const tabs=(()=>{
+  const id=Math.random().toString(36).slice(2),born=Date.now()+Math.random();const peers=new Map();let bc=null,num=0,count=1;
+  try{bc=new BroadcastChannel('typewriter-tabs')}catch(e){}
+  function recalc(){const now=Date.now();for(const [k,v] of peers)if(now-v.seen>5000)peers.delete(k);
+    const all=[born,...[...peers.values()].map(v=>v.born)].sort((a,b)=>a-b);num=all.indexOf(born)+1;count=all.length;updateTitle()}
+  if(bc){bc.onmessage=e=>{const m=e.data;if(!m||m.id===id)return;
+      if(m.t==='bye')peers.delete(m.id);else{const had=peers.has(m.id);peers.set(m.id,{born:m.born,seen:Date.now()});if(m.t==='hello'&&!had)bc.postMessage({t:'here',id,born})}
+      recalc()};
+    bc.postMessage({t:'hello',id,born});setInterval(()=>{bc.postMessage({t:'beat',id,born});recalc()},2000);
+    addEventListener('pagehide',()=>{try{bc.postMessage({t:'bye',id})}catch(e){}})}
+  return{get num(){return num},get count(){return count}};
+})();
+function updateTitle(){
+  const n=(nameEl.value.trim()||'Untitled');
+  document.title=(tabs.count>1?`(${tabs.num}) `:'')+(dirty?'• ':'')+n;
 }
 
 /* ---------- boot ---------- */
