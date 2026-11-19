@@ -112,9 +112,9 @@ body.hide-ui #hud{opacity:0;pointer-events:none}
 body.dirty #dot{opacity:.7}
 .sp{flex:1}
 #wc{margin-right:10px;white-space:nowrap;font-variant-numeric:tabular-nums}
-#opts,#fpick{position:absolute;right:14px;top:52px;z-index:11;width:280px;background:var(--card);color:var(--card-ink);border-radius:10px;padding:10px 12px;
+#opts{position:absolute;right:14px;top:52px;z-index:11;width:280px;background:var(--card);color:var(--card-ink);border-radius:10px;padding:10px 12px;
   box-shadow:0 18px 50px rgba(0,0,0,.28),0 0 0 .5px rgba(0,0,0,.08);font-size:12.5px;display:none;cursor:default}
-#opts.on,#fpick.on{display:block;animation:fade .15s ease}
+#opts.on{display:block;animation:fade .15s ease}
 .orow{display:flex;align-items:center;justify-content:space-between;padding:6px 0}
 .seg{display:flex;background:rgba(127,127,140,.14);border-radius:6px;padding:2px}
 .seg button{all:unset;cursor:pointer;padding:4px 9px;border-radius:5px;color:var(--card-ink);opacity:.6}
@@ -133,28 +133,46 @@ body.dirty #dot{opacity:.7}
   padding:7px 14px;border-radius:20px;background:rgba(20,20,26,.8);color:#eee;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none}
 #toast.on{opacity:1;transform:translate(-50%,0)}
 @keyframes fade{from{opacity:0}}
-/* ---------- focus session: a quiet e-ink style timer, steps by the minute ---------- */
-#fpick{width:250px}
-#fpick .seg{flex:1;justify-content:space-between}#fpick .seg button{flex:1;text-align:center;padding:6px 0}
-#fpick .note{font-size:12px;opacity:.6;padding:4px 0 2px;line-height:1.5}
-#tmr{all:unset;position:absolute;right:20px;bottom:max(18px,env(safe-area-inset-bottom));z-index:9;width:40px;height:44px;
-  color:var(--ink);opacity:0;pointer-events:none;cursor:pointer;transition:opacity 1.2s ease}
+/* ---------- save menu ---------- */
+.menu{position:relative;display:inline-flex;align-items:center}
+#hud .menu .car{padding:5px 4px 5px 0;font-size:10px;opacity:.7}
+#saveDrop{position:absolute;left:0;top:100%;padding-top:6px;display:none;z-index:12;min-width:150px}
+.menu:hover #saveDrop,.menu.on #saveDrop{display:block;animation:fade .15s ease}
+#saveDrop .pc{padding:5px}
+#hud #saveDrop button{display:block;width:100%;box-sizing:border-box;color:var(--card-ink);opacity:.75;padding:7px 9px;letter-spacing:.02em}
+#hud #saveDrop button:hover,#hud #saveDrop button:focus-visible{background:rgba(127,127,140,.16);opacity:1;color:var(--card-ink)}
+/* ---------- timer: an egg-timer dial in the corner. Faint until you reach for it; steps by 15 s ---------- */
+#tw{position:absolute;right:20px;bottom:max(18px,env(safe-area-inset-bottom));z-index:9}
+#tmr{all:unset;display:block;position:relative;width:40px;height:44px;color:var(--ink);opacity:.13;cursor:pointer;transition:opacity .6s ease}
 #tmr svg{display:block;width:100%;height:100%;overflow:visible}
 #tmr .rim{fill:none;stroke:currentColor;stroke-width:1.6}
 #tmr .tk{stroke:currentColor;stroke-width:1.2;opacity:.55}
 #tmr .kn{fill:currentColor}
 #tmr .sec{fill:currentColor;opacity:.5}
-body.focus #tmr{opacity:.55;pointer-events:auto}
-body.focus #tmr.swap{opacity:.2;transition-duration:.25s}
-body.focus #tmr:hover,body.focus #tmr:focus-visible{opacity:1;transition-duration:.3s}
-#tmr.done{opacity:.4!important}
+#tw.run #tmr{opacity:.55}
+#tw.done #tmr{opacity:.4}
+#tw:hover #tmr,#tw.open #tmr,#tmr:focus-visible{opacity:.9;transition-duration:.25s}
+#tmr.swap{opacity:.2!important;transition-duration:.2s!important}
+@media (hover:none){#tmr{opacity:.2}}
+#tmrPop{position:absolute;right:-8px;bottom:100%;padding-bottom:10px;width:262px;display:none}
+#tw:hover #tmrPop,#tw.open #tmrPop{display:block;animation:fade .15s ease}
+.pc{background:var(--card);color:var(--card-ink);border-radius:10px;padding:10px 12px;box-shadow:0 18px 50px rgba(0,0,0,.28),0 0 0 .5px rgba(0,0,0,.08);font-size:12.5px;cursor:default}
+.pc .seg{flex:1;margin:0 8px;justify-content:space-between}.pc .seg button{flex:1;text-align:center;padding:5px 0}
+.pc .u{opacity:.6}
+.pc .tb{all:unset;cursor:pointer;padding:4px 9px;border-radius:5px;border:1px solid rgba(127,127,140,.35);margin-left:6px}
+.pc .tb:hover,.pc .tb:focus-visible,.pc .tb.on{background:rgba(127,127,140,.16)}
+.pc .tb.on{border-color:var(--card-ink)}
+.pc .note{font-size:12px;opacity:.6;line-height:1.5;padding-top:6px}
+.pc .tsep{height:1px;background:rgba(127,127,140,.25);margin:6px 0}
+#tLeft{font-variant-numeric:tabular-nums;font-size:15px}
+#tw .runonly{display:none}#tw.run .runonly{display:flex}#tw.run .idleonly{display:none}
 @media (prefers-reduced-motion:reduce){#tmr{transition:none}}
 #drop{position:absolute;inset:12px;border:2px dashed var(--hud);border-radius:14px;z-index:12;display:none;align-items:center;justify-content:center;font-size:14px;color:var(--hud);pointer-events:none}
 body.dragging #drop{display:flex}
 #ta{position:absolute;left:0;top:0;width:2px;height:20px;opacity:0;padding:0;border:0;margin:0;resize:none;outline:none;overflow:hidden;
   font-size:16px;color:transparent;background:transparent;caret-color:transparent;white-space:pre;z-index:1}
 #print{display:none}
-@media (max-width:640px){ #hud .dk{display:none} #wc{margin-right:2px} #hud{padding-left:8px;padding-right:8px;font-size:12px} #name{width:11ch} #hud button{padding:5px 6px} #opts,#fpick{right:8px;width:calc(100vw - 16px)} }
+@media (max-width:640px){ #hud .dk{display:none} #wc{margin-right:2px} #hud{padding-left:8px;padding-right:8px;font-size:12px} #name{width:11ch} #hud button{padding:5px 6px} #opts{right:8px;width:calc(100vw - 16px)} }
 @media print{
   #stage{display:none!important}
   html,body{position:static;overflow:visible;height:auto;background:#fff}
@@ -189,12 +207,9 @@ body.dragging #drop{display:flex}
     <span class="sp"></span>
     <span id="wc">0 words</span>
     <button data-a="new" class="dk">new</button>
-    <button data-a="open">open</button>
-    <button data-a="save">save</button>
-    <button data-a="pdf" class="dk">pdf</button>
-    <button data-a="focus" id="focusBtn">focus</button>
+    <span class="menu" id="saveMenu"><button data-a="save">save</button><button data-a="menu" class="car" aria-label="More save options">▾</button>
+      <div id="saveDrop"><div class="pc"><button data-a="open">open…</button><button data-a="pdf">export as PDF</button></div></div></span>
     <button data-a="opts" id="optsBtn">options</button>
-    <button data-a="help" class="dk">?</button>
   </div>
   <div id="opts">
     <div class="orow"><span>Paper</span><div class="seg" data-k="theme"><button data-v="day">day</button><button data-v="night">night</button></div></div>
@@ -204,11 +219,14 @@ body.dragging #drop{display:flex}
     <div class="orow"><span>Haptics</span><div class="seg" data-k="haptics"><button data-v="on">on</button><button data-v="off">off</button></div></div>
     <div class="orow"><button data-a="new" style="all:unset;cursor:pointer;opacity:.7">new page</button><button data-a="help" style="all:unset;cursor:pointer;opacity:.7">shortcuts</button></div>
   </div>
-  <div id="fpick">
-    <div class="orow"><span>Write for</span><div class="seg" id="fLen"><button data-m="5">5</button><button data-m="10">10</button><button data-m="15">15</button><button data-m="25">25</button></div><span style="opacity:.6;padding-left:8px">min</span></div>
-    <div class="note" id="fNote"></div>
+  <div id="tw">
+    <div id="tmrPop"><div class="pc">
+      <div class="orow idleonly"><span>Timer</span><div class="seg" id="tLen"><button data-m="2">2</button><button data-m="5">5</button><button data-m="10">10</button><button data-m="25">25</button></div><span class="u">min</span></div>
+      <div class="orow runonly"><span id="tLeft">0:00 left</span><span style="flex:1"></span><button class="tb" data-add="5">+5 min</button><button class="tb" id="tEnd">end</button></div>
+      <div id="fRow"><div class="tsep"></div><div class="orow"><span>Focus</span><button class="tb" id="fBtn">full screen</button></div><div class="note">Write full screen, distraction-free. Esc to exit</div></div>
+    </div></div>
+    <button id="tmr" aria-label="Timer"><svg viewBox="0 0 40 44" aria-hidden="true"><rect class="kn" x="16.5" y="0" width="7" height="4" rx="1.6"/><circle class="rim" cx="20" cy="24" r="17.5"/><g class="tk"><path d="M20 8.2v2.6M20 37.2v2.6M4.2 24h2.6M33.2 24h2.6"/></g><path class="sec" id="tmrSec" d=""/></svg></button>
   </div>
-  <button id="tmr" title="End session" aria-label="End focus session"><svg viewBox="0 0 40 44" aria-hidden="true"><rect class="kn" x="16.5" y="0" width="7" height="4" rx="1.6"/><circle class="rim" cx="20" cy="24" r="17.5"/><g class="tk"><path d="M20 8.2v2.6M20 37.2v2.6M4.2 24h2.6M33.2 24h2.6"/></g><path class="sec" id="tmrSec" d=""/></svg></button>
   <div id="drop">Drop a .md file to open it</div>
   <div id="modal"><div class="card"><div id="mBody"></div><div class="row" id="mRow"></div></div></div>
   <div id="toast"></div>
@@ -224,7 +242,7 @@ const $=s=>document.querySelector(s);
 const ta=$('#ta'),stage=$('#stage'),linesEl=$('#lines'),litWrap=$('#lit'),litE=$('#litE'),litG=$('#litG'),
       lampEl=$('#lamp'),hotEl=$('#hot'),bar=$('#bar'),barGlint=$('#barGlint'),head=$('#head'),hb=$('#hb'),glyphEl=$('#winC'),
       swapLbl=$('#swapLbl'),caretEl=$('#caret'),hint=$('#hint'),wcEl=$('#wc'),nameEl=$('#name'),knob=$('#knob'),view=$('#view'),
-      fileInput=$('#file'),toastEl=$('#toast'),modalEl=$('#modal'),optsEl=$('#opts'),fpickEl=$('#fpick'),tmrEl=$('#tmr'),body=document.body,root=document.documentElement;
+      fileInput=$('#file'),toastEl=$('#toast'),modalEl=$('#modal'),optsEl=$('#opts'),twEl=$('#tw'),tmrEl=$('#tmr'),saveMenu=$('#saveMenu'),body=document.body,root=document.documentElement;
 const IN_FRAME=(()=>{try{return window.self!==window.top}catch(e){return true}})();
 const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},
              set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
@@ -802,7 +820,7 @@ function setIndicator(bits,loud){
 
 /* ---------- typing ---------- */
 let typingTimer=0,forceTyped=false,compStart=-1;
-function typingPulse(){body.classList.add('typing','hide-ui');optsEl.classList.remove('on');clearTimeout(typingTimer);typingTimer=setTimeout(()=>body.classList.remove('typing'),650);fpickEl.classList.remove('on')}
+function typingPulse(){body.classList.add('typing','hide-ui');optsEl.classList.remove('on');clearTimeout(typingTimer);typingTimer=setTimeout(()=>body.classList.remove('typing'),650);twEl.classList.remove('open');saveMenu.classList.remove('on')}
 
 ta.addEventListener('input',e=>{
   const now=performance.now(),t=ta.value,o=prev;
@@ -927,9 +945,8 @@ ta.addEventListener('keydown',e=>{
   if(e.key==='Tab'&&!mod){e.preventDefault();execInsert('    ');return}
   if((e.key==='ArrowUp'||e.key==='ArrowDown')&&!mod&&!e.altKey){e.preventDefault();vmove(e.key==='ArrowUp'?-1:1,e.shiftKey);return}
   if((e.key==='ArrowLeft'||e.key==='ArrowRight')&&!mod&&!e.altKey){e.preventDefault();hmove(e.key==='ArrowRight'?1:-1,e.shiftKey);return}
-  if(mod&&e.shiftKey&&k==='f'){e.preventDefault();focusPanel();return}
-  if(e.key==='Escape'&&focus.active){e.preventDefault();focus.end();return}
-  if(e.key==='Escape'){optsEl.classList.remove('on');fpickEl.classList.remove('on');body.classList.toggle('hide-ui')}
+  if(mod&&e.shiftKey&&k==='f'){e.preventDefault();timer.toggleFs();return}
+  if(e.key==='Escape'){optsEl.classList.remove('on');twEl.classList.remove('open');saveMenu.classList.remove('on');body.classList.toggle('hide-ui')}
 });
 let mouseDown=false;
 document.addEventListener('selectionchange',()=>{
@@ -1017,8 +1034,8 @@ function scrollTo(acc){
 }
 let ptr=null,lastMove={x:0,y:0};
 stage.addEventListener('pointerdown',e=>{
-  if(e.target.closest('#hud,#modal,#opts,#fpick,#tmr,#knob'))return;
-  optsEl.classList.remove('on');fpickEl.classList.remove('on');
+  if(e.target.closest('#hud,#modal,#opts,#tw,#knob'))return;
+  optsEl.classList.remove('on');twEl.classList.remove('open');saveMenu.classList.remove('on');
   ptr={x:e.clientY,y:e.clientY,type:e.pointerType,moved:false,anchor:0,acc:wheelAcc};
   if(e.pointerType==='mouse'){
     e.preventDefault();ta.focus({preventScroll:true});mouseDown=true;
@@ -1041,7 +1058,7 @@ stage.addEventListener('pointermove',e=>{
 });
 stage.addEventListener('pointerup',e=>{
   mouseDown=false;
-  if(ptr&&ptr.type==='pen'&&!ptr.moved&&!e.target.closest('#hud,#modal,#opts,#fpick,#tmr,#knob'))tapAt(e.clientX,e.clientY);
+  if(ptr&&ptr.type==='pen'&&!ptr.moved&&!e.target.closest('#hud,#modal,#opts,#tw,#knob'))tapAt(e.clientX,e.clientY);
   ptr=null;if(document.activeElement===ta)render();
 });
 /* touch: place the caret and focus inside touchend (a real user gesture on iOS), and cancel the
@@ -1051,7 +1068,7 @@ function tapAt(x,y){
   if(y<90)body.classList.remove('hide-ui');
 }
 let tStart=null;
-stage.addEventListener('touchstart',e=>{const t=e.changedTouches[0];tStart={x:t.clientX,y:t.clientY,ui:!!e.target.closest('#hud,#modal,#opts,#fpick,#tmr,#knob')}},{passive:true});
+stage.addEventListener('touchstart',e=>{const t=e.changedTouches[0];tStart={x:t.clientX,y:t.clientY,ui:!!e.target.closest('#hud,#modal,#opts,#tw,#knob')}},{passive:true});
 stage.addEventListener('touchend',e=>{
   const t=e.changedTouches[0];if(!tStart||tStart.ui){tStart=null;return}
   const moved=Math.hypot(t.clientX-tStart.x,t.clientY-tStart.y)>8;tStart=null;
@@ -1059,7 +1076,7 @@ stage.addEventListener('touchend',e=>{
   if(!moved)tapAt(t.clientX,t.clientY);
   else if(document.activeElement!==ta)ta.focus({preventScroll:true});
 },{passive:false});
-stage.addEventListener('mousedown',e=>{if(!e.target.closest('#hud,#modal,#opts,#fpick,#tmr,input,button'))e.preventDefault()});
+stage.addEventListener('mousedown',e=>{if(!e.target.closest('#hud,#modal,#opts,#tw,input,button'))e.preventDefault()});
 stage.addEventListener('pointercancel',()=>{ptr=null;mouseDown=false});
 stage.addEventListener('wheel',e=>{
   if(e.target.closest('#modal,#opts'))return;
@@ -1173,7 +1190,7 @@ function help(){
   <tr><td>Day / night paper</td><td>${k} ⇧ L</td></tr>
   <tr><td>Lamp on / off</td><td>${k} ⇧ K</td></tr>
   <tr><td>Centred typing point</td><td>${k} ⇧ C</td></tr>
-  <tr><td>Focus session</td><td>${k} ⇧ F</td></tr>
+  <tr><td>Focus (full screen)</td><td>${k} ⇧ F</td></tr>
   <tr><td>Export PDF</td><td>${k} P</td></tr>
   <tr><td>Turn the platen</td><td>scroll · drag knob</td></tr></table>
   <p style="margin-top:12px;opacity:.7">Bold and italic swap the type element — the markdown symbols are saved in the file but never printed on the page. Drop a .md file anywhere to open it.</p>`,[{l:'Close',pri:1}]);
@@ -1195,8 +1212,8 @@ function applySettings(){
 optsEl.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const seg=b.closest('.seg');
   if(seg)setOpt(seg.dataset.k,b.dataset.v);});
 document.addEventListener('click',e=>{const a=e.target.closest('[data-a]')?.dataset.a;if(!a)return;
-  ({focus:focusPanel,new:newDoc,open:openFile,save:()=>save(false),pdf:exportPdf,help,
-    opts:()=>{fpickEl.classList.remove('on');optsEl.classList.toggle('on');$('#optsBtn').classList.toggle('on',optsEl.classList.contains('on'))}})[a]?.();
+  ({menu:()=>saveMenu.classList.toggle('on'),new:newDoc,open:()=>{saveMenu.classList.remove('on');openFile()},save:()=>save(false),pdf:()=>{saveMenu.classList.remove('on');exportPdf()},help,
+    opts:()=>{optsEl.classList.toggle('on');$('#optsBtn').classList.toggle('on',optsEl.classList.contains('on'))}})[a]?.();
 });
 function updateCount(){
   let n=0;const re=/\S+/g;
@@ -1205,69 +1222,64 @@ function updateCount(){
 }
 
 
-/* ---------- focus session ----------
-   Pick 5/10/15/25 min: goes full screen (desktop, where the browser allows it) and a little egg-timer
-   dial sits in the corner. Its wedge of ink shrinks in steps, once a minute. At the end a soft bell
-   sounds and the dial empties — nothing stops, you keep typing. No stats, no history. */
-const focus=(()=>{
-  let endAt=0,mins=0,timer=0,shown=-1,swapT=0,doneT=0,ownFs=false;
-  const secEl=$('#tmrSec'),btn=$('#focusBtn');
+/* ---------- timer + focus ----------
+   The dial in the corner is a plain timer: start 2/5/10/25 minutes, then +5 as often as you like.
+   Its wedge of ink shrinks in 15 s steps; hover for the exact time left. At the end a soft bell sounds
+   and the dial empties — nothing stops, you keep typing. "Focus" is separate: browser full screen
+   (desktop), with or without the timer; Esc leaves full screen and nothing else. No stats, no history. */
+const timer=(()=>{
+  let endAt=0,total=0,tid=0,shown=-1,swapT=0,doneT=0;
+  const secEl=$('#tmrSec'),leftEl=$('#tLeft'),fBtn=$('#fBtn'),STEP=15000;
   const canFs=()=>!!(document.fullscreenEnabled&&document.documentElement.requestFullscreen)&&matchMedia('(pointer:fine)').matches;
-  const left=n=>Math.ceil(n/60000);
-  function wedge(frac){ // sector of ink from 12 o'clock, clockwise, `frac` of the dial
+  function wedge(frac){ // sector of ink from 12 o'clock, clockwise
     if(frac<=0)return'';
     if(frac>=1)return'M20 24m-15.5 0a15.5 15.5 0 1 0 31 0a15.5 15.5 0 1 0 -31 0';
     const a=frac*Math.PI*2,x=20+15.5*Math.sin(a),y=24-15.5*Math.cos(a);
     return`M20 24L20 8.5A15.5 15.5 0 ${frac>.5?1:0} 1 ${x.toFixed(2)} ${y.toFixed(2)}Z`;
   }
-  function show(n){
-    if(n===shown)return;const first=shown<0;shown=n;clearTimeout(swapT);
-    const set=()=>{secEl.setAttribute('d',wedge(n/mins));tmrEl.title=n?n+' min left — click to end':'Time — click to close';tmrEl.classList.remove('swap')};
-    if(first||!n)set();else{tmrEl.classList.add('swap');swapT=setTimeout(set,260)}
-  }
-  function label(){
-    const on=body.classList.contains('focus')||ownFs;
-    btn.textContent=on?(canFs()?'ESC to exit':'end focus'):'focus';
+  const fmt=ms=>{const t=Math.max(0,Math.ceil(ms/1000)),m=Math.floor(t/60),r=t%60;return m+':'+(r<10?'0':'')+r};
+  function draw(left){
+    const step=left>0?Math.ceil(left/STEP):0;
+    leftEl.textContent=fmt(left)+' left';
+    if(step===shown)return;const first=shown<0;shown=step;clearTimeout(swapT);
+    const set=()=>{secEl.setAttribute('d',wedge(Math.min(1,step*STEP/total)));tmrEl.classList.remove('swap')};
+    if(first||!step)set();else{tmrEl.classList.add('swap');swapT=setTimeout(set,200)}
   }
   function tick(){
     if(!endAt)return;const l=endAt-Date.now();
-    if(l>0){show(left(l));return}
+    if(l>0){draw(l);return}
     finish();
   }
   function finish(){
-    clearInterval(timer);timer=0;endAt=0;
-    snd.bell();show(0);tmrEl.classList.add('done');
-    doneT=setTimeout(()=>{clear();label()},14000);
+    clearInterval(tid);tid=0;endAt=0;twEl.classList.remove('run');twEl.classList.add('done');
+    snd.bell();draw(0);doneT=setTimeout(reset,14000);
   }
-  function clear(){
-    clearInterval(timer);timer=0;endAt=0;clearTimeout(doneT);clearTimeout(swapT);
-    body.classList.remove('focus');tmrEl.classList.remove('done','swap');shown=-1;
+  function reset(){
+    clearInterval(tid);tid=0;endAt=0;total=0;clearTimeout(doneT);clearTimeout(swapT);
+    twEl.classList.remove('run','done');tmrEl.classList.remove('swap');shown=-1;secEl.setAttribute('d','');
   }
-  function start(m){
-    clear();mins=m;endAt=Date.now()+m*60000;body.classList.add('focus');show(m);
-    timer=setInterval(tick,1000);fpickEl.classList.remove('on');btn.classList.remove('on');
-    if(canFs()&&!document.fullscreenElement){ownFs=true;document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(()=>{ownFs=false;label()})}
-    label();
-    if(/Mac|iPhone|iPad/.test(navigator.platform))toast('Tip: turn on Focus / Do Not Disturb to silence notifications',5000);
-    ta.focus({preventScroll:true});
+  function add(m){  // starts a timer when idle, otherwise adds to the one running
+    if(endAt){endAt+=m*60000;total+=m*60000}
+    else{reset();endAt=Date.now()+m*60000;total=m*60000;twEl.classList.add('run');tid=setInterval(tick,1000)}
+    draw(endAt-Date.now());
   }
-  function end(){
-    const wasOwn=ownFs;ownFs=false;clear();label();
-    if(wasOwn&&document.fullscreenElement)document.exitFullscreen().catch(()=>{});
+  function end(){reset()}
+  function fsToggle(){
+    if(!canFs())return toast('Full screen isn’t available here');
+    if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});
+    else{document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(()=>{});
+      if(/Mac|iPhone|iPad/.test(navigator.platform))toast('Tip: turn on Focus / Do Not Disturb to silence notifications',5000)}
   }
-  // the browser eats Esc while in full screen and just leaves it: treat that as leaving the session
-  document.addEventListener('fullscreenchange',()=>{if(ownFs&&!document.fullscreenElement)end();setTimeout(relayout,60)});
-  return{start,end,label,get active(){return body.classList.contains('focus')||ownFs},get running(){return !!endAt},canFs};
+  document.addEventListener('fullscreenchange',()=>{fBtn.classList.toggle('on',!!document.fullscreenElement);setTimeout(relayout,60)});
+  if(!canFs())$('#fRow').style.display='none';
+  $('#tLen').addEventListener('click',e=>{const b=e.target.closest('button');if(b){add(+b.dataset.m);ta.focus({preventScroll:true})}});
+  twEl.addEventListener('click',e=>{
+    const b=e.target.closest('[data-add]');if(b){add(+b.dataset.add);ta.focus({preventScroll:true})}});
+  $('#tEnd').addEventListener('click',()=>{end();ta.focus({preventScroll:true})});
+  fBtn.addEventListener('click',()=>{fsToggle();ta.focus({preventScroll:true})});
+  tmrEl.addEventListener('click',()=>twEl.classList.toggle('open'));   // touch: tap the dial to open the panel
+  return{add,end,toggleFs:fsToggle};
 })();
-function focusPanel(){
-  if(focus.active){focus.end();return}
-  optsEl.classList.remove('on');$('#optsBtn').classList.remove('on');
-  const on=!fpickEl.classList.contains('on');
-  $('#fNote').textContent=focus.running?'':(focus.canFs()?'Goes full screen. Esc ends the session.':'Just the timer — no full screen here.');
-  fpickEl.classList.toggle('on',on);$('#focusBtn').classList.toggle('on',on);
-}
-$('#fLen').addEventListener('click',e=>{const b=e.target.closest('button');if(b)focus.start(+b.dataset.m)});
-tmrEl.addEventListener('click',()=>{focus.end();ta.focus({preventScroll:true})});
 
 /* ---------- tab title: "(2) My chapter" ---------- */
 const tabs=(()=>{
