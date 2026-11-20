@@ -42,3 +42,5 @@ Never lose writing, without having to think about saving. Today the draft is kep
 - The lamp-lit layers (`#texLit`, `#lit`) are a lamp-sized window moved with `transform`, with their content counter-moved so it stays put. Never animate a mask position or a CSS variable on `:root` per frame: that re-rasterized the SVG paper texture every frame and made each keystroke take ~250 ms on an M2.
 - `--gx/--gy/--ex/--ey` (glyph shading) are written only when they change by half a character / 4 px; every span under the lamp restyles when they change.
 - The animation loop skips all DOM writes when nothing moved.
+- The platen knob is shaded per pixel in JS: its knurl repeats every 2π/40, so 32 phases are rendered once and cached (`kcache`). Never shade it per frame.
+- Audio: the synthesized sound set is built only if `sounds.mp3` fails to load (it took ~200 ms on the first keystroke); only the small type-swap sound is synthesized up front.

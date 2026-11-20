@@ -631,10 +631,18 @@ function renderHead(){
   lampK=0;renderField($('#headC'),56,18,headField,S.lamp,2.4);
   renderField($('#winC'),19,11,winField,S.lamp,1.6);
 }
+/* the knurl repeats every 2π/40 of rotation, so each of KN phases is shaded once and reused */
+const KN=32,KP=2*Math.PI/40;let kcache=[],kkey='';
 function drawKnob(angle){
   if(!kctx||L.mobile)return;
   const k=Math.max(1,dpr),w=Math.round(KW*k),h=Math.round(KH*k);
   if(knob.width!==w){knob.width=w;knob.height=h}
+  const key=w+'|'+S.lamp;if(key!==kkey){kkey=key;kcache=[]}
+  const ph=((Math.round(angle/KP*KN)%KN)+KN)%KN;
+  if(!kcache[ph])kcache[ph]=shadeKnob(ph*KP/KN,w,h,k);
+  kctx.putImageData(kcache[ph],0,0);
+}
+function shadeKnob(angle,w,h,k){
   lampK=.1;const img=kctx.createImageData(w,h),d=img.data,cy=KH/2,R=KH/2-2,lampOn=S.lamp;
   for(let py=0;py<h;py++){
     const y=(py+.5)/k;
@@ -652,7 +660,7 @@ function drawKnob(angle){
       const i=(py*w+px)*4;d[i]=toS(r);d[i+1]=toS(g2);d[i+2]=toS(b);d[i+3]=Math.round(255*edge);
     }
   }
-  kctx.putImageData(img,0,0);
+  return img;
 }
 let kdrag=null;
 knob.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();kdrag={y:e.clientY,acc:wheelAcc};try{knob.setPointerCapture(e.pointerId)}catch(_){}});
@@ -689,8 +697,9 @@ const snd=(()=>{
     burst(buf,o.second*r(.85,1.15),.006,[bq('bp',o.bf*1.4,1.4)],o.secondGain*.4);
     return norm(buf,o.peak);
   }
-  function build(){
-    B={key:[],space:[],back:[],ret:null,bell:null,swap:null,tick:null};
+  function build(full){
+    B=B||{key:[],space:[],back:[],ret:null,bell:null,swap:null,tick:null};
+    if(full&&!B.key.length){
     for(let v=0;v<10;v++)B.key.push(clack({len:.08,hp:r(2200,2900),bf:r(1600,2100),body:.011,ring:[[3150,.016,.05],[4700,.011,.035],[6900,.008,.02]],knock:520,second:.017,secondGain:.32,peak:.9}));
     for(let v=0;v<4;v++)B.space.push(clack({len:.11,hp:r(1300,1700),bf:r(850,1050),body:.022,ring:[[2300,.02,.04],[3600,.012,.03]],knock:300,second:.026,secondGain:.45,peak:.85}));
     for(let v=0;v<3;v++)B.back.push(clack({len:.06,hp:3200,bf:2600,body:.006,ring:[[5200,.008,.03]],knock:0,second:.008,secondGain:.5,peak:.5}));
@@ -705,6 +714,7 @@ const snd=(()=>{
     {const n=Math.floor(.42*SR),buf=new Float32Array(n);burst(buf,0,.0006,[bq('hp',5000,.7)],.12);
       [[1,.42,.085],[2.76,.12,.04],[5.4,.05,.018]].forEach(([m,g,d])=>tone(buf,.0003,3150*m,d,g));
       for(let i=0;i<n;i++)buf[i]*=Math.min(1,(n-i)/(.08*SR));B.bell=norm(buf,.3)}
+    }
     // type element swap: short whirr then a seated "chunk"
     {const buf=new Float32Array(Math.floor(.24*SR));
       const n=Math.floor(.1*SR);let x=noise(n);x=bq('bp',2600,1.2)(x);for(let i=0;i<n;i++){const t=i/n;buf[i]+=x[i]*Math.sin(Math.PI*t)*.25}
@@ -712,13 +722,13 @@ const snd=(()=>{
       burst(buf,.108,.0015,[bq('hp',1500,.7)],1);burst(buf,.108,.014,[bq('bp',950,1.3)],.5);tone(buf,.108,380,.012,.15);
       B.swap=norm(buf,.6)}
     // platen detent
-    {const buf=new Float32Array(Math.floor(.035*SR));burst(buf,0,.0009,[bq('hp',3600,.8)],1);burst(buf,0,.004,[bq('bp',2100,1.8)],.4);B.tick=norm(buf,.28)}
+    if(full){const buf=new Float32Array(Math.floor(.035*SR));burst(buf,0,.0009,[bq('hp',3600,.8)],1);burst(buf,0,.004,[bq('bp',2100,1.8)],.4);B.tick=norm(buf,.28)}
   }
   function init(){
     if(!ctx){try{ctx=new(window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'});
       out=ctx.createGain();out.gain.value=.55;
       const comp=ctx.createDynamicsCompressor();comp.threshold.value=-10;comp.ratio.value=4;comp.attack.value=.001;comp.release.value=.08;
-      out.connect(comp).connect(ctx.destination);build();loadSprite()}catch(e){ctx=null;return null}}
+      out.connect(comp).connect(ctx.destination);build(false);loadSprite()}catch(e){ctx=null;return null}}
     if(ctx.state==='suspended')ctx.resume().catch(()=>{});
     return ctx;
   }
@@ -745,7 +755,7 @@ const snd=(()=>{
           const st=Math.max(0,Math.round((p+dt)*sr)),L=Math.min(Math.round(len*sr),d.length-st);
           const b=ctx.createBuffer(1,L,sr);b.copyToChannel(d.slice(st,st+L),0);
           if(o[n])o[n].push(b);else o[n]=b}
-        SB=o}).catch(()=>{loading=false});
+        SB=o}).catch(()=>{loading=false;build(true)});  // offline / file://: synthesize the full set instead
   }
   function voice(b,{rate=1,gain=1,lp=0,at=0,off=0,dur=0}={}){
     if(!S.sound||!init()||!b)return;
