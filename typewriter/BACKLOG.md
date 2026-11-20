@@ -37,3 +37,8 @@ Never lose writing, without having to think about saving. Today the draft is kep
 - Extras: also save when the tab is hidden or closed (visibilitychange / pagehide).
 - Option: an "Auto-save" on/off row in options (default on), no other settings.
 - Keep it simple: no version history, no backups folder.
+
+## Performance — keep typing under ~50 ms
+- The lamp-lit layers (`#texLit`, `#lit`) are a lamp-sized window moved with `transform`, with their content counter-moved so it stays put. Never animate a mask position or a CSS variable on `:root` per frame: that re-rasterized the SVG paper texture every frame and made each keystroke take ~250 ms on an M2.
+- `--gx/--gy/--ex/--ey` (glyph shading) are written only when they change by half a character / 4 px; every span under the lamp restyles when they change.
+- The animation loop skips all DOM writes when nothing moved.

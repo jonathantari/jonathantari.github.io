@@ -40,8 +40,15 @@ body.day #tex{opacity:.13}
 body.day #lamp{opacity:.55}
 #hot{width:320px;height:110px;margin:-108px 0 0 -160px;
   background:radial-gradient(ellipse 50% 88% at 50% 100%,rgba(255,250,236,.72),rgba(255,245,226,.26) 45%,rgba(255,244,224,0) 100%)}
-#texLit{opacity:.24;-webkit-mask-image:radial-gradient(ellipse var(--rx) var(--ry) at var(--hx) var(--cy),#000 0%,rgba(0,0,0,.6) 45%,transparent 100%);
-  mask-image:radial-gradient(ellipse var(--rx) var(--ry) at var(--hx) var(--cy),#000 0%,rgba(0,0,0,.6) 45%,transparent 100%)}
+#texLit{opacity:.24;-webkit-mask-image:radial-gradient(ellipse 50% 50% at 50% 50%,#000 0%,rgba(0,0,0,.6) 45%,transparent 100%);
+  mask-image:radial-gradient(ellipse 50% 50% at 50% 50%,#000 0%,rgba(0,0,0,.6) 45%,transparent 100%)}
+/* lamp-lit layers are a window the size of the lamp ellipse that slides with the head (transform),
+   while their content slides the opposite way so it stays put on the page. Following the head is then
+   pure compositing: the masks and the SVG paper texture are painted once, never per frame. */
+#texLit,#lit{position:absolute;left:0;top:0;right:auto;bottom:auto;inset:auto;width:calc(var(--rx) * 2);height:calc(var(--ry) * 2);will-change:transform}
+#texLit{mix-blend-mode:multiply;background:none}
+#texLitIn,#litIn{position:absolute;left:0;top:0;will-change:transform}
+#texLitIn{width:100vw;height:100vh;mix-blend-mode:normal}
 body.lamp-off #lamp,body.lamp-off #hot,body.lamp-off #texLit,body.lamp-off #lit,body.lamp-off #barGlint{opacity:0}
 
 /* ---------- ink ---------- */
@@ -62,8 +69,8 @@ body.day #lines .ln{text-shadow:0 0 .45px rgba(0,0,0,.5),0 .6px 0 rgba(255,255,2
 }
 /* lit ink: cast shadow away from the lamp + glossy fill near the hotspot */
 #lit{position:absolute;inset:0;pointer-events:none;transition:opacity .7s ease;
-  -webkit-mask-image:radial-gradient(ellipse var(--rx) var(--ry) at var(--hx) var(--cy),#000 0%,rgba(0,0,0,.92) 30%,rgba(0,0,0,.5) 62%,transparent 100%);
-          mask-image:radial-gradient(ellipse var(--rx) var(--ry) at var(--hx) var(--cy),#000 0%,rgba(0,0,0,.92) 30%,rgba(0,0,0,.5) 62%,transparent 100%)}
+  -webkit-mask-image:radial-gradient(ellipse 50% 50% at 50% 50%,#000 0%,rgba(0,0,0,.92) 30%,rgba(0,0,0,.5) 62%,transparent 100%);
+          mask-image:radial-gradient(ellipse 50% 50% at 50% 50%,#000 0%,rgba(0,0,0,.92) 30%,rgba(0,0,0,.5) 62%,transparent 100%)}
 #litE .ln{color:transparent}
 #litE .k{
   --dx:calc(var(--ex) - var(--c) * var(--cw));
@@ -197,10 +204,10 @@ body.dragging #drop{display:flex}
   <div class="layer tex" id="tex"></div>
   <div id="lamp"></div>
   <div id="hot"></div>
-  <div class="layer tex" id="texLit"></div>
+  <div class="layer" id="texLit"><div class="tex" id="texLitIn"></div></div>
   <div id="view">
     <div id="lines"></div>
-    <div id="lit"><div id="litE"></div><div id="litG"></div></div>
+    <div id="lit"><div id="litIn"><div id="litE"></div><div id="litG"></div></div></div>
   </div>
   <div id="hint">Start typing…</div>
   <div id="bar"></div>
@@ -249,7 +256,7 @@ const $=s=>document.querySelector(s);
 const ta=$('#ta'),stage=$('#stage'),linesEl=$('#lines'),litWrap=$('#lit'),litE=$('#litE'),litG=$('#litG'),
       lampEl=$('#lamp'),hotEl=$('#hot'),bar=$('#bar'),barGlint=$('#barGlint'),head=$('#head'),hb=$('#hb'),glyphEl=$('#winC'),
       swapLbl=$('#swapLbl'),caretEl=$('#caret'),hint=$('#hint'),wcEl=$('#wc'),nameEl=$('#name'),knob=$('#knob'),view=$('#view'),
-      fileInput=$('#file'),toastEl=$('#toast'),modalEl=$('#modal'),optsEl=$('#opts'),twEl=$('#tw'),tmrEl=$('#tmr'),saveMenu=$('#saveMenu'),body=document.body,root=document.documentElement;
+      fileInput=$('#file'),toastEl=$('#toast'),modalEl=$('#modal'),optsEl=$('#opts'),twEl=$('#tw'),tmrEl=$('#tmr'),saveMenu=$('#saveMenu'),body=document.body,root=document.documentElement,texLit=$('#texLit'),texLitIn=$('#texLitIn'),litIn=$('#litIn');
 const IN_FRAME=(()=>{try{return window.self!==window.top}catch(e){return true}})();
 const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},
              set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
@@ -278,7 +285,7 @@ function measure(){
   const keyboard=vv&&vv.height<window.innerHeight*0.8;
   const typeY=Math.round(H*(keyboard?0.66:(mobile?0.54:0.6)));
   const rx=clamp(W*.44,280,720),ry=clamp(H*.36,180,340);
-  Object.assign(L,{W,H,fs,lh,cw,cols,left,typeY,mobile,rx,ry});
+  Object.assign(L,{W,H,fs,lh,cw,cols,left,typeY,mobile,rx,ry});W_.mp='';W_.fk='';W_.gx=W_.gy=NaN;
   root.style.setProperty('--fs',fs+'px');root.style.setProperty('--lh',lh+'px');root.style.setProperty('--cw',cw+'px');
   root.style.setProperty('--rx',rx+'px');root.style.setProperty('--ry',ry+'px');
   stage.style.height=H+'px';stage.style.top=(vv?vv.offsetTop:0)+'px';
@@ -475,6 +482,7 @@ function resetCaches(){for(const k in caches){for(const [,c] of caches[k])c.el.r
 /* critically damped springs: smooth, never bouncy */
 function spring(cur,vel,target,dt,k){const d=2*Math.sqrt(k);const acc=k*(target-cur)-d*vel;vel+=acc*dt;cur+=vel*dt;return[cur,vel]}
 let lastT=0,lastKnob=null;
+const W_={mp:'',fk:'',gx:NaN,gy:NaN}; // last values written to the lamp layers
 function frame(t){
   const dt=Math.min(.032,lastT?(t-lastT)/1000:.016);lastT=t;
   // integrate in small steps for stability with stiff springs
@@ -487,6 +495,10 @@ function frame(t){
   const tx=caretCol*L.cw;if(Math.abs(cx-tx)<.05&&Math.abs(vx)<.5){cx=tx;vx=0}
   paperX=S.center?Math.round((L.W/2-L.cw/2-cx)*2)/2:L.left;
   headX=S.center?L.W/2:L.left+cx+L.cw/2;
+  // nothing moved since last frame: skip all writes (the loop just idles)
+  const fk=paperX+'|'+headX+'|'+curS+'|'+cx+'|'+caretLine+'|'+L.typeY+'|'+L.W;
+  if(fk===W_.fk){requestAnimationFrame(frame);return}
+  W_.fk=fk;
   const ty=L.typeY-L.lh-curS;
   const tr=`translate3d(${paperX}px,${ty}px,0)`;
   linesEl.style.transform=litE.style.transform=litG.style.transform=tr;
@@ -498,11 +510,15 @@ function frame(t){
   const cy=L.typeY-L.ry*.42;
   lampEl.style.transform=`translate3d(${headX-L.rx}px,${cy-L.ry}px,0)`;
   hotEl.style.transform=`translate3d(${headX}px,${L.typeY}px,0)`;
-  root.style.setProperty('--hx',headX+'px');root.style.setProperty('--cy',cy+'px');
-  // light position in paper coordinates for the glyph shading
-  const gx=(headX-paperX)+'px',gy=(L.typeY-L.lh*.55-ty)+'px',ey=(L.typeY+14-ty)+'px';
-  litG.style.setProperty('--gx',gx);litG.style.setProperty('--gy',gy);
-  litE.style.setProperty('--ex',gx);litE.style.setProperty('--ey',ey);
+  const ox=headX-L.rx,oy=cy-L.ry,mp=ox+','+oy;
+  if(mp!==W_.mp){W_.mp=mp;
+    texLit.style.transform=litWrap.style.transform=`translate3d(${ox}px,${oy}px,0)`;
+    texLitIn.style.transform=litIn.style.transform=`translate3d(${-ox}px,${-oy}px,0)`}
+  // light position in paper coordinates for the glyph shading. Every span under the lamp restyles when
+  // these change, so they move in small steps (invisible at this shadow size) instead of every frame.
+  const q=L.cw/2,gxN=Math.round((headX-paperX)/q)*q,gyN=Math.round((L.typeY-L.lh*.55-ty)/4)*4,eyN=Math.round((L.typeY+14-ty)/4)*4;
+  if(gxN!==W_.gx){W_.gx=gxN;litG.style.setProperty('--gx',gxN+'px');litE.style.setProperty('--ex',gxN+'px')}
+  if(gyN!==W_.gy){W_.gy=gyN;litG.style.setProperty('--gy',gyN+'px');litE.style.setProperty('--ey',eyN+'px')}
   hint.style.transform=`translate(${paperX}px,${L.typeY-L.lh}px)`;
   if(Math.abs(curS-lastDrawS)>L.lh*1.2)drawLines();
   const ang=curS/L.lh*0.32;
