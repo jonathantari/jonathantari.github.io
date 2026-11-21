@@ -50,3 +50,9 @@ Never lose writing, without having to think about saving. Today the draft is kep
 - Options → Google Drive: connect / disconnect. Save menu: "open from Drive…" (list of .md files, newest first) and "save to Drive" (creates the file in the folder). Ctrl/Cmd+O opens the Drive list once connected (Ctrl/Cmd+Shift+O = local file).
 - Typing auto-saves to the browser draft only. "save" on a Drive file pushes it. Before pushing, the file's version is checked; if another device saved it since it was opened here, a dialog asks: keep Drive's / keep this one.
 - Next: open from a pasted Drive link; "Open with" from Drive.
+
+## Later: open Drive sync to friends (option B) + narrower permissions
+- Switch scope from full `drive` to `drive.file` (app sees only files it created or the user picked in Google's Picker). Fewer permissions, more control.
+- Each user chooses their own folder (Picker); remove the hard-coded folder ID and the jonathantari.com `hd` restriction.
+- Make the OAuth app External and publish to production (brand verification only for non-sensitive scopes); add a short privacy-policy page on garage.jonathantari.com.
+- Opening files not created in the app goes through the Picker; files made in Typewriter still show in the quiet list. Check how folder access behaves under drive.file when building.
