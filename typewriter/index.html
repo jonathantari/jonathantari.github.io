@@ -489,6 +489,13 @@ function resetCaches(){for(const k in caches){for(const [,c] of caches[k])c.el.r
 
 /* critically damped springs: smooth, never bouncy */
 function spring(cur,vel,target,dt,k){const d=2*Math.sqrt(k);const acc=k*(target-cur)-d*vel;vel+=acc*dt;cur+=vel*dt;return[cur,vel]}
+/* how long the carriage takes to get home from `chars` characters out: runs the same spring as frame()
+   so the return sound's slam lands when the carriage does (≈.13 s for 5 chars, ≈.5 s for a full line) */
+function returnTime(chars){
+  let x=Math.abs(chars),v=0,t=0;const K=S.center?70:110;
+  while(x>.3&&t<1.2){for(let q=0;q<4;q++)[x,v]=spring(x,v,0,1/240,Math.abs(x)>8?K:1400);t+=1/60}
+  return t;
+}
 let lastT=0,lastKnob=null;
 const W_={mp:'',fk:'',gx:NaN,gy:NaN}; // last values written to the lamp layers
 function frame(t){
@@ -798,11 +805,12 @@ const snd=(()=>{
       escapement(r(.012,.022),.3*v)},
     back(){if(!SB)return play(pick(B?B.back:[null]),r(.97,1.03));
       voice(bag('tick'),{rate:r(.78,.9),gain:2,lp:4500});voice(bag('tick'),{rate:r(.7,.8),gain:.8,at:r(.03,.045),lp:3500})},
-    ret(chars=40){if(!SB)return play(B&&B.ret);
-      // line-feed lever ratchet, then the carriage runs back (longer for a longer line) and slams home
+    ret(T=.4){if(!SB)return play(B&&B.ret);
+      // line-feed lever ratchet, then the carriage runs back and slams home the moment the
+      // on-screen carriage arrives (T = its travel time, from returnTime)
       voice(SB.lever,{rate:r(.95,1.05),gain:r(.5,.65),dur:r(.05,.09)});
-      const run=clamp(.14+chars/66*.85+r(-.05,.05),.16,1.1);
-      voice(SB.run,{rate:r(.97,1.03),gain:r(1.5,1.8),at:r(.06,.09),off:Math.max(0,SPR.slam-run)})},
+      const at=r(.05,.07),run=clamp(T-at+r(-.015,.015),.08,1.1);
+      voice(SB.run,{rate:r(.97,1.03),gain:r(1.5,1.8),at,off:Math.max(0,SPR.slam-run)})},
     bell(){if(!SB)return play(B&&B.bell);voice(SB.bell,{rate:r(.985,1.015),gain:r(1.2,1.5)})},
     swap(){play(B&&B.swap)},
     tick(){const n=performance.now();if(n-lastTick<28)return;lastTick=n;
@@ -874,7 +882,7 @@ ta.addEventListener('input',e=>{
   prev=t;userOff=0;wheelAcc=0;setDirty(true);
   const oldLine=caretLine;
   const insStr=t.slice(p,p+ins).replace(/[*_]/g,'');
-  if(ins>0&&typed){const ch=insStr[insStr.length-1]||'';if(ch==='\n'){snd.ret(p-(t.lastIndexOf('\n',p-1)+1));haptic(22)}else if(ch===' '){snd.space();haptic(9)}else{snd.key();haptic(7)}}
+  if(ins>0&&typed){const ch=insStr[insStr.length-1]||'';if(ch==='\n'){snd.ret(returnTime(cx/L.cw));haptic(22)}else if(ch===' '){snd.space();haptic(9)}else{snd.key();haptic(7)}}
   else if(del>0&&ins===0){snd.back();haptic(5)}
   typingPulse();render();
   // the margin bell rings when a word wraps onto a new line
