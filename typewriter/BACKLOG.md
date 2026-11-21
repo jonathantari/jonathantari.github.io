@@ -44,3 +44,9 @@ Never lose writing, without having to think about saving. Today the draft is kep
 - The animation loop skips all DOM writes when nothing moved.
 - The platen knob is shaded per pixel in JS: its knurl repeats every 2π/40, so 32 phases are rendered once and cached (`kcache`). Never shade it per frame.
 - Audio: the synthesized sound set is built only if `sounds.mp3` fails to load (it took ~200 ms on the first keystroke); only the small type-swap sound is synthesized up front.
+
+## Google Drive — MVP DONE (Nov 2026)
+- Files live in one Drive folder inside "written" (folder ID hard-coded in index.html). Google Cloud project "Typewriter" (typewriter-515409) under jonathantari.com; OAuth app is Internal, web client origin https://garage.jonathantari.com. Scope: drive.
+- Options → Google Drive: connect / disconnect. Save menu: "open from Drive…" (list of .md files, newest first) and "save to Drive" (creates the file in the folder). Ctrl/Cmd+O opens the Drive list once connected (Ctrl/Cmd+Shift+O = local file).
+- Typing auto-saves to the browser draft only. "save" on a Drive file pushes it. Before pushing, the file's version is checked; if another device saved it since it was opened here, a dialog asks: keep Drive's / keep this one.
+- Next: open from a pasted Drive link; "Open with" from Drive.
