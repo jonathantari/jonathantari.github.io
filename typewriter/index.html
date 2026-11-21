@@ -140,6 +140,11 @@ body.dirty #dot{opacity:.7}
   padding:7px 14px;border-radius:20px;background:rgba(20,20,26,.8);color:#eee;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none}
 #toast.on{opacity:1;transform:translate(-50%,0)}
 @keyframes fade{from{opacity:0}}
+body:not(.drive) .donly{display:none!important}
+.dlist{max-height:min(52vh,420px);overflow:auto;margin:4px -8px 0}
+.dfile{all:unset;box-sizing:border-box;display:flex;justify-content:space-between;gap:14px;width:100%;padding:8px;border-radius:6px;cursor:pointer}
+.dfile:hover,.dfile:focus-visible{background:rgba(127,127,140,.14)}
+.dfile span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dfile .dm{flex:none;opacity:.5;font-size:12.5px}
 /* ---------- save menu ---------- */
 .menu{position:relative;display:inline-flex;align-items:center}
 #hud .menu .car{padding:5px 4px 5px 0;font-size:10px;opacity:.7}
@@ -223,7 +228,7 @@ body.dragging #drop{display:flex}
     <span id="wc">0 words</span>
     <button data-a="new" class="dk">new</button>
     <span class="menu" id="saveMenu"><button data-a="save">save</button><button data-a="menu" class="car" aria-label="More save options">▾</button>
-      <div id="saveDrop"><div class="pc"><button data-a="open">open…</button><button data-a="pdf">export as PDF</button></div></div></span>
+      <div id="saveDrop"><div class="pc"><button data-a="open">open…</button><button data-a="dopen" class="donly">open from Drive…</button><button data-a="dsave" class="donly">save to Drive</button><button data-a="pdf">export as PDF</button></div></div></span>
     <button data-a="opts" id="optsBtn">options</button>
   </div>
   <div id="opts">
@@ -232,6 +237,7 @@ body.dragging #drop{display:flex}
     <div class="orow"><span>Typing point</span><div class="seg" data-k="center"><button data-v="off">moves</button><button data-v="on">centred</button></div></div>
     <div class="orow"><span>Sound</span><div class="seg" data-k="sound"><button data-v="on">on</button><button data-v="off">off</button></div></div>
     <div class="orow"><span>Haptics</span><div class="seg" data-k="haptics"><button data-v="on">on</button><button data-v="off">off</button></div></div>
+    <div class="orow" id="dRow"><span>Google Drive</span><div class="segx"><button id="dBtn">connect</button></div></div>
     <div class="orow" id="fRow"><span>Focus</span><div class="segx"><button id="fBtn">full screen</button></div></div>
     <div class="orow"><button data-a="new" style="all:unset;cursor:pointer;opacity:.7">new page</button><button data-a="help" style="all:unset;cursor:pointer;opacity:.7">shortcuts</button></div>
   </div>
@@ -969,7 +975,7 @@ ta.addEventListener('paste',e=>{ // keep pasted text plain: tabs → spaces, CRL
 ta.addEventListener('keydown',e=>{
   const mod=e.metaKey||e.ctrlKey,k=e.key.toLowerCase();
   if(mod&&k==='s'){e.preventDefault();save(e.shiftKey);return}
-  if(mod&&k==='o'){e.preventDefault();openFile();return}
+  if(mod&&k==='o'){e.preventDefault();if(drive.on&&drive.connected()&&!e.shiftKey)drive.browse();else openFile();return}
   if(mod&&k==='p'){e.preventDefault();exportPdf();return}
   if(mod&&!e.shiftKey&&k==='b'){e.preventDefault();toggleStyle(1);return}
   if(mod&&!e.shiftKey&&k==='i'){e.preventDefault();toggleStyle(2);return}
@@ -1147,20 +1153,21 @@ async function guard(){
   if(!dirty||!ta.value.trim())return true;
   return(await modal('<h3>Unsaved changes</h3><p>This page has changes that aren’t saved to a file yet.</p>',[{l:'Cancel'},{l:'Discard',pri:1}]))===1;
 }
-async function newDoc(){optsEl.classList.remove('on');if(await guard()){fileHandle=null;loadText('','Untitled');toast('Fresh sheet')}}
+async function newDoc(){optsEl.classList.remove('on');if(await guard()){fileHandle=null;drive.clear();loadText('','Untitled');toast('Fresh sheet')}}
 async function openFile(){
   if(!(await guard()))return;
   if(!IN_FRAME&&window.showOpenFilePicker){
     try{const [h]=await showOpenFilePicker({types:[{description:'Markdown',accept:{'text/markdown':['.md','.markdown','.txt']}}]});
-      const f=await h.getFile();fileHandle=h;loadText(await f.text(),f.name);toast('Opened '+f.name);return}
+      const f=await h.getFile();fileHandle=h;drive.clear();loadText(await f.text(),f.name);toast('Opened '+f.name);return}
     catch(e){if(e.name==='AbortError')return}
   }
   fileInput.click();
 }
-fileInput.addEventListener('change',async()=>{const f=fileInput.files[0];if(f){fileHandle=null;loadText(await f.text(),f.name);toast('Opened '+f.name)}fileInput.value=''});
+fileInput.addEventListener('change',async()=>{const f=fileInput.files[0];if(f){fileHandle=null;drive.clear();loadText(await f.text(),f.name);toast('Opened '+f.name)}fileInput.value=''});
 let dl=null;
 if(window.claude&&window.claude.use)window.claude.use('downloads').then(d=>{dl=d}).catch(()=>{});
 async function save(as){
+  if(drive.cur()&&!as)return drive.save();
   const text=exportText(),name=fileName();
   if(IN_FRAME){
     if(dl){try{await dl.save({filename:name+'.md',data:text});setDirty(false);toast('Saved '+name+'.md');return}catch(e){if(e&&/declin|cancel|abort/i.test(String(e.code||e.message||e)))return}}
@@ -1177,6 +1184,100 @@ async function save(as){
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'text/markdown'}));a.download=name+'.md';
   document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000);setDirty(false);toast('Downloaded '+name+'.md');
 }
+/* ---------- Google Drive ----------
+   Files live in one Drive folder (inside "written"). The typing draft is kept in the browser as before;
+   "save" on a Drive file pushes it to Drive. Before pushing, the file's version is checked: if it was
+   saved from another device since it was opened here, you choose which version to keep.
+   Sign-in is Google Identity Services (token in the browser, ~1 h); the OAuth app is internal to
+   jonathantari.com. Set DRIVE_CLIENT_ID to turn it on. */
+const DRIVE_CLIENT_ID='';
+const drive=(()=>{
+  const CID=DRIVE_CLIENT_ID,FOLDER='1lLmdoDPg2MI0tnWDNrzrQiqoN2r9opIm',SCOPE='https://www.googleapis.com/auth/drive',API='https://www.googleapis.com';
+  let tok=store.get('tw.gtok',null),client=null,waiting=null,file=null;
+  const on=!!CID;
+  body.classList.toggle('drive',on);
+  function init(){
+    client=google.accounts.oauth2.initTokenClient({client_id:CID,scope:SCOPE,hd:'jonathantari.com',
+      callback:r=>{const w=waiting;waiting=null;
+        if(r.error){w&&w.rej(new Error(r.error));return}
+        tok={t:r.access_token,exp:Date.now()+(r.expires_in-60)*1000};store.set('tw.gtok',tok);store.set('tw.gdrive',true);row();w&&w.res(tok.t)},
+      error_callback:e=>{const w=waiting;waiting=null;w&&w.rej(new Error(e&&e.type||'popup'))}});
+  }
+  if(on){const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';s.async=true;s.onload=init;document.head.appendChild(s)}
+  const connected=()=>!!store.get('tw.gdrive',false);
+  // call this first thing in a click/keypress handler: the sign-in popup needs the user's gesture
+  function token(){
+    if(tok&&tok.exp>Date.now())return Promise.resolve(tok.t);
+    if(!client)return Promise.reject(new Error('Drive is still loading — try again'));
+    return new Promise((res,rej)=>{waiting={res,rej};client.requestAccessToken({prompt:connected()?'':'consent'})});
+  }
+  async function api(path,o={},raw){
+    const r=await fetch(API+path,{...o,headers:{...(o.headers||{}),Authorization:'Bearer '+tok.t}});
+    if(r.status===401){tok=null;store.set('tw.gtok',null);throw new Error('auth')}
+    if(!r.ok){let m='';try{m=(await r.json()).error.message}catch(e){}throw new Error(m||('HTTP '+r.status))}
+    return raw?r.text():r.json();
+  }
+  function fail(e){
+    const m=String(e&&e.message||e);
+    if(m==='auth')toast('Drive sign-in expired — try again',3000);
+    else if(/popup|access_denied/.test(m))toast('Drive sign-in was closed or blocked',3000);
+    else toast('Drive: '+m,4000);
+  }
+  function when(iso){const d=new Date(iso),now=new Date();
+    return d.toDateString()===now.toDateString()?d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):d.toLocaleDateString([],{day:'numeric',month:'short',year:d.getFullYear()===now.getFullYear()?undefined:'numeric'})}
+  function upload(id,name,text){
+    const b='tw'+Math.random().toString(36).slice(2),meta=id?{name}:{name,parents:[FOLDER],mimeType:'text/markdown'};
+    const data=`--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${b}\r\nContent-Type: text/markdown; charset=UTF-8\r\n\r\n${text}\r\n--${b}--`;
+    return api(`/upload/drive/v3/files${id?'/'+id:''}?uploadType=multipart&fields=id,name,version`,{method:id?'PATCH':'POST',headers:{'Content-Type':'multipart/related; boundary='+b},body:data});
+  }
+  async function open(id){
+    const [m,text]=await Promise.all([api(`/drive/v3/files/${id}?fields=id,name,version`),api(`/drive/v3/files/${id}?alt=media`,{},true)]);
+    fileHandle=null;file={id:m.id,version:m.version};loadText(text,m.name);toast('Opened '+m.name);
+  }
+  async function browse(){
+    saveMenu.classList.remove('on');optsEl.classList.remove('on');
+    const tp=token();tp.catch(()=>{});
+    if(!(await guard()))return;
+    try{await tp;
+      const q=encodeURIComponent(`'${FOLDER}' in parents and trashed=false and mimeType!='application/vnd.google-apps.folder'`);
+      const [dir,r]=await Promise.all([api(`/drive/v3/files/${FOLDER}?fields=name`),api(`/drive/v3/files?q=${q}&orderBy=modifiedTime desc&pageSize=300&fields=files(id,name,modifiedTime)`)]);
+      const fs=r.files.filter(f=>/\.(md|markdown|txt)$/i.test(f.name));
+      const list=fs.length?'<div class="dlist">'+fs.map(f=>`<button class="dfile" data-id="${f.id}"><span>${esc(f.name.replace(/\.(md|markdown|txt)$/i,''))}</span><span class="dm">${when(f.modifiedTime)}</span></button>`).join('')+'</div>'
+        :'<p style="opacity:.7">No .md files here yet. Write something and use “save to Drive”.</p>';
+      const mb=$('#mBody');
+      const p=modal(`<h3>${esc(dir.name)}</h3>${list}`,[{l:'Close'}]);
+      mb.onclick=e=>{const b=e.target.closest('.dfile');if(!b)return;mb.onclick=null;modalEl.classList.remove('on');open(b.dataset.id).catch(fail)};
+      p.then(()=>{mb.onclick=null});
+    }catch(e){fail(e)}
+  }
+  async function save(){   // push the current page to Drive (creates it in the folder if it isn't a Drive file yet)
+    const tp=token();
+    try{await tp;
+      const text=exportText(),name=fileName()+'.md';
+      if(file){
+        const m=await api(`/drive/v3/files/${file.id}?fields=name,version,modifiedTime,trashed`);
+        if(m.trashed){file=null}
+        else if(String(m.version)!==String(file.version)){
+          const i=await modal(`<h3>Changed on another device</h3><p><b>${esc(m.name)}</b> was saved somewhere else (${when(m.modifiedTime)}) after you opened it here.</p><p>Which version do you want to keep?</p>`,[{l:'Cancel'},{l:'Keep Drive’s'},{l:'Keep this one',pri:1}]);
+          if(i===1){await open(file.id);return}
+          if(i!==2)return;
+        }
+      }
+      const r=await upload(file&&file.id,name,text);
+      file={id:r.id,version:r.version};setDirty(false);scheduleDraft();toast('Saved to Drive');
+    }catch(e){fail(e)}
+  }
+  function row(){const b=$('#dBtn');if(b)b.textContent=connected()?'disconnect':'connect'}
+  $('#dBtn').addEventListener('click',()=>{
+    if(connected()){try{if(tok&&window.google)google.accounts.oauth2.revoke(tok.t,()=>{})}catch(e){}
+      tok=null;store.set('tw.gtok',null);store.set('tw.gdrive',false);row();toast('Drive disconnected')}
+    else token().then(()=>toast('Drive connected')).catch(fail);
+    ta.focus({preventScroll:true});
+  });
+  if(!on)$('#dRow').style.display='none';
+  row();
+  return{on,browse,save,connected,cur:()=>file,clear(){file=null},restore(f){file=f||null}};
+})();
 async function copyText(t){try{await navigator.clipboard.writeText(t);toast('Copied to clipboard')}catch(e){toast('Copy blocked by the browser')}}
 function lineToHtml(line){
   const P=parse(line);let h='',cur='';
@@ -1195,9 +1296,9 @@ window.addEventListener('dragenter',e=>{e.preventDefault();dragDepth++;body.clas
 window.addEventListener('dragleave',()=>{if(--dragDepth<=0){dragDepth=0;body.classList.remove('dragging')}});
 window.addEventListener('dragover',e=>e.preventDefault());
 window.addEventListener('drop',async e=>{e.preventDefault();dragDepth=0;body.classList.remove('dragging');
-  const f=e.dataTransfer.files[0];if(f&&(await guard())){fileHandle=null;loadText(await f.text(),f.name);toast('Opened '+f.name)}});
+  const f=e.dataTransfer.files[0];if(f&&(await guard())){fileHandle=null;drive.clear();loadText(await f.text(),f.name);toast('Opened '+f.name)}});
 let draftTimer=0;
-function scheduleDraft(){clearTimeout(draftTimer);draftTimer=setTimeout(()=>store.set('tw.draft',{text:ta.value,name:nameEl.value,dirty}),400)}
+function scheduleDraft(){clearTimeout(draftTimer);draftTimer=setTimeout(()=>store.set('tw.draft',{text:ta.value,name:nameEl.value,dirty,drive:drive.cur()}),400)}
 nameEl.addEventListener('input',()=>{setDirty(true);scheduleDraft();updateTitle()});
 nameEl.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key==='Escape'){e.preventDefault();ta.focus({preventScroll:true})}});
 
@@ -1219,6 +1320,7 @@ function help(){
   modal(`<h3>Typewriter</h3><table>
   <tr><td>Save · Save as</td><td>${k} S · ${k} ⇧ S</td></tr>
   <tr><td>Open .md file</td><td>${k} O</td></tr>
+  ${drive.on?`<tr><td>Open from Drive · local file</td><td>${k} O · ${k} ⇧ O</td></tr>`:''}
   <tr><td>Undo · Redo</td><td>${k} Z · ${k} ⇧ Z</td></tr>
   <tr><td>Bold · Italic</td><td>${k} B · ${k} I</td></tr>
   <tr><td>Heading</td><td>${k} ⇧ H · or “# ”</td></tr>
@@ -1247,7 +1349,7 @@ function applySettings(){
 optsEl.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const seg=b.closest('.seg');
   if(seg)setOpt(seg.dataset.k,b.dataset.v);});
 document.addEventListener('click',e=>{const a=e.target.closest('[data-a]')?.dataset.a;if(!a)return;
-  ({menu:()=>saveMenu.classList.toggle('on'),new:newDoc,open:()=>{saveMenu.classList.remove('on');openFile()},save:()=>save(false),pdf:()=>{saveMenu.classList.remove('on');exportPdf()},help,
+  ({menu:()=>saveMenu.classList.toggle('on'),new:newDoc,open:()=>{saveMenu.classList.remove('on');openFile()},save:()=>save(false),dopen:()=>drive.browse(),dsave:()=>{saveMenu.classList.remove('on');drive.save()},pdf:()=>{saveMenu.classList.remove('on');exportPdf()},help,
     opts:()=>{optsEl.classList.toggle('on');$('#optsBtn').classList.toggle('on',optsEl.classList.contains('on'))}})[a]?.();
 });
 function updateCount(){
@@ -1336,7 +1438,7 @@ if(window.visualViewport)visualViewport.addEventListener('scroll',()=>{stage.sty
 applySettings();
 const draft=store.get('tw.draft',null);
 measure();
-if(draft&&draft.text!=null){loadText(draft.text,draft.name);setDirty(!!draft.dirty)}else loadText('','Untitled');
+if(draft&&draft.text!=null){drive.restore(draft.drive);loadText(draft.text,draft.name);setDirty(!!draft.dirty)}else loadText('','Untitled');
 (document.fonts?document.fonts.ready:Promise.resolve()).then(relayout);
 requestAnimationFrame(frame);
 setTimeout(()=>{body.classList.remove('hide-ui');setTimeout(()=>{if(ta.value||document.activeElement===ta)body.classList.add('hide-ui')},2600)},400);
