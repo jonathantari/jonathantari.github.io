@@ -56,3 +56,7 @@ Never lose writing, without having to think about saving. Today the draft is kep
 - Each user chooses their own folder (Picker); remove the hard-coded folder ID and the jonathantari.com `hd` restriction.
 - Make the OAuth app External and publish to production (brand verification only for non-sensitive scopes); add a short privacy-policy page on garage.jonathantari.com.
 - Opening files not created in the app goes through the Picker; files made in Typewriter still show in the quiet list. Check how folder access behaves under drive.file when building.
+
+## Feedback link — DONE (Nov 2026)
+- A quiet "feedback" text link bottom-left (mirrors the timer). Shows with the top bar, hides while typing. Opens an email to me@jonathantari.com with the subject "Typewriter — feedback or feature request". No form, no card, no backend.
+- Later, if friends use it a lot: maybe a tiny in-page note that posts somewhere (e.g. a Google Form) instead of opening mail.
