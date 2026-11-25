@@ -57,6 +57,11 @@ Never lose writing, without having to think about saving. Today the draft is kep
 - Make the OAuth app External and publish to production (brand verification only for non-sensitive scopes); add a short privacy-policy page on garage.jonathantari.com.
 - Opening files not created in the app goes through the Picker; files made in Typewriter still show in the quiet list. Check how folder access behaves under drive.file when building.
 
-## Feedback link — DONE (Nov 2026)
-- A quiet "feedback" text link bottom-left (mirrors the timer). Shows with the top bar, hides while typing. Opens an email to me@jonathantari.com with the subject "Typewriter — feedback or feature request". No form, no card, no backend.
-- Later, if friends use it a lot: maybe a tiny in-page note that posts somewhere (e.g. a Google Form) instead of opening mail.
+## Feedback — DONE (Nov 2026)
+- Notes go to the Google Form "Typewriter feedback" owned by me@jonathantari.com (form 16UKLCdzb9GUhJxFpzgfqkYCpsai7hLmprq8_pBrDUNA; responders: anyone with the link, no email collected). Read them in the form's Responses tab. Fields: Type, Note, From, Context (window size + browser). Entry IDs are in index.html. No email address anywhere in the site.
+- The note is written on the paper: three text tags (idea / something's off / other), a ruled line for the note, optional name, send / cancel. No card. Cmd/Ctrl+Enter sends, Esc closes. Posts with fetch no-cors, then "thank you" and it closes.
+- Desktop: "feedback" shows bottom-left on a fresh (empty) page and fades once you type. After that only when the mouse is near the bottom-left corner, or via options → feedback.
+- Mobile: never in the corner; options → feedback opens the note near the top (above the keyboard).
+
+## Title — DONE (Nov 2026)
+- The file name sits centred at the top, outside the bar that hides. Fully visible on a fresh page (inviting you to name it), otherwise ~.12 opacity, ~.06 while typing; hover or focus brings it back. Mobile: centred just under the bar.
