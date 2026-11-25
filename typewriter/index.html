@@ -163,38 +163,48 @@ body:not(.drive) .donly{display:none!important}
 #hud #saveDrop button{display:block;width:100%;box-sizing:border-box;color:var(--card-ink);opacity:.75;padding:7px 9px;letter-spacing:.02em}
 #hud #saveDrop button:hover,#hud #saveDrop button:focus-visible{background:rgba(127,127,140,.16);opacity:1;color:var(--card-ink)}
 /* ---------- feedback ----------
-   Desktop: the word "feedback" sits bottom-left on a fresh page and fades once you start writing. After
-   that it only shows when the mouse comes near the bottom-left corner, or from options → feedback.
-   Mobile: never in the corner, only from options. Open: a short note written on the paper (a ruled
-   line, no card), three text tags, send / cancel. Notes go to a Google Form owned by jonathantari.com. */
-#fb{position:absolute;left:0;bottom:0;z-index:9;padding:0 20px max(20px,env(safe-area-inset-bottom));min-width:170px;min-height:64px;
-  display:flex;flex-direction:column;justify-content:flex-end;font-size:12px;letter-spacing:.04em;color:var(--hud);opacity:0;transition:opacity .6s ease}
-#fb:hover,body.fresh:not(.typing) #fb,#fb.open{opacity:1}
-#fb button{all:unset;cursor:pointer;padding:5px 4px;color:var(--hud);transition:color .2s,opacity .2s}
-#fb button:hover,#fb button:focus-visible{color:var(--ink)}
-#fbOpen{opacity:.75;align-self:flex-start}
-#fb.open #fbOpen{display:none}
-#fbForm{display:none;width:min(340px,calc(100vw - 40px))}
-#fb.open #fbForm{display:block;animation:fbIn .45s ease}
-@keyframes fbIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-#fbKinds button{opacity:.55;padding:5px 10px 5px 0}
-#fbKinds button.on{opacity:1;color:var(--ink);text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px}
-#fbText,#fbFrom{all:unset;display:block;box-sizing:border-box;width:100%;font:inherit;font-size:13px;letter-spacing:.02em;color:var(--ink);
-  border-bottom:1px solid color-mix(in srgb,var(--ink) 22%,transparent);padding:6px 0 5px;margin-top:4px;white-space:pre-wrap;overflow-wrap:anywhere;
-  user-select:text;-webkit-user-select:text}
-#fbText{min-height:3.6em;max-height:9em;overflow:auto;resize:none}
-#fbFrom{font-size:12px}
-#fbText::placeholder,#fbFrom::placeholder{color:var(--hud);opacity:.8}
-#fbRow{display:flex;gap:10px;align-items:center;margin-top:6px}
-#fbMsg{opacity:.8}
-#fbSend[disabled]{opacity:.35;pointer-events:none}
-@media (hover:none),(max-width:640px){
-  #fb{display:none}
-  #fb.open{display:flex;bottom:auto;top:calc(56px + env(safe-area-inset-top));left:0;right:0;padding:0 16px;min-height:0}
-  #fbForm{width:100%}
-  #fbText,#fbFrom{font-size:16px}
-}
-@media print{#fb{display:none}}
+   Trigger: desktop shows "feedback" bottom-left on a fresh page; after you start writing only when the mouse
+   is near that corner. Mobile: no corner trigger. Both: options → feedback.
+   The note itself is a centred modal: the page dims and softly blurs behind it, the note fades up. You write,
+   send, it says thank you and closes. Notes go to a Google Form owned by jonathantari.com. */
+#fbT{position:absolute;left:0;bottom:0;z-index:9;padding:0 20px max(20px,env(safe-area-inset-bottom));min-width:170px;min-height:64px;
+  display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;opacity:0;transition:opacity .6s ease}
+#fbT:hover,body.fresh:not(.typing) #fbT{opacity:1}
+#fbT button{all:unset;cursor:pointer;padding:5px 4px;font-size:12px;letter-spacing:.04em;color:var(--hud);opacity:.75;transition:color .2s,opacity .2s}
+#fbT button:hover,#fbT button:focus-visible{color:var(--ink);opacity:1}
+body.fbopen #fbT{opacity:0;pointer-events:none}
+@media (hover:none),(max-width:640px){#fbT{display:none}}
+#fb{position:absolute;inset:0;z-index:25;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;
+  background:rgba(12,12,18,0);-webkit-backdrop-filter:blur(0);backdrop-filter:blur(0);visibility:hidden;cursor:default;
+  transition:background .5s ease,backdrop-filter .5s ease,-webkit-backdrop-filter .5s ease,visibility 0s linear .5s}
+#fb.open{visibility:visible;background:rgba(12,12,18,.34);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);transition:background .5s ease,backdrop-filter .5s ease,-webkit-backdrop-filter .5s ease}
+body.day #fb.open{background:rgba(40,32,20,.22)}
+#fbForm{width:min(400px,100%);background:var(--card);color:var(--card-ink);border-radius:12px;padding:22px 24px 16px;box-sizing:border-box;
+  box-shadow:0 24px 70px rgba(0,0,0,.32),0 0 0 .5px rgba(0,0,0,.06);font-size:13px;letter-spacing:.02em;
+  opacity:0;transform:translateY(10px) scale(.985);transition:opacity .45s ease,transform .5s cubic-bezier(.2,.75,.25,1)}
+#fb.open #fbForm{opacity:1;transform:none}
+#fbForm h3{margin:0 0 2px;font-size:15px;font-weight:normal;letter-spacing:.03em}
+#fbForm .sub{margin:0 0 14px;font-size:12px;opacity:.55}
+#fbKinds{display:flex;gap:4px;margin-bottom:10px}
+#fbKinds button{all:unset;cursor:pointer;padding:4px 10px;border-radius:20px;font-size:12px;color:var(--card-ink);opacity:.5;
+  border:1px solid transparent;transition:opacity .2s,border-color .2s}
+#fbKinds button:hover{opacity:.8}
+#fbKinds button.on{opacity:1;border-color:rgba(127,127,140,.4)}
+#fbText,#fbFrom{all:unset;display:block;box-sizing:border-box;width:100%;font:inherit;font-size:14px;line-height:1.55;color:var(--card-ink);
+  border-bottom:1px solid rgba(127,127,140,.35);padding:6px 0 6px;margin-top:4px;white-space:pre-wrap;overflow-wrap:anywhere;user-select:text;-webkit-user-select:text}
+#fbText{min-height:6.2em;max-height:14em;overflow:auto;resize:none}
+#fbFrom{font-size:13px;margin-top:10px}
+#fbText::placeholder,#fbFrom::placeholder{color:var(--card-ink);opacity:.38}
+#fbText:focus,#fbFrom:focus{border-bottom-color:rgba(127,127,140,.7)}
+#fbRow{display:flex;gap:6px;align-items:center;justify-content:flex-end;margin-top:16px}
+#fbMsg{margin-right:auto;font-size:12px;opacity:.6}
+#fbRow button{all:unset;cursor:pointer;padding:7px 13px;border-radius:6px;font-size:13px;color:var(--card-ink);opacity:.7}
+#fbRow button:hover{opacity:1}
+#fbRow #fbSend{background:var(--card-ink);color:var(--card)!important;opacity:.9!important}
+#fbRow #fbSend:hover{opacity:1!important}
+#fbRow #fbSend[disabled]{opacity:.3!important;pointer-events:none}
+@media (max-width:640px){#fb{align-items:flex-start;padding-top:calc(60px + env(safe-area-inset-top))} #fbText,#fbFrom{font-size:16px}}
+@media print{#fb,#fbT{display:none}}
 /* ---------- timer: a little egg timer on the table ----------
    Idle: a faint outline in the corner. Running: a soft wedge of ink that creeps back to 12 o'clock.
    Hover (or tap on touch): the dial grows, the time left appears in grey in its centre, and two quiet
@@ -290,13 +300,15 @@ body.dragging #drop{display:flex}
     </div>
     <button id="tmr" aria-label="Timer"><svg viewBox="0 0 40 44" aria-hidden="true"><rect class="kn" x="16.5" y="0" width="7" height="4" rx="1.6"/><circle class="sec" id="tmrSec" cx="20" cy="24" r="7.75" pathLength="100" transform="rotate(-90 20 24)"/><circle class="rim" cx="20" cy="24" r="17.5"/><g class="tk"><path d="M20 8.2v2.6M20 37.2v2.6M4.2 24h2.6M33.2 24h2.6"/></g></svg><span id="tLeft"></span></button>
   </div>
-  <div id="fb">
-    <button id="fbOpen" title="Send feedback or a feature request">feedback</button>
+  <div id="fbT"><button id="fbOpen" title="Send feedback or a feature request">feedback</button></div>
+  <div id="fb" role="dialog" aria-modal="true" aria-labelledby="fbH">
     <form id="fbForm" autocomplete="off">
+      <h3 id="fbH">Feedback</h3>
+      <p class="sub">An idea, something that feels off, anything. It goes straight to Tari.</p>
       <div id="fbKinds"><button type="button" data-k="idea" class="on">idea</button><button type="button" data-k="something's off">something's off</button><button type="button" data-k="other">other</button></div>
-      <textarea id="fbText" rows="3" maxlength="2000" placeholder="What would make it better?"></textarea>
-      <input id="fbFrom" maxlength="120" placeholder="your name (optional)">
-      <div id="fbRow"><button type="submit" id="fbSend">send</button><button type="button" id="fbCancel">cancel</button><span id="fbMsg"></span></div>
+      <textarea id="fbText" rows="4" maxlength="2000" placeholder="What would make it better?"></textarea>
+      <input id="fbFrom" maxlength="120" placeholder="Your name (optional)">
+      <div id="fbRow"><span id="fbMsg"></span><button type="button" id="fbCancel">cancel</button><button type="submit" id="fbSend">send</button></div>
     </form>
   </div>
   <div id="drop">Drop a .md file to open it</div>
@@ -1133,7 +1145,7 @@ function scrollTo(acc){
 }
 let ptr=null,lastMove={x:0,y:0};
 stage.addEventListener('pointerdown',e=>{
-  if(e.target.closest('#hud,#ttl,#modal,#opts,#tw,#knob,#fb'))return;
+  if(e.target.closest('#hud,#ttl,#modal,#opts,#tw,#knob,#fb,#fbT'))return;
   optsEl.classList.remove('on');twEl.classList.remove('open');saveMenu.classList.remove('on');
   ptr={x:e.clientY,y:e.clientY,type:e.pointerType,moved:false,anchor:0,acc:wheelAcc};
   if(e.pointerType==='mouse'){
@@ -1157,7 +1169,7 @@ stage.addEventListener('pointermove',e=>{
 });
 stage.addEventListener('pointerup',e=>{
   mouseDown=false;
-  if(ptr&&ptr.type==='pen'&&!ptr.moved&&!e.target.closest('#hud,#ttl,#modal,#opts,#tw,#knob,#fb'))tapAt(e.clientX,e.clientY);
+  if(ptr&&ptr.type==='pen'&&!ptr.moved&&!e.target.closest('#hud,#ttl,#modal,#opts,#tw,#knob,#fb,#fbT'))tapAt(e.clientX,e.clientY);
   ptr=null;if(document.activeElement===ta)render();
 });
 /* touch: place the caret and focus inside touchend (a real user gesture on iOS), and cancel the
@@ -1167,7 +1179,7 @@ function tapAt(x,y){
   if(y<90)body.classList.remove('hide-ui');
 }
 let tStart=null;
-stage.addEventListener('touchstart',e=>{const t=e.changedTouches[0];tStart={x:t.clientX,y:t.clientY,ui:!!e.target.closest('#hud,#ttl,#modal,#opts,#tw,#knob,#fb')}},{passive:true});
+stage.addEventListener('touchstart',e=>{const t=e.changedTouches[0];tStart={x:t.clientX,y:t.clientY,ui:!!e.target.closest('#hud,#ttl,#modal,#opts,#tw,#knob,#fb,#fbT')}},{passive:true});
 stage.addEventListener('touchend',e=>{
   const t=e.changedTouches[0];if(!tStart||tStart.ui){tStart=null;return}
   const moved=Math.hypot(t.clientX-tStart.x,t.clientY-tStart.y)>8;tStart=null;
@@ -1175,7 +1187,7 @@ stage.addEventListener('touchend',e=>{
   if(!moved)tapAt(t.clientX,t.clientY);
   else if(document.activeElement!==ta)ta.focus({preventScroll:true});
 },{passive:false});
-stage.addEventListener('mousedown',e=>{if(!e.target.closest('#hud,#ttl,#modal,#opts,#tw,#fb,input,button'))e.preventDefault()});
+stage.addEventListener('mousedown',e=>{if(!e.target.closest('#hud,#ttl,#modal,#opts,#tw,#fb,#fbT,input,button'))e.preventDefault()});
 stage.addEventListener('pointercancel',()=>{ptr=null;mouseDown=false});
 stage.addEventListener('wheel',e=>{
   if(e.target.closest('#modal,#opts'))return;
@@ -1514,6 +1526,7 @@ setTimeout(()=>{body.classList.remove('hide-ui');setTimeout(()=>{if(ta.value||do
   window.twFeedback=open;
   document.getElementById('fbOpen').addEventListener('click',open);
   document.getElementById('fbCancel').addEventListener('click',close);
+  box.addEventListener('mousedown',e=>{if(e.target===box)close()});
   kinds.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;kind=b.dataset.k;
     kinds.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));txt.focus()});
   box.addEventListener('keydown',e=>{e.stopPropagation();
