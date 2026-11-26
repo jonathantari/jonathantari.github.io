@@ -59,7 +59,7 @@ Never lose writing, without having to think about saving. Today the draft is kep
 
 ## Feedback — DONE (Nov 2026)
 - Notes go to the Google Form "Typewriter feedback" owned by me@jonathantari.com (form 16UKLCdzb9GUhJxFpzgfqkYCpsai7hLmprq8_pBrDUNA; responders: anyone with the link, no email collected). Read them in the form's Responses tab. Fields: Type, Note, From, Context (window size + browser). Entry IDs are in index.html. No email address anywhere in the site.
-- The note is a centred modal (Tari asked for this, Nov 25): the page dims and softly blurs behind it and the card fades up. Title "Feedback", one quiet line, three pill tags (idea / something's off / other), note, optional name, cancel / send. Cmd/Ctrl+Enter sends; Esc or clicking outside closes. Posts with fetch no-cors, shows "thank you", closes.
+- The note is a centred modal (Tari asked for this, Nov 25): the page dims and softly blurs behind it and the card fades up. Title "Submit Feedback", one quiet line, three pill tags (idea / bug / other), note, optional name, cancel / send. Cmd/Ctrl+Enter sends; Esc or clicking outside closes. Posts with fetch no-cors, shows "thank you", closes.
 - Desktop: "feedback" shows bottom-left on a fresh (empty) page and fades once you type. After that only when the mouse is near the bottom-left corner, or via options → feedback.
 - Mobile: no corner link; options → feedback opens the modal near the top (above the keyboard).
 - Google emails me@jonathantari.com on every new response (form setting "Get email notifications for new responses"); the email links to the form, it doesn't include the note.
