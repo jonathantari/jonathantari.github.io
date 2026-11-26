@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Typewriter · Privacy</title>
+<meta name="description" content="What you write in Typewriter stays yours.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#1d1d22;--soft:rgba(29,29,34,.62)}
+  html{min-height:100%;background:#aeafbc radial-gradient(ellipse 90% 70% at 35% 20%,#efe9d8 0%,#c9c8cf 50%,#aeafbc 100%) no-repeat}
+  body{margin:0;min-height:100vh;display:flex;justify-content:center;font-family:'Courier Prime','Courier New',Courier,monospace;color:var(--ink);
+    -webkit-font-smoothing:antialiased}
+  main{max-width:34rem;padding:14vh 28px 12vh;font-size:16px;line-height:1.75;animation:in .9s ease both}
+  @keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  h1{font-size:22px;font-weight:700;letter-spacing:.02em;margin:0 0 1.4em}
+  h2{font-size:16px;font-weight:700;margin:2.2em 0 .5em}
+  p{margin:0 0 1em}
+  ul{margin:0 0 1em;padding:0;list-style:none}
+  li{padding-left:1.4em;position:relative;margin:.25em 0}
+  li::before{content:"·";position:absolute;left:.4em}
+  .soft{color:var(--soft)}
+  a{color:inherit;text-underline-offset:3px;text-decoration-thickness:1px}
+  .sign{margin-top:3em;font-style:italic;color:var(--soft)}
+  .back{display:inline-block;margin-top:2.4em;font-size:14px;color:var(--soft)}
+  @media (prefers-reduced-motion:reduce){main{animation:none}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Your words are yours.</h1>
+
+  <p>Everything you type stays on your device: in this browser, or in files you choose to save. It is never sent to us. We can't read it, and we never will.</p>
+  <p class="soft">If you connect Google Drive, your files travel straight between your browser and your own Drive. Nobody else is in between.</p>
+
+  <h2>The little we do count</h2>
+  <p>To know whether anyone is enjoying this typewriter, we count a few anonymous things:</p>
+  <ul>
+    <li>that someone visited</li>
+    <li>how many words were typed. Just the number, never the words.</li>
+    <li>general details like device type, browser and country</li>
+  </ul>
+  <p>This is done with <a href="https://umami.is/privacy" target="_blank" rel="noopener">Umami</a>, a privacy-friendly analytics service hosted in the EU. No cookies, nothing stored on your device for tracking, and nothing that follows you to other sites. Your IP address is only used to work out the country, then forgotten. Nothing is sold, shared or used for ads.</p>
+  <p>Rather not be counted? Turn off <em>Anonymous stats</em> in options. If your browser sends Do Not Track or Global Privacy Control, we don't count you at all.</p>
+
+  <h2>Two small notes</h2>
+  <p>If you send feedback, only what you write in that box reaches the creator, through a Google Form. And the typewriter's font comes from Google Fonts, so Google sees a request for it, like on many websites.</p>
+
+  <p>Questions? Use the feedback button in options.</p>
+
+  <p class="sign">Happy writing ♥︎<br>Last updated November 2026</p>
+  <a class="back" href="./">← back to the typewriter</a>
+</main>
+</body>
+</html>

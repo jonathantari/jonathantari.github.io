@@ -5,6 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Typewriter</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='b' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23545660'/%3E%3Cstop offset='1' stop-color='%231c1d22'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='18' y='4' width='28' height='26' rx='1.5' fill='%23f6f1e4' stroke='%23b9b2a2'/%3E%3Cpath d='M23 12h18M23 17h14M23 22h16' stroke='%2333333a' stroke-width='2' stroke-linecap='round'/%3E%3Crect x='6' y='26' width='52' height='9' rx='4.5' fill='%23202126'/%3E%3Ccircle cx='6' cy='30.5' r='5' fill='%23101114'/%3E%3Ccircle cx='58' cy='30.5' r='5' fill='%23101114'/%3E%3Cpath d='M8 36h48l4 22H4z' fill='url(%23b)'/%3E%3Cg fill='%23e9e4d8'%3E%3Ccircle cx='15' cy='44' r='2.4'/%3E%3Ccircle cx='23' cy='44' r='2.4'/%3E%3Ccircle cx='31' cy='44' r='2.4'/%3E%3Ccircle cx='39' cy='44' r='2.4'/%3E%3Ccircle cx='47' cy='44' r='2.4'/%3E%3Ccircle cx='19' cy='51' r='2.4'/%3E%3Ccircle cx='27' cy='51' r='2.4'/%3E%3Ccircle cx='35' cy='51' r='2.4'/%3E%3Ccircle cx='43' cy='51' r='2.4'/%3E%3C/g%3E%3C/svg%3E">
+<!-- Anonymous stats (Umami, cookieless). Never the page title (it holds the file name) and never any text:
+     only a visit and, now and then, how many words were added. Off with GPC / Do Not Track / options → Anonymous stats. -->
+<script>
+(()=>{try{
+  if(location.hostname!=='garage.jonathantari.com')return;
+  if(navigator.globalPrivacyControl||navigator.doNotTrack==='1'||localStorage.getItem('umami.disabled'))return;
+  const s=document.createElement('script');s.defer=true;s.src='https://cloud.umami.is/script.js';
+  s.dataset.websiteId='b6e1a65b-8a2c-4193-8ab2-f028ec8f7249';s.dataset.autoTrack='false';s.dataset.doNotTrack='true';
+  s.dataset.excludeSearch='true';s.dataset.excludeHash='true';s.dataset.domains='garage.jonathantari.com';
+  s.onload=()=>window.umami&&umami.track(p=>({...p,title:'Typewriter'}));
+  document.head.appendChild(s);
+}catch(e){}})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
@@ -130,6 +143,8 @@ body.dirty #dot{opacity:.7}
 #opts{position:absolute;right:14px;top:52px;z-index:11;width:280px;background:var(--card);color:var(--card-ink);border-radius:10px;padding:10px 12px;
   box-shadow:0 18px 50px rgba(0,0,0,.28),0 0 0 .5px rgba(0,0,0,.08);font-size:12.5px;display:none;cursor:default}
 #opts.on{display:block;animation:fade .15s ease}
+.opriv{padding:8px 0 2px;margin-top:4px;border-top:1px solid rgba(127,127,140,.18);font-size:11.5px;opacity:.55;line-height:1.5}
+.opriv a{color:inherit;text-underline-offset:3px}
 .orow{display:flex;align-items:center;justify-content:space-between;padding:6px 0}
 .seg{display:flex;background:rgba(127,127,140,.14);border-radius:6px;padding:2px}
 .seg button{all:unset;cursor:pointer;padding:4px 9px;border-radius:5px;color:var(--card-ink);opacity:.6}
@@ -290,7 +305,9 @@ body.dragging #drop{display:flex}
     <div class="orow"><span>Haptics</span><div class="seg" data-k="haptics"><button data-v="on">on</button><button data-v="off">off</button></div></div>
     <div class="orow" id="dRow"><span>Google Drive</span><div class="segx"><button id="dBtn">connect</button></div></div>
     <div class="orow" id="fRow"><span>Focus</span><div class="segx"><button id="fBtn">full screen</button></div></div>
+    <div class="orow"><span>Anonymous stats</span><div class="seg" data-k="stats"><button data-v="on">on</button><button data-v="off">off</button></div></div>
     <div class="orow"><button data-a="new" style="all:unset;cursor:pointer;opacity:.7">new page</button><button data-a="help" style="all:unset;cursor:pointer;opacity:.7">shortcuts</button><button data-a="feedback" style="all:unset;cursor:pointer;opacity:.7">feedback</button></div>
+    <div class="opriv">What you write stays on your device. <a href="privacy.html" target="_blank" rel="noopener">privacy</a></div>
   </div>
   <div id="tw">
     <div id="tCtl">
@@ -334,7 +351,29 @@ const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 const ANIM=130;
 
 /* ---------- settings ---------- */
-const S={theme:store.get('tw2.theme','night'),lamp:store.get('tw2.lamp',null),center:store.get('tw2.center',false),sound:store.get('tw2.sound',true),haptics:store.get('tw2.haptics',true)};
+const S={theme:store.get('tw2.theme','night'),lamp:store.get('tw2.lamp',null),center:store.get('tw2.center',false),sound:store.get('tw2.sound',true),haptics:store.get('tw2.haptics',true),stats:(()=>{try{return !localStorage.getItem('umami.disabled')}catch(e){return true}})()};
+
+/* ---------- anonymous stats ----------
+   Only numbers: words added since the last report (never the words), sent every few minutes and when the
+   tab is hidden. The title sent is always "Typewriter", never the file name. */
+const stats=(()=>{
+  let base=null,pend=0;
+  const ok=()=>S.stats&&window.umami&&typeof umami.track==='function';
+  const send=(name,data)=>{if(ok())try{umami.track(p=>({...p,title:'Typewriter',name,data}))}catch(e){}};
+  function flush(){if(pend>0&&ok()){send('words',{words:pend});pend=0}}
+  setInterval(flush,180000);
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flush()});
+  addEventListener('pagehide',flush);
+  return{
+    rebase(){base=null},
+    words(n){if(base===null){base=n;return}if(n>base)pend+=n-base;base=n},
+    event(name){send(name)},
+    boot(){if(location.hostname!=='garage.jonathantari.com'||document.querySelector('script[src*="umami.is"]'))return;
+      const s=document.createElement('script');s.defer=true;s.src='https://cloud.umami.is/script.js';
+      Object.assign(s.dataset,{websiteId:'b6e1a65b-8a2c-4193-8ab2-f028ec8f7249',autoTrack:'false',doNotTrack:'true',excludeSearch:'true',excludeHash:'true',domains:'garage.jonathantari.com'});
+      s.onload=()=>window.umami&&umami.track(p=>({...p,title:'Typewriter'}));document.head.appendChild(s)}
+  };
+})();
 if(S.lamp===null)S.lamp=S.theme==='night';
 
 /* ---------- layout ---------- */
@@ -1200,6 +1239,7 @@ window.addEventListener('scroll',()=>window.scrollTo(0,0));
 function setDirty(v){dirty=v;body.classList.toggle('dirty',v);if(typeof updateTitle==='function')try{updateTitle()}catch(e){}}
 function fileName(){return(nameEl.value.trim()||'Untitled').replace(/[\\/:*?"<>|]/g,'-')}
 function loadText(text,name){
+  stats.rebase();
   text=text.replace(/\r\n?/g,'\n').replace(/\t/g,'    ');
   ta.value=text;prev=text;times=new Array(text.length).fill(0);pending=null;
   nameEl.value=(name||'Untitled').replace(/\.(md|markdown|txt)$/i,'');try{updateTitle()}catch(e){}
@@ -1406,6 +1446,7 @@ function setOpt(k,v){
   if(k==='theme'){S.theme=v;store.set('tw2.theme',v);S.lamp=v==='night';store.set('tw2.lamp',S.lamp)}
   if(k==='lamp'){S.lamp=v==='on';store.set('tw2.lamp',S.lamp)}
   if(k==='center'){S.center=v==='on';store.set('tw2.center',S.center)}
+  if(k==='stats'){S.stats=v==='on';try{S.stats?localStorage.removeItem('umami.disabled'):localStorage.setItem('umami.disabled','1')}catch(e){}if(S.stats&&!window.umami)stats.boot()}
   if(k==='haptics'){S.haptics=v==='on';store.set('tw2.haptics',S.haptics);haptic(10)}
   if(k==='sound'){S.sound=v==='on';store.set('tw2.sound',S.sound);if(S.sound){audioReady=false;unlockAudio();setTimeout(()=>snd.key(),30)}}
   applySettings();
@@ -1427,6 +1468,7 @@ function updateCount(){
   let n=0;const re=/\S+/g;
   for(const line of lastText.split('\n')){const P=parse(line);let s='';for(let j=0;j<line.length;j++)if(!(P.st[j]&4))s+=line[j];n+=(s.match(re)||[]).length}
   wcEl.textContent=n.toLocaleString()+(n===1?' word':' words');
+  stats.words(n);
   body.classList.toggle('fresh',!lastText.trim());
 }
 
@@ -1539,7 +1581,7 @@ setTimeout(()=>{body.classList.remove('hide-ui');setTimeout(()=>{if(ta.value||do
     d.set(F.ctx,innerWidth+'×'+innerHeight+' · '+navigator.userAgent);
     try{
       await fetch(FORM,{method:'POST',mode:'no-cors',body:d});
-      txt.value='';msg.textContent='thank you';setTimeout(()=>{if(!txt.value)close()},1800);
+      stats.event('feedback sent');txt.value='';msg.textContent='thank you';setTimeout(()=>{if(!txt.value)close()},1800);
     }catch(_){msg.textContent='couldn\'t send, try again'}
     busy=false;send.disabled=false;
   });
