@@ -69,9 +69,9 @@ Never lose writing, without having to think about saving. Today the draft is kep
 
 ## Anonymous stats + privacy page — DONE (Nov 2026)
 - Umami Cloud (EU), account me@jonathantari.com, website "Typewriter" (garage.jonathantari.com), ID b6e1a65b-8a2c-4193-8ab2-f028ec8f7249. Cookieless; nothing stored on the device for tracking.
-- Loads only on garage.jonathantari.com; skipped with Global Privacy Control, Do Not Track, or options → Anonymous stats off (sets Umami's own localStorage "umami.disabled").
+- Loads only on garage.jonathantari.com; skipped with Global Privacy Control or Do Not Track. No toggle in options (Tari removed it). People who ask via feedback to be removed get the link garage.jonathantari.com/typewriter/?nostats, which sets Umami's own localStorage "umami.disabled" in that browser (?stats undoes it).
 - Auto-tracking is off. One pageview per load with the title forced to "Typewriter" (document.title holds the file name, so it must never be sent). No query string or hash.
 - Events: "words" with {words: n} = words added since the last report (positive changes only; loading/opening a file resets the baseline), sent every 3 min and when the tab is hidden. "feedback sent" with no data. Never any text, file names or titles.
 - See: visitors, unique visitors (daily), active now ("realtime"), total words in Umami → Events → words.
-- privacy.html: short, warm privacy note (content stays on device; what Umami counts; opt-out; feedback form and Google Fonts). Linked from the bottom of options ("What you write stays on your device. privacy"). Update it if anything new is collected.
+- privacy.html: short, warm privacy note (content stays on device; what Umami counts; ask via feedback to be removed). Linked from the bottom of options ("What you write stays on your device. privacy"). Update it if anything new is collected.
 - Later: a "Wrapped" can be computed entirely in the browser from local data, no new collection needed.

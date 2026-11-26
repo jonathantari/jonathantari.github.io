@@ -6,10 +6,13 @@
 <title>Typewriter</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='b' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23545660'/%3E%3Cstop offset='1' stop-color='%231c1d22'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='18' y='4' width='28' height='26' rx='1.5' fill='%23f6f1e4' stroke='%23b9b2a2'/%3E%3Cpath d='M23 12h18M23 17h14M23 22h16' stroke='%2333333a' stroke-width='2' stroke-linecap='round'/%3E%3Crect x='6' y='26' width='52' height='9' rx='4.5' fill='%23202126'/%3E%3Ccircle cx='6' cy='30.5' r='5' fill='%23101114'/%3E%3Ccircle cx='58' cy='30.5' r='5' fill='%23101114'/%3E%3Cpath d='M8 36h48l4 22H4z' fill='url(%23b)'/%3E%3Cg fill='%23e9e4d8'%3E%3Ccircle cx='15' cy='44' r='2.4'/%3E%3Ccircle cx='23' cy='44' r='2.4'/%3E%3Ccircle cx='31' cy='44' r='2.4'/%3E%3Ccircle cx='39' cy='44' r='2.4'/%3E%3Ccircle cx='47' cy='44' r='2.4'/%3E%3Ccircle cx='19' cy='51' r='2.4'/%3E%3Ccircle cx='27' cy='51' r='2.4'/%3E%3Ccircle cx='35' cy='51' r='2.4'/%3E%3Ccircle cx='43' cy='51' r='2.4'/%3E%3C/g%3E%3C/svg%3E">
 <!-- Anonymous stats (Umami, cookieless). Never the page title (it holds the file name) and never any text:
-     only a visit and, now and then, how many words were added. Off with GPC / Do Not Track / options → Anonymous stats. -->
+     only a visit and, now and then, how many words were added. Off with GPC / Do Not Track / the ?nostats link. -->
 <script>
 (()=>{try{
   if(location.hostname!=='garage.jonathantari.com')return;
+  // Opt-out link Tari can send people who ask: ?nostats (undo with ?stats)
+  if(/[?&]nostats\b/.test(location.search))localStorage.setItem('umami.disabled','1');
+  if(/[?&]stats\b/.test(location.search))localStorage.removeItem('umami.disabled');
   if(navigator.globalPrivacyControl||navigator.doNotTrack==='1'||localStorage.getItem('umami.disabled'))return;
   const s=document.createElement('script');s.defer=true;s.src='https://cloud.umami.is/script.js';
   s.dataset.websiteId='b6e1a65b-8a2c-4193-8ab2-f028ec8f7249';s.dataset.autoTrack='false';s.dataset.doNotTrack='true';
@@ -305,7 +308,6 @@ body.dragging #drop{display:flex}
     <div class="orow"><span>Haptics</span><div class="seg" data-k="haptics"><button data-v="on">on</button><button data-v="off">off</button></div></div>
     <div class="orow" id="dRow"><span>Google Drive</span><div class="segx"><button id="dBtn">connect</button></div></div>
     <div class="orow" id="fRow"><span>Focus</span><div class="segx"><button id="fBtn">full screen</button></div></div>
-    <div class="orow"><span>Anonymous stats</span><div class="seg" data-k="stats"><button data-v="on">on</button><button data-v="off">off</button></div></div>
     <div class="orow"><button data-a="new" style="all:unset;cursor:pointer;opacity:.7">new page</button><button data-a="help" style="all:unset;cursor:pointer;opacity:.7">shortcuts</button><button data-a="feedback" style="all:unset;cursor:pointer;opacity:.7">feedback</button></div>
     <div class="opriv">What you write stays on your device. <a href="privacy.html" target="_blank" rel="noopener">privacy</a></div>
   </div>
